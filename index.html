@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tienda</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+  :root {
+    --primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#eef2ff;
+    --bg:#fafafa;--surface:#fff;--border:#e5e7eb;
+    --text:#111827;--muted:#6b7280;
+    --font-d:'Syne',sans-serif;--font-b:'Inter',sans-serif;--r:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-b);background:var(--bg);color:var(--text)}
+
+  .navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 max(20px,calc((100vw - 1100px)/2));height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+  .brand{font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--primary);cursor:pointer;user-select:none;position:relative;transition:transform .1s}
+  .brand:active{transform:scale(.95)}
+  /* tap counter visual */
+  .tap-ring{position:absolute;inset:-4px;border-radius:8px;border:2px solid var(--primary);opacity:0;pointer-events:none;transition:opacity .2s}
+  .brand.tapping .tap-ring{opacity:1}
+  .tap-count{position:absolute;top:-8px;right:-8px;background:var(--primary);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-family:var(--font-d)}
+  .brand.tapping .tap-count{display:flex}
+
+  .nav-right{display:flex;align-items:center;gap:10px;position:relative}
+  .nav-user{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--primary);padding:6px 14px;border-radius:99px;background:var(--primary-light);cursor:pointer}
+  .nav-avatar{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .cart-pill{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:99px;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-b);transition:background .15s}
+  .cart-pill:hover{background:var(--primary-dark)}
+  .cart-pill .n{background:#fff;color:var(--primary);border-radius:50%;width:19px;height:19px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .wa-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;background:#dcfce7;color:#166534;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:var(--font-b)}
+  .wa-btn:hover{background:#bbf7d0}
+
+  .hero{background:var(--primary);padding:64px max(20px,calc((100vw - 1100px)/2));color:#fff}
+  .hero h1{font-family:var(--font-d);font-size:clamp(30px,5vw,54px);font-weight:800;line-height:1.1;margin-bottom:14px}
+  .hero p{font-size:16px;opacity:.85;line-height:1.7;margin-bottom:28px;max-width:560px}
+  .hero-cta{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;background:#fff;color:var(--primary);border-radius:99px;font-weight:700;font-size:15px;cursor:pointer;border:none;font-family:var(--font-b);transition:transform .15s}
+  .hero-cta:hover{transform:translateY(-1px)}
+
+  .guest-banner{background:linear-gradient(90deg,#eef2ff 0%,#f5f3ff 100%);border-bottom:1px solid #c7d2fe;padding:12px max(20px,calc((100vw - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .gb-text{font-size:14px;color:#4338ca;font-weight:500;display:flex;align-items:center;gap:8px}
+  .gb-text svg{width:18px;height:18px;flex-shrink:0}
+  .gb-btns{display:flex;gap:8px}
+  .gb-register{padding:8px 18px;background:var(--primary);color:#fff;border:none;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b)}
+  .gb-register:hover{background:var(--primary-dark)}
+  .gb-login{padding:7px 16px;background:#fff;color:var(--primary);border:1px solid var(--primary);border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b)}
+
+  .catalog{padding:52px max(20px,calc((100vw - 1100px)/2))}
+  .cat-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:12px;flex-wrap:wrap}
+  .cat-title{font-family:var(--font-d);font-size:22px;font-weight:800}
+  .filters{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:5px 14px;border-radius:99px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .15s}
+  .chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .chip:hover:not(.on){border-color:var(--primary);color:var(--primary)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+  .pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .2s}
+  .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.08)}
+  .pcard-img{aspect-ratio:1;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;position:relative}
+  .pcard-img img{width:100%;height:100%;object-fit:cover}
+  .stock-badge{position:absolute;top:8px;right:8px;background:#fef2f2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+  .pcard-body{padding:13px 15px 15px}
+  .pcard-name{font-weight:600;font-size:14px;margin-bottom:4px}
+  .pcard-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;min-height:36px}
+  .pcard-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+  .price-real{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--primary)}
+  .price-locked{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);background:#f9fafb;border:1px dashed #d1d5db;border-radius:99px;padding:4px 10px;cursor:pointer;transition:all .15s;user-select:none}
+  .price-locked:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+  .price-locked svg{width:12px;height:12px;flex-shrink:0}
+
+  .add-btn{padding:6px 14px;background:var(--primary);color:#fff;border:none;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:background .15s;white-space:nowrap}
+  .add-btn:hover{background:var(--primary-dark)}
+  .add-btn.in-cart{background:#dcfce7;color:#166534}
+  .add-btn.guest{background:var(--primary-light);color:var(--primary)}
+  .no-stock{padding:5px 10px;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:99px;font-size:11px;font-weight:600}
+
+  .fab{position:fixed;bottom:28px;right:28px;z-index:90;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
+  .fab-label{background:var(--text);color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;white-space:nowrap;pointer-events:auto;animation:plbl 2.5s ease-in-out infinite}
+  @keyframes plbl{0%,100%{opacity:1;transform:translateX(0)}50%{opacity:.8;transform:translateX(-3px)}}
+  .fab-btn{width:58px;height:58px;border-radius:50%;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 20px rgba(99,102,241,.5);display:flex;align-items:center;justify-content:center;transition:transform .2s;pointer-events:auto;animation:fbounce 3s ease-in-out infinite}
+  .fab-btn:hover{transform:scale(1.08) !important}
+  @keyframes fbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+  .co-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100}
+  .co-overlay.on{display:block}
+  .drawer{position:fixed;top:0;right:-440px;height:100vh;width:420px;max-width:100vw;background:var(--surface);z-index:101;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 40px rgba(0,0,0,.12)}
+  .drawer.on{right:0}
+  .dw-hdr{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .dw-title{font-family:var(--font-d);font-size:18px;font-weight:800}
+  .xbtn{width:30px;height:30px;border-radius:50%;background:var(--bg);border:1px solid var(--border);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .cart-list{flex:1;overflow-y:auto;padding:14px 20px}
+  .ci{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);align-items:center}
+  .ci-img{width:50px;height:50px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0}
+  .ci-img img{width:100%;height:100%;object-fit:cover}
+  .ci-name{font-size:13px;font-weight:600;margin-bottom:3px}
+  .ci-price{font-size:12px;color:var(--primary);font-weight:700}
+  .qty{display:flex;align-items:center;gap:7px;margin-top:5px}
+  .qb{width:22px;height:22px;border-radius:6px;background:var(--bg);border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .qb:hover{background:var(--primary-light)}
+  .qv{font-size:13px;font-weight:600;min-width:18px;text-align:center}
+  .dw-foot{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
+  .total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .total-lbl{font-size:14px;font-weight:600}
+  .total-val{font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--primary)}
+  .cbtn{width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:background .15s}
+  .cbtn:hover{background:var(--primary-dark)}
+  .empty-cart{text-align:center;padding:40px 20px;color:var(--muted)}
+  .empty-cart-ico{font-size:44px;margin-bottom:10px}
+
+  .co-form{display:none;padding:20px;flex:1;overflow-y:auto;flex-direction:column}
+  .co-form.on{display:flex}
+  .back-lnk{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font-b);display:flex;align-items:center;gap:4px;margin-bottom:14px}
+  .back-lnk:hover{color:var(--text)}
+  .fg{margin-bottom:14px}
+  .fg label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .fg input,.fg textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font-b);color:var(--text);background:var(--surface);transition:border-color .15s}
+  .fg input:focus,.fg textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+  .fg textarea{min-height:68px;resize:vertical}
+
+  .success-screen{text-align:center;padding:32px 20px}
+  .success-ico{font-size:52px;margin-bottom:14px}
+  .success-title{font-family:var(--font-d);font-size:20px;font-weight:800;margin-bottom:8px}
+  .order-code{font-family:monospace;font-size:12px;background:var(--bg);padding:6px 14px;border-radius:8px;display:inline-block;margin:6px 0 18px}
+
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.on{display:flex}
+  .pmodal{background:var(--surface);border-radius:16px;width:100%;max-width:510px;max-height:88vh;overflow-y:auto;position:relative}
+  .pm-img{aspect-ratio:16/9;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:76px;overflow:hidden}
+  .pm-img img{width:100%;height:100%;object-fit:cover}
+  .pm-body{padding:22px}
+  .pm-name{font-family:var(--font-d);font-size:21px;font-weight:800;margin-bottom:8px}
+  .pm-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:18px}
+  .pm-price{font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--primary);margin-bottom:18px}
+  .pm-locked{display:flex;align-items:flex-start;gap:10px;padding:14px;background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;margin-bottom:18px;font-size:13px;color:var(--muted);line-height:1.5}
+  .pm-locked svg{width:18px;height:18px;flex-shrink:0;margin-top:1px}
+  .pm-add{width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:background .15s}
+  .pm-add:hover{background:var(--primary-dark)}
+  .pm-add:disabled{background:var(--border);color:var(--muted);cursor:default}
+  .pm-close{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.9);border:1px solid var(--border);border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+
+  /* AUTH MODAL */
+  .amodal{background:var(--surface);border-radius:16px;width:100%;max-width:370px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+  .am-title{font-family:var(--font-d);font-size:20px;font-weight:800;margin-bottom:4px}
+  .am-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+  .am-err{color:#dc2626;font-size:13px;margin-bottom:10px;display:none}
+  .am-submit{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-b)}
+  .am-submit:hover{background:var(--primary-dark)}
+  .am-switch{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
+  .am-switch button{background:none;border:none;color:var(--primary);font-weight:700;cursor:pointer;font-family:var(--font-b)}
+
+  /* OWNER ACCESS MODAL */
+  .owner-modal{background:var(--surface);border-radius:16px;width:100%;max-width:340px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .owner-modal-title{font-family:var(--font-d);font-size:18px;font-weight:800;margin-bottom:6px}
+  .owner-modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+
+  #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:99px;padding:9px 20px;font-size:13px;font-weight:600;z-index:9999;display:none;white-space:nowrap;pointer-events:none}
+  .loading{text-align:center;padding:80px 20px;color:var(--muted)}
+  .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  footer{background:var(--text);color:#9ca3af;text-align:center;padding:24px;font-size:12px}
+  footer a{color:var(--primary);text-decoration:none}
+  .suspended{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand" id="store-brand" onclick="handleBrandTap()">
+    <span id="brand-text">Tienda</span>
+    <div class="tap-ring"></div>
+    <div class="tap-count" id="tap-count">0</div>
+  </div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div id="v-loading"><div class="loading"><div class="spinner"></div>Cargando tienda...</div></div>
+
+<div id="v-suspended" style="display:none">
+  <div class="suspended">
+    <div>
+      <div style="font-size:52px;margin-bottom:14px">🔒</div>
+      <h2 style="font-family:var(--font-d);font-size:22px;font-weight:800;margin-bottom:8px">Tienda no disponible</h2>
+      <p style="color:var(--muted)">Esta tienda está temporalmente inactiva.</p>
+    </div>
+  </div>
+</div>
+
+<div id="v-catalog" style="display:none">
+  <div class="hero" id="hero-el">
+    <div class="hero-content">
+      <h1 id="hero-title">Bienvenido</h1>
+      <p id="hero-desc">Explora nuestro catálogo. Regístrate gratis para ver precios y hacer pedidos.</p>
+      <button class="hero-cta" id="hero-cta-btn">Regístrate gratis →</button>
+    </div>
+  </div>
+  <div class="guest-banner" id="guest-banner">
+    <div class="gb-text">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Los precios son exclusivos para clientes registrados — el registro es gratuito e inmediato
+    </div>
+    <div class="gb-btns">
+      <button class="gb-login" onclick="showAuth('login')">Iniciar sesión</button>
+      <button class="gb-register" onclick="showAuth('register')">Registrarse gratis</button>
+    </div>
+  </div>
+  <section class="catalog">
+    <div class="cat-hdr">
+      <div class="cat-title">Catálogo</div>
+      <div class="filters" id="filters-el"></div>
+    </div>
+    <div class="grid" id="grid-el"></div>
+  </section>
+</div>
+
+<div class="fab" id="fab-el" style="display:none">
+  <div class="fab-label" onclick="showAuth('register')">Ver precios — Regístrate gratis</div>
+  <button class="fab-btn" onclick="showAuth('register')">👤</button>
+</div>
+
+<div class="co-overlay" id="co-overlay" onclick="closeCart()"></div>
+<div class="drawer" id="drawer">
+  <div id="cart-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="dw-hdr"><div class="dw-title">Tu carrito</div><button class="xbtn" onclick="closeCart()">✕</button></div>
+    <div class="cart-list" id="cart-list"></div>
+    <div class="dw-foot">
+      <div class="total-row"><span class="total-lbl">Total</span><span class="total-val" id="cart-total">$0.00</span></div>
+      <button class="cbtn" onclick="showCheckout()">Continuar con el pedido →</button>
+    </div>
+  </div>
+  <div class="co-form" id="co-view">
+    <button class="back-lnk" onclick="showCartView()">← Volver al carrito</button>
+    <div class="dw-hdr" style="padding:0 0 14px;flex-shrink:0"><div class="dw-title">Datos del pedido</div></div>
+    <div class="fg"><label>Nombre completo *</label><input id="co-name" placeholder="Juan García"/></div>
+    <div class="fg"><label>Email *</label><input type="email" id="co-email" placeholder="juan@email.com"/></div>
+    <div class="fg"><label>Teléfono</label><input id="co-phone" placeholder="+52 xxx xxx xxxx"/></div>
+    <div class="fg"><label>Dirección de entrega</label><input id="co-addr" placeholder="Calle, número, colonia..."/></div>
+    <div class="fg"><label>Notas</label><textarea id="co-notes" placeholder="Instrucciones especiales..."></textarea></div>
+    <div style="margin-top:auto;padding-top:16px;flex-shrink:0">
+      <div class="total-row"><span class="total-lbl">Total</span><span class="total-val" id="co-total">$0.00</span></div>
+      <button class="cbtn" id="place-btn" onclick="placeOrder()">Confirmar pedido</button>
+    </div>
+  </div>
+  <div class="co-form" id="success-view">
+    <div class="success-screen" style="margin:auto">
+      <div class="success-ico">🎉</div>
+      <div class="success-title">¡Pedido confirmado!</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Número de pedido:</div>
+      <div class="order-code" id="order-id-el">—</div>
+      <div style="font-size:13px;color:var(--muted)" id="order-total-el"></div>
+      <button class="cbtn" style="margin-top:20px" onclick="closeCart()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-bg" id="pm-bg" onclick="if(event.target===this)closePM()">
+  <div class="pmodal">
+    <div class="pm-img" id="pm-img"></div>
+    <button class="pm-close" onclick="closePM()">✕</button>
+    <div class="pm-body">
+      <div class="pm-name" id="pm-name"></div>
+      <div class="pm-desc" id="pm-desc"></div>
+      <div id="pm-price-block"></div>
+      <button class="pm-add" id="pm-add-btn">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-bg" id="am-bg" onclick="if(event.target===this)closeAuth()">
+  <div class="amodal">
+    <div class="am-title" id="am-title">Regístrate gratis</div>
+    <div class="am-sub" id="am-sub">Crea tu cuenta para ver precios y hacer pedidos</div>
+    <div id="am-reg-fields">
+      <div class="fg"><label>Nombre completo *</label><input id="am-name" placeholder="Juan García"/></div>
+      <div class="fg"><label>Teléfono</label><input id="am-phone" placeholder="+52..."/></div>
+    </div>
+    <div class="fg"><label>Email *</label><input type="email" id="am-email" placeholder="tu@email.com"/></div>
+    <div class="fg"><label>Contraseña *</label><input type="password" id="am-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"/></div>
+    <div class="am-err" id="am-err"></div>
+    <button class="am-submit" id="am-submit" onclick="submitAuth()">Crear cuenta</button>
+    <div class="am-switch">
+      <span id="am-sw-text">¿Ya tienes cuenta?</span>
+      <button onclick="toggleAuthMode()" id="am-sw-btn">Iniciar sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR OCULTO (5 taps en logo) -->
+<div class="modal-bg" id="owner-bg" onclick="if(event.target===this)closeOwnerModal()" style="align-items:flex-end;padding:0">
+  <div id="owner-modal-inner" style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)">
+
+    <!-- PIN screen -->
+    <div id="editor-pin-screen" style="padding:28px 24px">
+      <div style="font-size:28px;margin-bottom:12px;text-align:center">🔑</div>
+      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;margin-bottom:6px;text-align:center">Acceso dueño</div>
+      <div style="font-size:13px;color:#6b7280;margin-bottom:20px;text-align:center">Ingresa tu contraseña de acceso</div>
+      <input type="password" id="owner-pin-input" placeholder="Contraseña" style="width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkOwnerPin()">
+      <div id="owner-pin-err" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none">Contraseña incorrecta</div>
+      <button onclick="checkOwnerPin()" style="width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Entrar →</button>
+      <button onclick="closeOwnerModal()" style="width:100%;padding:11px;background:transparent;border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--muted)">Cancelar</button>
+    </div>
+
+    <!-- Editor screen -->
+    <div id="editor-main-screen" style="display:none">
+      <div style="padding:16px 20px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1">
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:800">✏️ Apariencia</div>
+        <button onclick="closeOwnerModal()" style="width:30px;height:30px;border-radius:50%;background:#f3f4f6;border:1px solid #e5e7eb;cursor:pointer;font-size:15px">✕</button>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
+
+        <!-- Preview mini -->
+        <div id="ed-preview" style="border-radius:12px;overflow:hidden;border:1.5px solid #e5e7eb">
+          <div id="ed-prev-banner" style="height:90px;background:var(--primary);display:flex;align-items:center;justify-content:center;background-size:cover;background-position:center;position:relative">
+            <span id="ed-prev-banner-ph" style="font-size:24px;opacity:.4">🖼️</span>
+          </div>
+          <div style="padding:10px 14px 14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-top:-18px;margin-bottom:8px">
+              <div id="ed-prev-logo" style="width:36px;height:36px;border-radius:8px;border:2px solid #fff;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0">🏪</div>
+              <div id="ed-prev-name" style="font-family:var(--font-d);font-size:14px;font-weight:800;color:#111">Nombre tienda</div>
+            </div>
+            <div id="ed-prev-desc" style="font-size:11px;color:#6b7280;line-height:1.4">Descripción de la tienda</div>
+          </div>
+        </div>
+
+        <!-- Nombre -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Nombre de la tienda</label>
+          <input id="ed-name" placeholder="Mi Tienda" oninput="edLivePreview()" style="width:100%;padding:11px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit">
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Descripción / Slogan</label>
+          <textarea id="ed-desc" placeholder="Explora nuestro catálogo..." oninput="edLivePreview()" style="width:100%;padding:11px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;resize:none;min-height:64px"></textarea>
+        </div>
+
+        <!-- Logo -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Logo</label>
+          <label style="display:flex;align-items:center;gap:12px;border:1.5px dashed #e5e7eb;border-radius:10px;padding:12px 14px;cursor:pointer;position:relative">
+            <div id="ed-logo-thumb" style="width:46px;height:46px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0">🏪</div>
+            <div>
+              <div id="ed-logo-label" style="font-size:13px;font-weight:600;margin-bottom:2px">Toca para subir logo</div>
+              <div style="font-size:11px;color:#6b7280">Cuadrado — JPG, PNG — máx 3MB</div>
+            </div>
+            <input type="file" accept="image/*" onchange="edLoadImg(this,'logo')" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
+        </div>
+
+        <!-- Banner -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Banner / Hero</label>
+          <label style="display:flex;align-items:center;gap:12px;border:1.5px dashed #e5e7eb;border-radius:10px;padding:12px 14px;cursor:pointer;position:relative">
+            <div id="ed-banner-thumb" style="width:46px;height:46px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0">🖼️</div>
+            <div>
+              <div id="ed-banner-label" style="font-size:13px;font-weight:600;margin-bottom:2px">Toca para subir banner</div>
+              <div style="font-size:11px;color:#6b7280">Horizontal — JPG, PNG — máx 5MB</div>
+            </div>
+            <input type="file" accept="image/*" onchange="edLoadImg(this,'banner')" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
+        </div>
+
+        <!-- Color -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Color principal</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="color" id="ed-color" value="#6366f1" oninput="syncEdColor(this.value)" style="width:42px;height:38px;padding:3px;border:1.5px solid #e5e7eb;border-radius:8px;cursor:pointer;flex-shrink:0">
+            <input type="text" id="ed-color-hex" value="#6366f1" placeholder="#6366f1" oninput="syncEdColorHex(this.value)" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:monospace">
+          </div>
+        </div>
+
+        <button id="ed-save-btn" onclick="edSave()" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">💾 Guardar cambios</button>
+        <div id="ed-save-err" style="color:#ef4444;font-size:13px;text-align:center;display:none"></div>
+        <button onclick="goToOwnerPanel()" style="width:100%;padding:11px;background:transparent;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;color:#6b7280">Ir al panel completo →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+<footer><p>Tienda powered by <a href="#" target="_blank">LandingKit</a></p></footer>
+
+<script>
+const params   = new URLSearchParams(location.search);
+const BACKEND  = params.get('backend') || window.LK_BACKEND || '';
+const STORE_ID = params.get('store')   || window.LK_STORE   || '';
+// URL del panel del dueño — ajusta si cambias el nombre del archivo
+const OWNER_PANEL_URL = params.get('panel') || 'panel-dueno.html';
+
+let products=[], cart=JSON.parse(localStorage.getItem('c_'+STORE_ID)||'[]');
+let customer=JSON.parse(localStorage.getItem('u_'+STORE_ID)||'null');
+let currency='MXN', activeCat='', authMode='register', curProdId=null, storeWA='';
+
+// ── TAP EASTER EGG ────────────────────────────────────────────
+let tapCount=0, tapTimer=null;
+const TAP_REQUIRED=5;
+
+function handleBrandTap() {
+  tapCount++;
+  const brand=document.getElementById('store-brand');
+  const counter=document.getElementById('tap-count');
+  counter.textContent=tapCount;
+  brand.classList.add('tapping');
+  clearTimeout(tapTimer);
+  if (tapCount>=TAP_REQUIRED) {
+    tapCount=0;
+    brand.classList.remove('tapping');
+    setTimeout(()=>document.getElementById('owner-bg').classList.add('on'),200);
+    return;
+  }
+  tapTimer=setTimeout(()=>{
+    tapCount=0;
+    brand.classList.remove('tapping');
+  }, 1500);
+}
+
+function closeOwnerModal() {
+  document.getElementById('owner-bg').classList.remove('on');
+  // reset al cerrar
+  setTimeout(()=>{
+    document.getElementById('editor-pin-screen').style.display='block';
+    document.getElementById('editor-main-screen').style.display='none';
+    document.getElementById('owner-pin-input').value='';
+    document.getElementById('owner-pin-err').style.display='none';
+  }, 300);
+}
+
+// ── EDITOR PIN ────────────────────────────────────────────────
+const OWNER_PIN = 'admin'; // cambia esto por tu contraseña
+
+function checkOwnerPin() {
+  const val = document.getElementById('owner-pin-input').value;
+  if (!val) return;
+  // verificar contra backend
+  post('owner.verify', { pin: val }).then(res => {
+    const ok = res && (res.ok || res.valid);
+    if (ok || val === OWNER_PIN) {
+      document.getElementById('editor-pin-screen').style.display='none';
+      document.getElementById('editor-main-screen').style.display='block';
+      edLoadCurrentData();
+    } else {
+      document.getElementById('owner-pin-err').style.display='block';
+    }
+  }).catch(()=>{
+    // si el backend no tiene owner.verify, usar pin local
+    if (val === OWNER_PIN) {
+      document.getElementById('editor-pin-screen').style.display='none';
+      document.getElementById('editor-main-screen').style.display='block';
+      edLoadCurrentData();
+    } else {
+      document.getElementById('owner-pin-err').style.display='block';
+    }
+  });
+}
+
+// ── EDITOR — cargar datos actuales desde lo que ya cargó la tienda ──
+let ED = { logob64:'', logomime:'', logoname:'', bannerb64:'', bannermime:'', bannername:'' };
+let _edLogoUrl='', _edBannerUrl='';
+
+function edLoadCurrentData() {
+  // Reusar los datos que ya cargó la tienda en el init
+  get('store.info').then(iR => {
+    if (!iR) return;
+    const s = iR.store, cfg = s.config||{};
+    document.getElementById('ed-name').value  = s.name||'';
+    document.getElementById('ed-desc').value  = cfg.description||'';
+    const color = cfg.primaryColor||'#6366f1';
+    document.getElementById('ed-color').value     = color;
+    document.getElementById('ed-color-hex').value = color;
+    _edLogoUrl   = cfg.logo||'';
+    _edBannerUrl = cfg.bannerUrl||'';
+    // precargar logo thumb — misma lógica que tienda.html
+    if (cfg.logo) {
+      const src = fixImgUrl(cfg.logo);
+      const thumb = document.getElementById('ed-logo-thumb');
+      thumb.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:6px';
+      thumb.appendChild(img);
+      document.getElementById('ed-logo-label').textContent = 'Toca para cambiar logo';
+      document.getElementById('ed-prev-logo').innerHTML = '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px">';
+    }
+    // precargar banner thumb — misma lógica que tienda.html
+    if (cfg.bannerUrl) {
+      const src = fixImgUrl(cfg.bannerUrl);
+      const thumb = document.getElementById('ed-banner-thumb');
+      thumb.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:6px';
+      thumb.appendChild(img);
+      document.getElementById('ed-banner-label').textContent = 'Toca para cambiar banner';
+      document.getElementById('ed-prev-banner').style.background = `linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)), url(${src}) center/cover no-repeat`;
+      document.getElementById('ed-prev-banner-ph').style.display = 'none';
+    }
+    edLivePreview();
+  });
+}
+
+function edLoadImg(input, type) {
+  const file = input.files[0]; if (!file) return;
+  const maxMB = type==='logo' ? 3 : 5;
+  if (file.size > maxMB*1024*1024) { toast('Imagen muy grande — máx '+maxMB+'MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64 = e.target.result.split(',')[1];
+    if (type==='logo') {
+      ED.logob64=b64; ED.logomime=file.type||'image/jpeg'; ED.logoname=file.name;
+      const thumb = document.getElementById('ed-logo-thumb');
+      thumb.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:6px';
+      thumb.appendChild(img);
+      document.getElementById('ed-logo-label').textContent = '✓ '+file.name;
+      document.getElementById('ed-prev-logo').innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px">';
+    } else {
+      ED.bannerb64=b64; ED.bannermime=file.type||'image/jpeg'; ED.bannername=file.name;
+      const thumb = document.getElementById('ed-banner-thumb');
+      thumb.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:6px';
+      thumb.appendChild(img);
+      document.getElementById('ed-banner-label').textContent = '✓ '+file.name;
+      document.getElementById('ed-prev-banner').style.background = `linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)), url(${e.target.result}) center/cover no-repeat`;
+      document.getElementById('ed-prev-banner-ph').style.display = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function edLivePreview() {
+  const name  = document.getElementById('ed-name').value||'Nombre tienda';
+  const desc  = document.getElementById('ed-desc').value||'Descripción de la tienda';
+  const color = document.getElementById('ed-color-hex').value||'#6366f1';
+  document.getElementById('ed-prev-name').textContent = name;
+  document.getElementById('ed-prev-desc').textContent = desc;
+  if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+    if (!ED.bannerb64 && !_edBannerUrl) document.getElementById('ed-prev-banner').style.background = color;
+    document.getElementById('ed-save-btn').style.background = color;
+  }
+}
+
+function syncEdColor(val) {
+  document.getElementById('ed-color-hex').value = val;
+  edLivePreview();
+}
+function syncEdColorHex(val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) document.getElementById('ed-color').value = val;
+  edLivePreview();
+}
+
+async function edSave() {
+  const btn = document.getElementById('ed-save-btn');
+  const errEl = document.getElementById('ed-save-err');
+  errEl.style.display='none';
+  btn.disabled=true; btn.textContent='Guardando...';
+
+  let logoUrl = _edLogoUrl;
+  let bannerUrl = _edBannerUrl;
+
+  try {
+    if (ED.logob64) {
+      const r = await post('image.upload', { imageBase64:ED.logob64, mimeType:ED.logomime, fileName:ED.logoname||'logo.jpg' });
+      if (r && r.imageUrl) { logoUrl = r.imageUrl; _edLogoUrl = logoUrl; }
+      else throw new Error('Error subiendo logo');
+    }
+    if (ED.bannerb64) {
+      const r = await post('image.upload', { imageBase64:ED.bannerb64, mimeType:ED.bannermime, fileName:ED.bannername||'banner.jpg' });
+      if (r && r.imageUrl) { bannerUrl = r.imageUrl; _edBannerUrl = bannerUrl; }
+      else throw new Error('Error subiendo banner');
+    }
+
+    const color = document.getElementById('ed-color-hex').value||'#6366f1';
+    const name  = document.getElementById('ed-name').value.trim();
+    const desc  = document.getElementById('ed-desc').value.trim();
+
+    const res = await post('store.settings.save', { config:{
+      logo: logoUrl, bannerUrl: bannerUrl,
+      primaryColor: color, description: desc,
+      name: name
+    }});
+
+    if (!res || res.error) throw new Error(res?.error||'Error al guardar');
+
+    // aplicar cambios en vivo a la tienda
+    applyColor(color);
+    document.getElementById('brand-text').textContent = name||'Tienda';
+    document.title = name||'Tienda';
+    document.getElementById('hero-title').textContent = name||'Bienvenido';
+    if (desc) document.getElementById('hero-desc').textContent = desc;
+    if (bannerUrl) {
+      document.getElementById('hero-el').style.background = `linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)), url(${fixImgUrl(bannerUrl)}) center/cover no-repeat`;
+    }
+    ED.logob64=''; ED.bannerb64='';
+    toast('¡Cambios guardados! 🎨');
+    closeOwnerModal();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled=false; btn.textContent='💾 Guardar cambios';
+  }
+}
+
+function goToOwnerPanel() {
+  // Pasa backend y store al panel del dueño via URL
+  const url = `${OWNER_PANEL_URL}?backend=${encodeURIComponent(BACKEND)}&store=${encodeURIComponent(STORE_ID)}`;
+  window.open(url, '_blank');
+  closeOwnerModal();
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  if (!BACKEND || !STORE_ID) { showV('suspended'); return; }
+  try {
+    const [iR, cR] = await Promise.all([get('store.info'), get('store.catalog')]);
+    if (!iR) { showV('suspended'); return; }
+    const s=iR.store, cfg=s.config||{};
+    currency=cfg.currency||'MXN';
+    storeWA=cfg.whatsapp||'';
+    if (cfg.primaryColor) applyColor(cfg.primaryColor);
+    const brandText=document.getElementById('brand-text');
+    brandText.textContent=s.name||'Tienda';
+    document.getElementById('store-brand').title=s.name||'Tienda';
+    document.title=s.name||'Tienda';
+    document.getElementById('hero-title').textContent=s.name||'Bienvenido';
+    if (cfg.description) document.getElementById('hero-desc').textContent=cfg.description;
+    // Banner hero
+    if (cfg.bannerUrl) {
+      const heroEl=document.getElementById('hero-el');
+      heroEl.style.background=`linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)), url(${fixImgUrl(cfg.bannerUrl)}) center/cover no-repeat`;
+    }
+    // Logo en hero si existe
+    if (cfg.logo) {
+      const heroContent=document.querySelector('.hero-content');
+      const logoEl=document.createElement('img');
+      logoEl.src=fixImgUrl(cfg.logo); logoEl.alt=s.name;
+      logoEl.style.cssText='height:48px;margin-bottom:16px;border-radius:8px;display:block';
+      heroContent.insertBefore(logoEl, heroContent.firstChild);
+    }
+    products=(cR?.products||[]).filter(p=>p.active===true||p.active==='TRUE');
+    renderCatalog();
+    updateNav(); updateFAB(); updateBanner();
+    showV('catalog');
+  } catch(e) { showV('suspended'); }
+});
+
+// ── API ────────────────────────────────────────────────────
+async function get(a) {
+  try {
+    const r=await fetch(`${BACKEND}?action=${a}&storeId=${STORE_ID}`);
+    const d=await r.json(); return d.ok?d:null;
+  } catch(e) { return null; }
+}
+async function post(a,b) {
+  const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:a,storeId:STORE_ID,...b})});
+  return r.json();
+}
+
+// ── CATALOG ───────────────────────────────────────────────
+function renderCatalog() {
+  const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];
+  document.getElementById('filters-el').innerHTML=`<div class="chip on" onclick="setCat('')">Todos</div>`+cats.map(c=>`<div class="chip" onclick="setCat('${esc(c)}')">${esc(c)}</div>`).join('');
+  renderGrid();
+}
+
+function setCat(c) {
+  activeCat=c;
+  document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.textContent===(c||'Todos')));
+  renderGrid();
+}
+
+function renderGrid() {
+  const list=activeCat?products.filter(p=>p.category===activeCat):products;
+  const g=document.getElementById('grid-el');
+  if (!list.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Sin productos en esta categoría</div>';return;}
+  g.innerHTML=list.map(p=>{
+    const stock=Number(p.stock||0),inStock=stock>0;
+    const qty=cart.find(c=>c.productId===p.productId)?.qty||0;
+    const priceHTML=customer?`<span class="price-real">${fmt(p.price)}</span>`:`<span class="price-locked" onclick="event.stopPropagation();showAuth('register')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Ver precio</span>`;
+    let ctaHTML;
+    if (!customer) ctaHTML=`<button class="add-btn guest" onclick="event.stopPropagation();showAuth('register')">Comprar</button>`;
+    else if (!inStock) ctaHTML=`<span class="no-stock">Sin stock</span>`;
+    else ctaHTML=`<button class="add-btn ${qty>0?'in-cart':''}" onclick="event.stopPropagation();addToCart('${p.productId}')">${qty>0?`✓ ${qty}`:'+ Agregar'}</button>`;
+    return `<div class="pcard" onclick="openPM('${p.productId}')">
+      <div class="pcard-img">${p.imageUrl?`<img src="${esc(fixImgUrl(p.imageUrl))}" alt="${esc(p.name)}" loading="lazy" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:'🛍'}${inStock&&stock<=5?`<div class="stock-badge">${stock} restantes</div>`:''}</div>
+      <div class="pcard-body">
+        <div class="pcard-name">${esc(p.name)}</div>
+        <div class="pcard-desc">${esc((p.description||'').slice(0,72))}${(p.description||'').length>72?'…':''}</div>
+        <div class="pcard-foot">${priceHTML}${ctaHTML}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PRODUCT MODAL ─────────────────────────────────────────
+function openPM(id) {
+  curProdId=id;
+  const p=products.find(x=>x.productId===id);if(!p)return;
+  document.getElementById('pm-img').innerHTML=p.imageUrl?`<img src="${esc(fixImgUrl(p.imageUrl))}" alt="${esc(p.name)}" style="width:100%;height:100%;object-fit:cover">`:'🛍';
+  document.getElementById('pm-name').textContent=p.name;
+  document.getElementById('pm-desc').textContent=p.description||'';
+  const pb=document.getElementById('pm-price-block'),btn=document.getElementById('pm-add-btn');
+  if (customer){
+    pb.innerHTML=`<div class="pm-price">${fmt(p.price)}</div>`;
+    const inStock=Number(p.stock||0)>0;
+    btn.textContent=inStock?'Agregar al carrito':'Sin stock';
+    btn.disabled=!inStock; btn.onclick=addFromModal;
+  } else {
+    pb.innerHTML=`<div class="pm-locked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>El precio es <strong>exclusivo para clientes registrados.</strong><br>El registro es gratuito y solo toma un momento.</span></div>`;
+    btn.textContent='Regístrate para comprar'; btn.disabled=false;
+    btn.onclick=()=>{closePM();showAuth('register');};
+  }
+  document.getElementById('pm-bg').classList.add('on');
+}
+function addFromModal(){if(curProdId){addToCart(curProdId);closePM();}}
+function closePM(){document.getElementById('pm-bg').classList.remove('on');}
+
+// ── CART ──────────────────────────────────────────────────
+function addToCart(pid) {
+  if (!customer){showAuth('register');return;}
+  const p=products.find(x=>x.productId===pid);if(!p)return;
+  const item=cart.find(c=>c.productId===pid);
+  if(item) item.qty++;
+  else cart.push({productId:pid,name:p.name,price:Number(p.price),imageUrl:p.imageUrl||'',qty:1});
+  save(); renderGrid(); renderCartList();
+  toast(`"${p.name}" añadido al carrito`);
+}
+function updQty(pid,d){
+  const item=cart.find(c=>c.productId===pid);if(!item)return;
+  item.qty+=d;
+  if(item.qty<=0) cart=cart.filter(c=>c.productId!==pid);
+  save(); renderCartList(); renderGrid();
+}
+function save(){localStorage.setItem('c_'+STORE_ID,JSON.stringify(cart));}
+function cartTotal(){return cart.reduce((s,c)=>s+c.price*c.qty,0);}
+function cartCount(){return cart.reduce((s,c)=>s+c.qty,0);}
+
+function renderCartList(){
+  const tot=cartTotal();
+  document.getElementById('cart-total').textContent=fmt(tot);
+  document.getElementById('co-total').textContent=fmt(tot);
+  updateNav();
+  const list=document.getElementById('cart-list');
+  if(!cart.length){list.innerHTML=`<div class="empty-cart"><div class="empty-cart-ico">🛒</div><p>Tu carrito está vacío</p></div>`;return;}
+  list.innerHTML=cart.map(c=>`<div class="ci">
+    <div class="ci-img">${c.imageUrl?`<img src="${esc(fixImgUrl(c.imageUrl))}" style="width:100%;height:100%;object-fit:cover">`:'🛍'}</div>
+    <div style="flex:1"><div class="ci-name">${esc(c.name)}</div><div class="ci-price">${fmt(c.price)}</div>
+    <div class="qty"><button class="qb" onclick="updQty('${c.productId}',-1)">−</button><span class="qv">${c.qty}</span><button class="qb" onclick="updQty('${c.productId}',1)">+</button></div></div>
+    <div style="font-weight:700;font-size:13px;color:var(--primary)">${fmt(c.price*c.qty)}</div>
+  </div>`).join('');
+}
+
+function openCart(){renderCartList();document.getElementById('drawer').classList.add('on');document.getElementById('co-overlay').classList.add('on');showCartView();}
+function closeCart(){document.getElementById('drawer').classList.remove('on');document.getElementById('co-overlay').classList.remove('on');}
+function showCheckout(){
+  if(!cart.length){toast('Agrega productos primero');return;}
+  document.getElementById('cart-view').style.display='none';
+  document.getElementById('co-view').classList.add('on');
+  document.getElementById('success-view').classList.remove('on');
+  if(customer){document.getElementById('co-name').value=customer.name||'';document.getElementById('co-email').value=customer.email||'';document.getElementById('co-phone').value=customer.phone||'';}
+}
+function showCartView(){
+  document.getElementById('cart-view').style.display='';
+  document.getElementById('co-view').classList.remove('on');
+  document.getElementById('success-view').classList.remove('on');
+}
+
+// ── ORDER ─────────────────────────────────────────────────
+async function placeOrder(){
+  const name=document.getElementById('co-name').value.trim();
+  const email=document.getElementById('co-email').value.trim();
+  if(!name||!email){toast('Nombre y email requeridos');return;}
+  if(!cart.length){toast('Carrito vacío');return;}
+  const btn=document.getElementById('place-btn');
+  btn.disabled=true;btn.textContent='Enviando...';
+  try {
+    const res=await post('order.create',{
+      customerId:customer?.customerId||'',customerName:name,customerEmail:email,
+      customerPhone:document.getElementById('co-phone').value,
+      items:cart.map(c=>({productId:c.productId,qty:c.qty})),
+      notes:document.getElementById('co-notes').value,
+    });
+    if(!res.ok)throw new Error(res.error);
+    cart=[];save();renderGrid();updateNav();
+    document.getElementById('order-id-el').textContent=res.orderId;
+    document.getElementById('order-total-el').textContent=`Total: ${fmt(res.total)}`;
+    document.getElementById('co-view').classList.remove('on');
+    document.getElementById('success-view').classList.add('on');
+  }catch(e){toast(e.message);btn.disabled=false;btn.textContent='Confirmar pedido';}
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+function showAuth(mode){
+  authMode=mode;const r=mode==='register';
+  document.getElementById('am-title').textContent=r?'Regístrate gratis':'Iniciar sesión';
+  document.getElementById('am-sub').textContent=r?'Crea tu cuenta para ver precios y comprar':'Accede con tu cuenta de esta tienda';
+  document.getElementById('am-submit').textContent=r?'Crear cuenta':'Entrar';
+  document.getElementById('am-sw-text').textContent=r?'¿Ya tienes cuenta?':'¿Sin cuenta?';
+  document.getElementById('am-sw-btn').textContent=r?'Iniciar sesión':'Registrarse';
+  document.getElementById('am-reg-fields').style.display=r?'block':'none';
+  document.getElementById('am-err').style.display='none';
+  document.getElementById('am-bg').classList.add('on');
+}
+function closeAuth(){document.getElementById('am-bg').classList.remove('on');}
+function toggleAuthMode(){showAuth(authMode==='register'?'login':'register');}
+
+async function submitAuth(){
+  const email=document.getElementById('am-email').value.trim();
+  const pass=document.getElementById('am-pass').value;
+  const errEl=document.getElementById('am-err');
+  errEl.style.display='none';
+  try {
+    let res,cust;
+    if(authMode==='register'){
+      res=await post('customer.register',{name:document.getElementById('am-name').value.trim(),phone:document.getElementById('am-phone').value.trim(),email,password:pass});
+      if(!res.ok)throw new Error(res.error);
+      cust={customerId:res.customerId,name:document.getElementById('am-name').value.trim(),email,phone:document.getElementById('am-phone').value.trim()};
+    }else{
+      res=await post('customer.login',{email,password:pass});
+      if(!res.ok)throw new Error(res.error);
+      cust={customerId:res.customerId,name:res.name,email};
+    }
+    customer=cust;
+    localStorage.setItem('u_'+STORE_ID,JSON.stringify(cust));
+    closeAuth();updateNav();updateFAB();updateBanner();renderGrid();
+    toast(`¡Bienvenido, ${cust.name}! 🎉`);
+  }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
+}
+
+function logoutCustomer(){
+  customer=null;cart=[];
+  localStorage.removeItem('u_'+STORE_ID);localStorage.removeItem('c_'+STORE_ID);
+  updateNav();updateFAB();updateBanner();renderGrid();
+  toast('Sesión cerrada');closeUserMenu();
+}
+
+// ── NAV ───────────────────────────────────────────────────
+function updateNav(){
+  const cnt=cartCount();
+  const waH=storeWA?`<button class="wa-btn" onclick="window.open('https://wa.me/${storeWA.replace(/\D/g,'')}','_blank')">💬 WhatsApp</button>`:'';
+  const navEl=document.getElementById('nav-right');
+  if(customer){
+    navEl.innerHTML=`${waH}
+      <button class="cart-pill" onclick="openCart()">🛒 Carrito <span class="n">${cnt}</span></button>
+      <div class="nav-user" onclick="toggleUserMenu()" id="nu">
+        <div class="nav-avatar">${customer.name[0].toUpperCase()}</div>
+        ${customer.name.split(' ')[0]}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="umenu" style="display:none;position:fixed;top:64px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;z-index:60;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.1)">
+        <div style="padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);margin-bottom:4px">${esc(customer.email)}</div>
+        <button onclick="logoutCustomer()" style="width:100%;padding:8px 12px;background:none;border:none;font-size:13px;cursor:pointer;text-align:left;border-radius:7px;color:#dc2626;font-family:var(--font-b)">Cerrar sesión</button>
+      </div>`;
+  }else{
+    navEl.innerHTML=`${waH}
+      <div class="nav-user" onclick="showAuth('login')">Entrar</div>
+      <button class="cart-pill" style="background:var(--border);color:var(--muted);cursor:default" disabled>🛒 <span class="n" style="background:var(--muted)">0</span></button>`;
+  }
+}
+
+function toggleUserMenu(){const m=document.getElementById('umenu');if(m)m.style.display=m.style.display==='none'?'block':'none';}
+function closeUserMenu(){const m=document.getElementById('umenu');if(m)m.style.display='none';}
+document.addEventListener('click',e=>{if(!e.target.closest('#nu')&&!e.target.closest('#umenu'))closeUserMenu();});
+
+function updateFAB(){document.getElementById('fab-el').style.display=customer?'none':'flex';}
+function updateBanner(){
+  const b=document.getElementById('guest-banner');
+  if(b)b.style.display=customer?'none':'';
+  const cta=document.getElementById('hero-cta-btn');
+  if(cta){
+    if(customer){cta.textContent='Ver catálogo ↓';cta.onclick=()=>document.querySelector('.catalog').scrollIntoView({behavior:'smooth'});}
+    else{cta.textContent='Regístrate gratis →';cta.onclick=()=>showAuth('register');}
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function showV(name){['loading','suspended','catalog'].forEach(v=>document.getElementById('v-'+v).style.display=v===name?'block':'none');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmt(n){return new Intl.NumberFormat('es-MX',{style:'currency',currency}).format(Number(n||0));}
+function fixImgUrl(url){
+  if(!url)return '';
+  // Google Drive uc?export=view&id=ID → lh3 directo (sin bloqueo CORS)
+  const m=url.match(/[?&]id=([\w-]+)/);
+  if(m)return 'https://lh3.googleusercontent.com/d/'+m[1];
+  return url;
+}
+function applyColor(hex){document.documentElement.style.setProperty('--primary',hex);document.documentElement.style.setProperty('--primary-light',hex+'18');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2600);}
+</script>
+</body>
+</html>
