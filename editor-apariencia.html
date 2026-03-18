@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor de apariencia</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f4f4f0;min-height:100vh;padding:0 0 40px}
+header{background:#fff;border-bottom:1px solid #e5e7eb;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800}
+.back-btn{font-size:13px;color:#6b7280;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px}
+.wrap{max-width:480px;margin:0 auto;padding:20px 16px;display:flex;flex-direction:column;gap:16px}
+.preview{border-radius:14px;overflow:hidden;border:1.5px solid #e5e7eb;background:#fff}
+.prev-banner{height:110px;background:#6366f1;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center}
+.prev-banner-ph{font-size:32px;opacity:.3}
+.prev-body{padding:10px 14px 16px}
+.prev-row{display:flex;align-items:center;gap:10px;margin-top:-18px;margin-bottom:8px}
+.prev-logo{width:36px;height:36px;border-radius:8px;border:2px solid #fff;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0}
+.prev-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#111}
+.prev-desc{font-size:12px;color:#6b7280;line-height:1.4}
+.card{background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.card-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af}
+label.field-lbl{display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+input[type=text],textarea{width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;color:#111;background:#fff}
+input:focus,textarea:focus{outline:none;border-color:#6366f1}
+textarea{resize:none;min-height:60px}
+.upload-row{display:flex;align-items:center;gap:12px;border:1.5px dashed #d1d5db;border-radius:10px;padding:11px 14px;cursor:pointer;position:relative;background:#fafafa;transition:border-color .15s}
+.upload-row:hover{border-color:#6366f1}
+.upload-row input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-thumb{width:44px;height:44px;border-radius:8px;background:#f3f4f6;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.upload-info-lbl{font-size:13px;font-weight:600;margin-bottom:2px}
+.upload-info-hint{font-size:11px;color:#9ca3af}
+.color-row{display:flex;gap:8px;align-items:center}
+input[type=color]{width:42px;height:38px;border:1.5px solid #e5e7eb;border-radius:8px;padding:3px;cursor:pointer;flex-shrink:0}
+input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:monospace}
+.save-btn{width:100%;padding:15px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;transition:opacity .15s}
+.save-btn:hover{opacity:.88}
+.save-btn:disabled{opacity:.5}
+.err{color:#ef4444;font-size:13px;text-align:center;display:none}
+.ok{color:#16a34a;font-size:13px;text-align:center;display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="back-btn" onclick="history.back()">← Volver</button>
+  <div class="header-title">✏️ Editor de apariencia</div>
+  <div style="width:60px"></div>
+</header>
+
+<!-- LOGIN -->
+<div id="login-screen" style="max-width:420px;margin:40px auto;padding:0 16px">
+  <div style="background:#fff;border-radius:16px;border:1.5px solid #e5e7eb;padding:28px 24px">
+    <div style="font-size:32px;text-align:center;margin-bottom:12px">🔑</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;text-align:center;margin-bottom:6px">Acceso dueño</div>
+    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:22px;line-height:1.5">Pega tu código LK-... para acceder al editor</div>
+    <label style="display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Código de acceso</label>
+    <textarea id="lk-code" placeholder="LK-eyJzdG9yZUlk..." onkeydown="if(event.ctrlKey&&event.key==='Enter')verificarCodigo()" style="width:100%;padding:11px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:12px;font-family:monospace;resize:none;min-height:80px;margin-bottom:10px"></textarea>
+    <div id="lk-err" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none"></div>
+    <button id="lk-btn" onclick="verificarCodigo()" style="width:100%;padding:13px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Entrar →</button>
+  </div>
+</div>
+
+<!-- EDITOR -->
+<div id="editor-screen" style="display:none">
+<div class="wrap">
+
+  <!-- Preview -->
+  <div class="preview">
+    <div class="prev-banner" id="prev-banner">
+      <span class="prev-banner-ph" id="prev-banner-ph">🖼️</span>
+    </div>
+    <div class="prev-body">
+      <div class="prev-row">
+        <div class="prev-logo" id="prev-logo">🏪</div>
+        <div class="prev-name" id="prev-name">Nombre tienda</div>
+      </div>
+      <div class="prev-desc" id="prev-desc">Descripción de la tienda</div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="card">
+    <div class="card-title">Información</div>
+    <div>
+      <label class="field-lbl">Nombre de la tienda</label>
+      <input type="text" id="ed-name" oninput="livePreview()">
+    </div>
+    <div>
+      <label class="field-lbl">Descripción / Slogan</label>
+      <textarea id="ed-desc" oninput="livePreview()"></textarea>
+    </div>
+  </div>
+
+  <!-- Imágenes -->
+  <div class="card">
+    <div class="card-title">Imágenes</div>
+    <div>
+      <label class="field-lbl">Logo</label>
+      <label class="upload-row">
+        <div class="upload-thumb" id="logo-thumb">🏪</div>
+        <div>
+          <div class="upload-info-lbl" id="logo-lbl">Subir logo</div>
+          <div class="upload-info-hint">Cuadrado — JPG, PNG — máx 3MB</div>
+        </div>
+        <input type="file" accept="image/*" onchange="loadImg(this,'logo')">
+      </label>
+    </div>
+    <div>
+      <label class="field-lbl">Banner</label>
+      <label class="upload-row">
+        <div class="upload-thumb" id="banner-thumb">🖼️</div>
+        <div>
+          <div class="upload-info-lbl" id="banner-lbl">Subir banner</div>
+          <div class="upload-info-hint">Horizontal — JPG, PNG — máx 5MB</div>
+        </div>
+        <input type="file" accept="image/*" onchange="loadImg(this,'banner')">
+      </label>
+    </div>
+  </div>
+
+  <!-- Color -->
+  <div class="card">
+    <div class="card-title">Color principal</div>
+    <div class="color-row">
+      <input type="color" id="ed-color" value="#6366f1" oninput="document.getElementById('ed-hex').value=this.value;livePreview()">
+      <input type="text" id="ed-hex" class="hex" value="#6366f1" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){document.getElementById('ed-color').value=this.value;livePreview()}">
+    </div>
+  </div>
+
+  <button class="save-btn" id="save-btn" onclick="guardar()">💾 Guardar cambios</button>
+  <div class="err" id="err-msg"></div>
+  <div class="ok" id="ok-msg">✅ ¡Guardado correctamente!</div>
+
+</div>
+</div>
+
+<script>
+const params   = new URLSearchParams(location.search);
+const BACKEND  = params.get('backend') || localStorage.getItem('ld_backend') || '';
+const STORE_ID = params.get('store')   || localStorage.getItem('ld_store')   || '';
+let TOKEN = '';
+
+let IMG = { logob64:'', logomime:'', logoname:'', bannerb64:'', bannermime:'', bannername:'' };
+let currentLogo = '', currentBanner = '';
+
+function fixImgUrl(url) {
+  if (!url) return '';
+  const m = url.match(/[?&]id=([\w-]+)/);
+  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+  const m2 = url.match(/\/d\/([\w-]+)/);
+  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  return url;
+}
+
+async function postAPI(action, data) {
+  const r = await fetch(BACKEND, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, storeId: STORE_ID, token: TOKEN, ...data })
+  });
+  return r.json();
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────
+async function verificarCodigo() {
+  const code = document.getElementById('lk-code').value.trim();
+  const errEl = document.getElementById('lk-err');
+  const btn   = document.getElementById('lk-btn');
+  if (!code) return;
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    const r = await fetch(BACKEND, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'owner.login', accessCode: code })
+    });
+    const d = await r.json();
+    if (!d.ok || !d.token) throw new Error('Código incorrecto');
+    if (d.storeId && d.storeId !== STORE_ID) throw new Error('Este código no corresponde a esta tienda');
+    TOKEN = d.token;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('editor-screen').style.display = 'block';
+    cargarDatos();
+  } catch(e) {
+    errEl.textContent = e.message; errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar →';
+  }
+}
+
+// Cargar datos actuales
+async function cargarDatos() {
+  if (!BACKEND || !STORE_ID) return;
+  try {
+    const r = await fetch(`${BACKEND}?action=store.info&storeId=${STORE_ID}`);
+    const d = await r.json();
+    if (!d.ok) return;
+    const s = d.store, cfg = s.config || {};
+    document.getElementById('ed-name').value = s.name || '';
+    document.getElementById('ed-desc').value = cfg.description || '';
+    const color = cfg.primaryColor || '#6366f1';
+    document.getElementById('ed-color').value = color;
+    document.getElementById('ed-hex').value   = color;
+    currentLogo   = cfg.logo || '';
+    currentBanner = cfg.bannerUrl || '';
+    // Logo
+    if (cfg.logo) {
+      const src = fixImgUrl(cfg.logo);
+      const th = document.getElementById('logo-thumb');
+      th.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = src; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+      th.appendChild(img);
+      document.getElementById('logo-lbl').textContent = 'Cambiar logo';
+      document.getElementById('prev-logo').innerHTML = '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">';
+    }
+    // Banner
+    if (cfg.bannerUrl) {
+      const src = fixImgUrl(cfg.bannerUrl);
+      const th = document.getElementById('banner-thumb');
+      th.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = src; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+      th.appendChild(img);
+      document.getElementById('banner-lbl').textContent = 'Cambiar banner';
+      document.getElementById('prev-banner').style.backgroundImage = 'linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url('+src+')';
+      document.getElementById('prev-banner').style.backgroundSize = 'cover';
+      document.getElementById('prev-banner-ph').style.display = 'none';
+    }
+    livePreview();
+  } catch(e) {}
+}
+
+function loadImg(input, type) {
+  const file = input.files[0]; if (!file) return;
+  const maxMB = type === 'logo' ? 3 : 5;
+  if (file.size > maxMB * 1024 * 1024) { alert('Imagen muy grande — máx ' + maxMB + 'MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64 = e.target.result.split(',')[1];
+    const th = document.getElementById(type + '-thumb');
+    th.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = e.target.result; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    th.appendChild(img);
+    document.getElementById(type + '-lbl').textContent = '✓ ' + file.name;
+    if (type === 'logo') {
+      IMG.logob64 = b64; IMG.logomime = file.type; IMG.logoname = file.name;
+      document.getElementById('prev-logo').innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover">';
+    } else {
+      IMG.bannerb64 = b64; IMG.bannermime = file.type; IMG.bannername = file.name;
+      document.getElementById('prev-banner').style.backgroundImage = 'linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url('+e.target.result+')';
+      document.getElementById('prev-banner').style.backgroundSize = 'cover';
+      document.getElementById('prev-banner-ph').style.display = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function livePreview() {
+  const name  = document.getElementById('ed-name').value || 'Nombre tienda';
+  const desc  = document.getElementById('ed-desc').value || '';
+  const color = document.getElementById('ed-hex').value || '#6366f1';
+  document.getElementById('prev-name').textContent = name;
+  document.getElementById('prev-desc').textContent = desc;
+  if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+    document.getElementById('save-btn').style.background = color;
+    if (!IMG.bannerb64 && !currentBanner) {
+      document.getElementById('prev-banner').style.background = color;
+    }
+  }
+}
+
+async function guardar() {
+  const btn = document.getElementById('save-btn');
+  const errEl = document.getElementById('err-msg');
+  const okEl  = document.getElementById('ok-msg');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    let logoUrl = currentLogo, bannerUrl = currentBanner;
+    if (IMG.logob64) {
+      const r = await postAPI('image.upload', { imageBase64: IMG.logob64, mimeType: IMG.logomime, fileName: IMG.logoname });
+      if (!r || !r.imageUrl) throw new Error('Error subiendo logo');
+      logoUrl = r.imageUrl; currentLogo = logoUrl;
+    }
+    if (IMG.bannerb64) {
+      const r = await postAPI('image.upload', { imageBase64: IMG.bannerb64, mimeType: IMG.bannermime, fileName: IMG.bannername });
+      if (!r || !r.imageUrl) throw new Error('Error subiendo banner');
+      bannerUrl = r.imageUrl; currentBanner = bannerUrl;
+    }
+    const name  = document.getElementById('ed-name').value.trim();
+    const desc  = document.getElementById('ed-desc').value.trim();
+    const color = document.getElementById('ed-hex').value.trim();
+    const res = await postAPI('store.settings.save', {
+      name,
+      config: { logo: logoUrl, bannerUrl: bannerUrl, primaryColor: color, description: desc, whatsapp: '', currency: 'MXN' }
+    });
+    if (!res || res.error) throw new Error(res?.error || 'Error al guardar');
+    IMG.logob64 = ''; IMG.bannerb64 = '';
+    okEl.style.display = 'block';
+    setTimeout(() => okEl.style.display = 'none', 3000);
+  } catch(e) {
+    errEl.textContent = e.message; errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Guardar cambios';
+    document.getElementById('save-btn').style.background = document.getElementById('ed-hex').value || '#6366f1';
+  }
+}
+window.addEventListener('load', () => {
+  if (!BACKEND || !STORE_ID) {
+    document.getElementById('lk-err').textContent = 'Faltan parámetros backend/store en la URL';
+    document.getElementById('lk-err').style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>
