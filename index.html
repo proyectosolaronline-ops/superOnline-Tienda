@@ -630,19 +630,37 @@ function abrirEditor(){
 function applyColor(hex){document.documentElement.style.setProperty('--primary',hex);document.documentElement.style.setProperty('--primary-light',hex+'18');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2600);}
 </script>
-  <!-- Botón flotante QR + Modal -->
-<button id="qr-float-btn" title="Compartir esta página con QR">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4-10h-3V7h-2v3H8l4 4 4-4z" fill="white"/>
+      margin-top: 15px;
+    font-weight: bold;
+  }
+</style>
+
+<!-- Botón flotante QR con ícono de tres puntos horizontales negro -->
+<button id="qr-float-btn" title="Generar QR para compartir">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="5" cy="12" r="2" fill="#000000"/>
+    <circle cx="12" cy="12" r="2" fill="#000000"/>
+    <circle cx="19" cy="12" r="2" fill="#000000"/>
   </svg>
 </button>
 
+<!-- Modal con QR y campos editables -->
 <div id="qr-modal" class="qr-modal">
   <div class="qr-modal-content">
     <span class="qr-close">&times;</span>
     <h3>QR para compartir esta página 🔥</h3>
-    <p id="qr-current-url" style="color:#00ff9d; word-break:break-all; font-size:14px;"></p>
+    
+    <p style="margin: 15px 0 5px; color: #ccc; font-size: 14px;">Mensaje 1 (arriba del QR)</p>
+    <input type="text" id="msg1" value="Super fácil de pedir" placeholder="Ej: ¡Pide en 1 clic!">
+    
+    <p style="margin: 15px 0 5px; color: #ccc; font-size: 14px;">Mensaje 2 (abajo del QR)</p>
+    <input type="text" id="msg2" value="Escanea el código y haz tu pedido" placeholder="Ej: Escanea y ordena ya">
+    
+    <p id="qr-current-url" style="color:#00ff9d; word-break:break-all; font-size:13px; margin: 20px 0 10px;"></p>
+    
     <div id="qr-container"></div>
+    
+    <button id="qr-generate-btn">Generar / Actualizar QR</button>
     <button id="qr-download-btn">Descargar PNG 💦</button>
   </div>
 </div>
@@ -657,8 +675,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
     right: 25px;
     width: 65px;
     height: 65px;
-    background: #FF1493;
-    color: white;
+    background: #FF1493; /* Fondo rosa cabrón */
     border: none;
     border-radius: 50%;
     box-shadow: 0 6px 20px rgba(255,20,147,0.5);
@@ -672,6 +689,9 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
   #qr-float-btn:hover {
     transform: scale(1.15);
     background: #ff69b4;
+  }
+  #qr-float-btn svg {
+    fill: #000000; /* Ícono negro puro */
   }
 
   .qr-modal {
@@ -687,9 +707,8 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
     background: #0f0f0f;
     padding: 30px;
     border-radius: 16px;
-    max-width: 380px;
+    max-width: 420px;
     text-align: center;
-    position: relative;
     box-shadow: 0 0 40px rgba(255,20,147,0.6);
   }
   .qr-close {
@@ -700,6 +719,16 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
     color: #FF1493;
     cursor: pointer;
   }
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px;
+    background: #222;
+    color: white;
+    border: 1px solid #FF1493;
+    border-radius: 8px;
+    font-size: 15px;
+  }
   #qr-container {
     margin: 20px auto;
     background: white;
@@ -707,17 +736,18 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
     border-radius: 12px;
     display: inline-block;
   }
-  #qr-download-btn {
-    background: #00ff9d;
-    color: #000;
+  button {
+    background: #FF1493;
+    color: white;
     border: none;
-    padding: 12px 30px;
+    padding: 12px 25px;
     font-size: 16px;
     border-radius: 10px;
     cursor: pointer;
-    margin-top: 15px;
-    font-weight: bold;
+    margin: 10px 5px;
   }
+  #qr-generate-btn { background: #444; }
+  #qr-download-btn { background: #00ff9d; color: #000; }
 </style>
 
 <script>
@@ -725,29 +755,41 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
   const qrModal = document.getElementById('qr-modal');
   const qrClose = document.querySelector('.qr-close');
   const qrContainer = document.getElementById('qr-container');
-  const qrUrlEl = document.getElementById('qr-current-url');
+  const msg1Input = document.getElementById('msg1');
+  const msg2Input = document.getElementById('msg2');
+  const urlEl = document.getElementById('qr-current-url');
+  const generateBtn = document.getElementById('qr-generate-btn');
   const downloadBtn = document.getElementById('qr-download-btn');
 
   let currentQR = null;
 
-  qrBtn.onclick = () => {
-    const pageUrl = window.location.href; // Link actual (producto, etc.)
+  function generarQR() {
+    const pageUrl = window.location.href;
+    const msg1 = msg1Input.value.trim();
+    const msg2 = msg2Input.value.trim();
 
-    qrUrlEl.textContent = pageUrl;
+    const qrText = `\( {msg1}\n\n \){pageUrl}\n\n${msg2}`; // Mensajes + link en el QR
+
+    urlEl.textContent = pageUrl;
 
     qrContainer.innerHTML = ''; // Limpia anterior
 
     currentQR = new QRCode(qrContainer, {
-      text: pageUrl,
+      text: qrText,
       width: 260,
       height: 260,
       colorDark: "#000000",
       colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.H
     });
+  }
 
+  qrBtn.onclick = () => {
+    generarQR();
     qrModal.style.display = 'flex';
   };
+
+  generateBtn.onclick = generarQR; // Para actualizar si editan mensajes
 
   qrClose.onclick = () => qrModal.style.display = 'none';
 
