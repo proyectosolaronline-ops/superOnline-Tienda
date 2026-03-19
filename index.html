@@ -630,182 +630,114 @@ function abrirEditor(){
 function applyColor(hex){document.documentElement.style.setProperty('--primary',hex);document.documentElement.style.setProperty('--primary-light',hex+'18');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2600);}
 </script>
-      margin-top: 15px;
-    font-weight: bold;
-  }
-</style>
+  <!-- Botón flotante con QR -->
+<div class="fab" id="share-fab" title="Compartir vía QR">↷</div>
 
-<!-- Botón flotante QR con ícono de tres puntos horizontales negro -->
-<button id="qr-float-btn" title="Generar QR para compartir">
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="5" cy="12" r="2" fill="#000000"/>
-    <circle cx="12" cy="12" r="2" fill="#000000"/>
-    <circle cx="19" cy="12" r="2" fill="#000000"/>
-  </svg>
-</button>
-
-<!-- Modal con QR y campos editables -->
-<div id="qr-modal" class="qr-modal">
-  <div class="qr-modal-content">
-    <span class="qr-close">&times;</span>
-    <h3>QR para compartir esta página 🔥</h3>
-    
-    <p style="margin: 15px 0 5px; color: #ccc; font-size: 14px;">Mensaje 1 (arriba del QR)</p>
-    <input type="text" id="msg1" value="Super fácil de pedir" placeholder="Ej: ¡Pide en 1 clic!">
-    
-    <p style="margin: 15px 0 5px; color: #ccc; font-size: 14px;">Mensaje 2 (abajo del QR)</p>
-    <input type="text" id="msg2" value="Escanea el código y haz tu pedido" placeholder="Ej: Escanea y ordena ya">
-    
-    <p id="qr-current-url" style="color:#00ff9d; word-break:break-all; font-size:13px; margin: 20px 0 10px;"></p>
-    
-    <div id="qr-container"></div>
-    
-    <button id="qr-generate-btn">Generar / Actualizar QR</button>
-    <button id="qr-download-btn">Descargar PNG 💦</button>
+<div id="qr-modal">
+  <div class="qr-container">
+    <h3>Comparte esta página</h3>
+    <div id="qr-code"></div>
+    <p style="font-size:0.9rem; color:#555; margin:12px 0;">Escanea con tu celular</p>
+    <button class="close-btn" id="close-qr">Cerrar</button>
   </div>
 </div>
 
-<!-- QRCode.js CDN -->
+<!-- QR library (necesaria) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
-  #qr-float-btn {
+  .fab {
     position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 65px;
-    height: 65px;
-    background: #FF1493; /* Fondo rosa cabrón */
-    border: none;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background: #6200ee;
+    color: white;
     border-radius: 50%;
-    box-shadow: 0 6px 20px rgba(255,20,147,0.5);
-    cursor: pointer;
-    z-index: 99999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s;
+    font-size: 28px;
+    cursor: pointer;
+    z-index: 9999;
+    transition: all 0.25s;
   }
-  #qr-float-btn:hover {
-    transform: scale(1.15);
-    background: #ff69b4;
-  }
-  #qr-float-btn svg {
-    fill: #000000; /* Ícono negro puro */
+  .fab:hover {
+    background: #7c4dff;
+    transform: scale(1.1);
   }
 
-  .qr-modal {
+  #qr-modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 100000;
+    background: rgba(0,0,0,0.65);
+    z-index: 10000;
     align-items: center;
     justify-content: center;
   }
-  .qr-modal-content {
-    background: #0f0f0f;
-    padding: 30px;
-    border-radius: 16px;
-    max-width: 420px;
-    text-align: center;
-    box-shadow: 0 0 40px rgba(255,20,147,0.6);
-  }
-  .qr-close {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 36px;
-    color: #FF1493;
-    cursor: pointer;
-  }
-  input[type="text"] {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0 15px;
-    background: #222;
-    color: white;
-    border: 1px solid #FF1493;
-    border-radius: 8px;
-    font-size: 15px;
-  }
-  #qr-container {
-    margin: 20px auto;
+
+  .qr-container {
     background: white;
-    padding: 20px;
-    border-radius: 12px;
-    display: inline-block;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
   }
-  button {
-    background: #FF1493;
+
+  #qr-code {
+    margin: 16px auto;
+  }
+
+  .close-btn {
+    padding: 10px 28px;
+    background: #e53935;
     color: white;
     border: none;
-    padding: 12px 25px;
-    font-size: 16px;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
-    margin: 10px 5px;
+    font-size: 1rem;
   }
-  #qr-generate-btn { background: #444; }
-  #qr-download-btn { background: #00ff9d; color: #000; }
+  .close-btn:hover {
+    background: #c62828;
+  }
 </style>
 
 <script>
-  const qrBtn = document.getElementById('qr-float-btn');
-  const qrModal = document.getElementById('qr-modal');
-  const qrClose = document.querySelector('.qr-close');
-  const qrContainer = document.getElementById('qr-container');
-  const msg1Input = document.getElementById('msg1');
-  const msg2Input = document.getElementById('msg2');
-  const urlEl = document.getElementById('qr-current-url');
-  const generateBtn = document.getElementById('qr-generate-btn');
-  const downloadBtn = document.getElementById('qr-download-btn');
+  const fab = document.getElementById('share-fab');
+  const modal = document.getElementById('qr-modal');
+  const qrDiv = document.getElementById('qr-code');
+  const closeBtn = document.getElementById('close-qr');
 
-  let currentQR = null;
+  let qrCreated = false;
 
-  function generarQR() {
-    const pageUrl = window.location.href;
-    const msg1 = msg1Input.value.trim();
-    const msg2 = msg2Input.value.trim();
-
-    const qrText = `\( {msg1}\n\n \){pageUrl}\n\n${msg2}`; // Mensajes + link en el QR
-
-    urlEl.textContent = pageUrl;
-
-    qrContainer.innerHTML = ''; // Limpia anterior
-
-    currentQR = new QRCode(qrContainer, {
-      text: qrText,
-      width: 260,
-      height: 260,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-  }
-
-  qrBtn.onclick = () => {
-    generarQR();
-    qrModal.style.display = 'flex';
-  };
-
-  generateBtn.onclick = generarQR; // Para actualizar si editan mensajes
-
-  qrClose.onclick = () => qrModal.style.display = 'none';
-
-  window.onclick = (e) => {
-    if (e.target === qrModal) qrModal.style.display = 'none';
-  };
-
-  downloadBtn.onclick = () => {
-    const canvas = qrContainer.querySelector('canvas');
-    if (canvas) {
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = `qr_tienda_${Date.now()}.png`;
-      a.click();
+  fab.onclick = () => {
+    modal.style.display = 'flex';
+    if (!qrCreated) {
+      new QRCode(qrDiv, {
+        text: window.location.href,
+        width: 220,
+        height: 220,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      qrCreated = true;
     }
   };
+
+  closeBtn.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  };
 </script>
+    
 </body>
 </html>
