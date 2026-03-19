@@ -630,5 +630,140 @@ function abrirEditor(){
 function applyColor(hex){document.documentElement.style.setProperty('--primary',hex);document.documentElement.style.setProperty('--primary-light',hex+'18');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2600);}
 </script>
+  <!-- Botón flotante QR + Modal -->
+<button id="qr-float-btn" title="Compartir esta página con QR">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4-10h-3V7h-2v3H8l4 4 4-4z" fill="white"/>
+  </svg>
+</button>
+
+<div id="qr-modal" class="qr-modal">
+  <div class="qr-modal-content">
+    <span class="qr-close">&times;</span>
+    <h3>QR para compartir esta página 🔥</h3>
+    <p id="qr-current-url" style="color:#00ff9d; word-break:break-all; font-size:14px;"></p>
+    <div id="qr-container"></div>
+    <button id="qr-download-btn">Descargar PNG 💦</button>
+  </div>
+</div>
+
+<!-- QRCode.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+  #qr-float-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 65px;
+    height: 65px;
+    background: #FF1493;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 6px 20px rgba(255,20,147,0.5);
+    cursor: pointer;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  #qr-float-btn:hover {
+    transform: scale(1.15);
+    background: #ff69b4;
+  }
+
+  .qr-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100000;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-modal-content {
+    background: #0f0f0f;
+    padding: 30px;
+    border-radius: 16px;
+    max-width: 380px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 40px rgba(255,20,147,0.6);
+  }
+  .qr-close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 36px;
+    color: #FF1493;
+    cursor: pointer;
+  }
+  #qr-container {
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: inline-block;
+  }
+  #qr-download-btn {
+    background: #00ff9d;
+    color: #000;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: bold;
+  }
+</style>
+
+<script>
+  const qrBtn = document.getElementById('qr-float-btn');
+  const qrModal = document.getElementById('qr-modal');
+  const qrClose = document.querySelector('.qr-close');
+  const qrContainer = document.getElementById('qr-container');
+  const qrUrlEl = document.getElementById('qr-current-url');
+  const downloadBtn = document.getElementById('qr-download-btn');
+
+  let currentQR = null;
+
+  qrBtn.onclick = () => {
+    const pageUrl = window.location.href; // Link actual (producto, etc.)
+
+    qrUrlEl.textContent = pageUrl;
+
+    qrContainer.innerHTML = ''; // Limpia anterior
+
+    currentQR = new QRCode(qrContainer, {
+      text: pageUrl,
+      width: 260,
+      height: 260,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    qrModal.style.display = 'flex';
+  };
+
+  qrClose.onclick = () => qrModal.style.display = 'none';
+
+  window.onclick = (e) => {
+    if (e.target === qrModal) qrModal.style.display = 'none';
+  };
+
+  downloadBtn.onclick = () => {
+    const canvas = qrContainer.querySelector('canvas');
+    if (canvas) {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `qr_tienda_${Date.now()}.png`;
+      a.click();
+    }
+  };
+</script>
 </body>
 </html>
