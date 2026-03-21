@@ -715,7 +715,7 @@ async function submitAuth(){
         name:document.getElementById('am-name').value.trim(),
         phone:document.getElementById('am-phone').value.trim(),
         email,password:pass,
-        customerType:wantsMayorista?'mayorista':'regular'
+        customerType:wantsMayorista?'solicitado':'regular'
       });
       if(!res.ok)throw new Error(res.error);
       cust={
@@ -801,8 +801,15 @@ function updateBanner(){
     const btn=document.getElementById('banner-mayorista-btn');
     if(btn){
       if(customer&&!isMayorista){
-        btn.textContent='Solicitar cuenta mayorista →';
-        btn.onclick=()=>toast('Contacta a la tienda para activar tu cuenta mayorista');
+  const tipo=customer.customerType||'regular';
+  if(tipo==='solicitado'){
+    btn.textContent='Solicitud enviada ✓';
+    btn.style.background='#d97706';
+    btn.onclick=()=>toast('Tu solicitud está pendiente de aprobación');
+  }else{
+    btn.textContent='Solicitar cuenta mayorista →';
+    btn.onclick=()=>showAuth('register');
+  }
       }else{
         btn.textContent='Quiero ser mayorista →';
         btn.onclick=()=>showAuth('register');
