@@ -186,8 +186,7 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-fo
 .chip:hover:not(.on){border-color:var(--text);color:var(--text)}
 
 /* ── GRID ── */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
-
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .pcard{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r);overflow:hidden;cursor:pointer;
@@ -197,10 +196,52 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-fo
 .pcard-img{
   aspect-ratio:1;background:#f3f1ec;
   display:flex;align-items:center;justify-content:center;
-  font-size:52px;overflow:hidden;position:relative
+  font-size:36px;overflow:hidden;position:relative;
+  cursor:pointer
 }
-.pcard-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
-.pcard:hover .pcard-img img{transform:scale(1.04)}
+.img-track{
+  display:flex;width:100%;height:100%;
+  transition:transform .35s cubic-bezier(.4,0,.2,1)
+}
+.img-track img{
+  width:100%;height:100%;object-fit:cover;
+  flex-shrink:0;transition:transform .4s
+}
+.pcard:hover .img-track img:first-child{transform:scale(1.04)}
+
+/* Lightbox */
+.lightbox{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.92);z-index:500;
+  align-items:center;justify-content:center;
+  cursor:zoom-out
+}
+.lightbox.on{display:flex}
+.lightbox img{
+  max-width:92vw;max-height:92vh;
+  object-fit:contain;border-radius:8px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  cursor:zoom-out
+}
+.lb-close{
+  position:absolute;top:18px;right:18px;
+  background:rgba(255,255,255,.12);border:none;
+  color:#fff;width:40px;height:40px;border-radius:50%;
+  font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s
+}
+.lb-close:hover{background:rgba(255,255,255,.25)}
+.lb-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  width:44px;height:44px;border-radius:50%;font-size:20px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s
+}
+.lb-nav:hover{background:rgba(255,255,255,.25)}
+.lb-prev{left:18px}
+.lb-next{right:18px}
 .stock-badge{
   position:absolute;top:10px;right:10px;
   background:#fff;color:#dc2626;font-size:10px;font-weight:700;
@@ -465,9 +506,9 @@ footer a{color:rgba(255,255,255,.5);text-decoration:none}
   .hero h1{font-size:38px}
   .catalog{padding:40px 16px}
   .cat-title{font-size:26px}
-  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-  .pcard-body{padding:12px 14px 14px}
-  .pcard-name{font-size:14px}
+  .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .pcard-body{padding:10px 12px 12px}
+  .pcard-name{font-size:13px}
   .navbar{padding:0 16px}
 }
 </style>
@@ -658,6 +699,13 @@ footer a{color:rgba(255,255,255,.5);text-decoration:none}
     <button onclick="closeOwnerModal()" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:12px;font-size:13px;cursor:pointer;font-family:var(--font-b);color:var(--muted)">Cancelar</button>
   </div>
 </div>
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <button class="lb-nav lb-prev" onclick="event.stopPropagation();lbPrev()">‹</button>
+  <img id="lb-img" src="" alt="">
+  <button class="lb-nav lb-next" onclick="event.stopPropagation();lbNext()">›</button>
+</div>
+<div id="toast"></div>
 
 <div id="toast"></div>
 <footer><p>Tienda powered by <a href="#" target="_blank">LandingKit</a></p></footer>
@@ -780,7 +828,6 @@ function setCat(c){
   document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.textContent===(c||'Todos')));
   renderGrid();
 }
-
 function renderGrid(){
   const list=activeCat?products.filter(p=>p.category===activeCat):products;
   const g=document.getElementById('grid-el');
@@ -789,6 +836,78 @@ function renderGrid(){
     g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted);font-weight:300">Sin productos en esta categoría</div>';
     return;
   }
+  g.innerHTML=list.map(p=>{
+    const stock=Number(p.stock||0),inStock=stock>0;
+    const qty=cart.find(c=>c.productId===p.productId)?.qty||0;
+    const hasWholesale=isMayorista&&p.wholesalePrice!==undefined&&p.wholesalePrice!=='';
+    const img1=p.imageUrl?`<img src="${esc(fixImgUrl(p.imageUrl))}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none'">` :'';
+    const img2=p.imageUrl2?`<img src="${esc(fixImgUrl(p.imageUrl2))}" alt="${esc(p.name)} 2" loading="lazy" onerror="this.style.display='none'">` :'';
+    const hasTwo=!!(p.imageUrl&&p.imageUrl2);
+
+    const priceHTML=`<div class="price-wrap">
+      <span class="price-real">${fmt(p.price)}</span>
+      ${hasWholesale?`<span class="price-wholesale">★ Mayorista: ${fmt(p.wholesalePrice)}</span>`:''}
+    </div>`;
+
+    let ctaHTML;
+    if(!customer) ctaHTML=`<button class="add-btn guest" onclick="event.stopPropagation();showAuth('register')">Comprar</button>`;
+    else if(!inStock) ctaHTML=`<span class="no-stock">Sin stock</span>`;
+    else ctaHTML=`<button class="add-btn ${qty>0?'in-cart':''}" onclick="event.stopPropagation();addToCart('${p.productId}')">${qty>0?`✓ ${qty}`:'+ Agregar'}</button>`;
+
+    return `<div class="pcard" onclick="openPM('${p.productId}')">
+      <div class="pcard-img" onclick="event.stopPropagation();openLightbox('${p.productId}',0)">
+        <div class="img-track" id="track-${p.productId}">
+          ${img1||'<span style="font-size:36px">🛍</span>'}
+          ${hasTwo?img2:''}
+        </div>
+        ${inStock&&stock<=5?`<div class="stock-badge">${stock} restantes</div>`:''}
+        ${hasWholesale?`<div class="mayorista-tag">★ Mayorista</div>`:''}
+        ${hasTwo?`<div style="position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:4px;pointer-events:none">
+          <div style="width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9" id="dot0-${p.productId}"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:#fff;opacity:.4" id="dot1-${p.productId}"></div>
+        </div>`:''}
+      </div>
+      <div class="pcard-body">
+        ${p.category?`<div class="pcard-cat">${esc(p.category)}</div>`:''}
+        <div class="pcard-name">${esc(p.name)}</div>
+        <div class="pcard-desc">${esc((p.description||'').slice(0,80))}${(p.description||'').length>80?'…':''}</div>
+        <div class="pcard-foot">${priceHTML}${ctaHTML}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Touch swipe en cada card para cambiar imagen
+  list.forEach(p=>{
+    if(!p.imageUrl||!p.imageUrl2)return;
+    const track=document.getElementById('track-'+p.productId);
+    if(!track)return;
+    let startX=0,curSlide=0;
+    track.parentElement.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;},{passive:true});
+    track.parentElement.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-startX;
+      if(Math.abs(dx)<30)return;
+      curSlide=dx<0?1:0;
+      track.style.transform=`translateX(${curSlide*-100}%)`;
+      const d0=document.getElementById('dot0-'+p.productId);
+      const d1=document.getElementById('dot1-'+p.productId);
+      if(d0)d0.style.opacity=curSlide===0?'.9':'.4';
+      if(d1)d1.style.opacity=curSlide===1?'.9':'.4';
+    },{passive:true});
+    // Click en imagen también alterna
+    track.parentElement.addEventListener('click',e=>{
+      if(e.target.closest('.stock-badge')||e.target.closest('.mayorista-tag'))return;
+      e.stopPropagation();
+      curSlide=curSlide===0?1:0;
+      track.style.transform=`translateX(${curSlide*-100}%)`;
+      const d0=document.getElementById('dot0-'+p.productId);
+      const d1=document.getElementById('dot1-'+p.productId);
+      if(d0)d0.style.opacity=curSlide===0?'.9':'.4';
+      if(d1)d1.style.opacity=curSlide===1?'.9':'.4';
+      // Lightbox con la imagen activa
+      setTimeout(()=>openLightbox(p.productId,curSlide),0);
+    });
+  });
+}
   g.innerHTML=list.map(p=>{
     const stock=Number(p.stock||0),inStock=stock>0;
     const qty=cart.find(c=>c.productId===p.productId)?.qty||0;
@@ -1121,7 +1240,40 @@ function openQR(){
   document.getElementById('qr-img').src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
   document.getElementById('qr-modal-bg').classList.add('on');
 }
-function closeQR(){document.getElementById('qr-modal-bg').classList.remove('on');}
+function closeQR(){document.getElementById('qr-modal-bg').classList.remove('on');} 
+  // ── LIGHTBOX ──────────────────────────────────────────────
+let lbImages=[],lbIndex=0;
+function openLightbox(productId,startIndex=0){
+  const p=products.find(x=>x.productId===productId);if(!p||!p.imageUrl)return;
+  lbImages=[fixImgUrl(p.imageUrl)];
+  if(p.imageUrl2)lbImages.push(fixImgUrl(p.imageUrl2));
+  lbIndex=startIndex;
+  document.getElementById('lb-img').src=lbImages[lbIndex];
+  document.getElementById('lightbox').classList.add('on');
+  document.body.style.overflow='hidden';
+  const prev=document.querySelector('.lb-prev');
+  const next=document.querySelector('.lb-next');
+  if(prev)prev.style.display=lbImages.length>1?'flex':'none';
+  if(next)next.style.display=lbImages.length>1?'flex':'none';
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('on');
+  document.body.style.overflow='';
+}
+function lbPrev(){
+  lbIndex=(lbIndex-1+lbImages.length)%lbImages.length;
+  document.getElementById('lb-img').src=lbImages[lbIndex];
+}
+function lbNext(){
+  lbIndex=(lbIndex+1)%lbImages.length;
+  document.getElementById('lb-img').src=lbImages[lbIndex];
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lightbox').classList.contains('on'))return;
+  if(e.key==='Escape')closeLightbox();
+  if(e.key==='ArrowRight')lbNext();
+  if(e.key==='ArrowLeft')lbPrev();
+});
 </script>
 </body>
 </html>
