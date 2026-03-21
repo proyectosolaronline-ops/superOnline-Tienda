@@ -424,6 +424,7 @@ window.addEventListener('load',async()=>{
     currency=cfg.currency||'MXN';
     storeWA=cfg.whatsapp||'';
     bannerMsg=cfg.bannerMessage||'';
+    window.STORE_BUSINESS_TYPE = cfg.businessType || 'regular';
     if(cfg.primaryColor)applyColor(cfg.primaryColor);
     document.getElementById('brand-text').textContent=s.name||'Tienda';
     document.title=s.name||'Tienda';
@@ -696,11 +697,14 @@ function showAuth(mode){
   document.getElementById('am-sw-text').textContent=r?'¿Ya tienes cuenta?':'¿Sin cuenta?';
   document.getElementById('am-sw-btn').textContent=r?'Iniciar sesión':'Registrarse';
   document.getElementById('am-reg-fields').style.display=r?'block':'none';
+  const checkMay = document.querySelector('.mayorista-check');
+  if (checkMay) checkMay.style.display = (window.STORE_BUSINESS_TYPE==='mayorista') ? '' : 'none';
   document.getElementById('am-err').style.display='none';
   document.getElementById('am-bg').classList.add('on');
 }
 function closeAuth(){document.getElementById('am-bg').classList.remove('on');}
 function toggleAuthMode(){showAuth(authMode==='register'?'login':'register');}
+  
 
 async function submitAuth(){
   const email=document.getElementById('am-email').value.trim();
@@ -795,8 +799,9 @@ function updateBanner(){
   if(gb)gb.style.display=customer?'none':'';
   const bm=document.getElementById('banner-mayorista');
   const isMayorista=customer?.isMayorista||false;
+  const esTiendaMayorista=window.STORE_BUSINESS_TYPE==='mayorista';
   if(bm){
-    bm.style.display=isMayorista?'none':'';
+    bm.style.display=(isMayorista||!esTiendaMayorista)?'none':'';
     if(bannerMsg){const t=document.getElementById('banner-mayorista-text');if(t)t.textContent=bannerMsg;}
     const btn=document.getElementById('banner-mayorista-btn');
     if(btn){
