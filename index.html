@@ -792,7 +792,7 @@ window.addEventListener('load',async()=>{
     renderCatalog();
     updateNav();updateBanner();
     showV('catalog');
-  }catch(e){showV('suspended');}
+  }catch(e){console.error('INIT ERROR:',e);showV('suspended');}
 });
 
 // ── API ────────────────────────────────────────────────────
