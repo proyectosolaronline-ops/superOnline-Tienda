@@ -641,8 +641,8 @@ footer a:hover{color:#fff}
     <div class="owner-modal-title">Acceso al panel</div>
     <div class="owner-modal-sub">Eres el dueno de esta tienda? Accede a tu panel de gestion.</div>
     <button class="owner-btn primary" onclick="goToOwnerPanel()">Ir al panel de gestion</button>
-    <button class="owner-btn accent" onclick="goToEditorApariencia()">🎨 Editor de apariencia</button>
-  '<button class="owner-btn primary" onclick="abrirFlyerQR()">🖨️ Flyer QR</button>' +
+<button class="owner-btn accent" onclick="goToEditorApariencia()">🎨 Editor de apariencia</button>
+    <button class="owner-btn primary" onclick="abrirFlyerModal();closeOwnerModal()">🖨️ Flyer QR</button>
     <button class="owner-btn ghost" onclick="closeOwnerModal()">Cancelar</button>
   </div>
 </div>
@@ -713,9 +713,14 @@ function handleBrandTap() {
   document.getElementById('tap-count').textContent = tapCount;
   brand.classList.add('tapping');
   clearTimeout(tapTimer);
-  if (tapCount >= 5) {
+if (tapCount >= 5) {
     tapCount = 0; brand.classList.remove('tapping');
     setTimeout(function(){ document.getElementById('owner-bg').classList.add('on'); }, 200);
+    return;
+  }
+  if (tapCount >= 3) {
+    tapCount = 0; brand.classList.remove('tapping');
+    abrirFlyerModal();
     return;
   }
   tapTimer = setTimeout(function(){ tapCount = 0; brand.classList.remove('tapping'); }, 1500);
@@ -1295,41 +1300,127 @@ document.getElementById('priv-overlay').addEventListener('click', function(e) {
   if (e.target === this) ignorarPrivacidad();
 });
  // ══ FLYER QR — botón flotante solo para dueño ══
-(function() {
-  var btn = document.createElement('button');
-  btn.id = 'btn-flyer-qr';
-  btn.innerHTML = '🖨️';
-  btn.title = 'Flyer QR';
-  btn.style.cssText = 'display:none;position:fixed;bottom:84px;right:24px;z-index:90;width:52px;height:52px;border-radius:50%;background:var(--cta);color:#fff;border:none;cursor:pointer;font-size:20px;box-shadow:0 4px 16px rgba(255,105,0,.4);transition:transform .2s';
-  btn.onmouseenter = function(){ this.style.transform='scale(1.08)'; };
-  btn.onmouseleave = function(){ this.style.transform='scale(1)'; };
-  btn.onclick = abrirFlyerQR;
-  document.body.appendChild(btn);
+// ══ MODAL FLYER QR ══
+(function(){
+  var el = document.createElement('div');
+  el.id = 'flyer-modal';
+  el.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:600;overflow-y:auto;padding:20px';
+  el.innerHTML =
+    '<div style="max-width:700px;margin:0 auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<span style="color:#fff;font-family:var(--font-d);font-size:18px;font-weight:700">🖨️ Flyer QR</span>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button onclick="window.print()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer">🖨️ Imprimir</button>' +
+          '<button onclick="cerrarFlyerModal()" style="padding:8px 16px;background:#333;color:#fff;border:none;border-radius:8px;font-family:var(--font-b);font-size:13px;cursor:pointer">✕ Cerrar</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="flyer-sheet" style="background:#fff;width:100%;aspect-ratio:8.5/11;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;position:relative;box-shadow:0 12px 48px rgba(0,0,0,.4)">' +
+        '<div id="fc0" style="display:flex;flex-direction:column;align-items:center;padding:4mm 5mm 3mm;gap:1.5mm;border:.3px solid #dde5ee;background:#fff;overflow:hidden"></div>' +
+        '<div id="fc1" style="display:flex;flex-direction:column;align-items:center;padding:4mm 5mm 3mm;gap:1.5mm;border:.3px solid #dde5ee;background:#fff;overflow:hidden"></div>' +
+        '<div id="fc2" style="display:flex;flex-direction:column;align-items:center;padding:4mm 5mm 3mm;gap:1.5mm;border:.3px solid #dde5ee;background:#fff;overflow:hidden"></div>' +
+        '<div id="fc3" style="display:flex;flex-direction:column;align-items:center;padding:4mm 5mm 3mm;gap:1.5mm;border:.3px solid #dde5ee;background:#fff;overflow:hidden"></div>' +
+        '<div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed #b0bec5;pointer-events:none"></div>' +
+        '<div style="position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed #b0bec5;pointer-events:none"></div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(el);
 })();
 
-function mostrarBtnFlyer() {
-  var b = document.getElementById('btn-flyer-qr');
-  if (b) b.style.display = 'flex';
+function abrirFlyerModal() {
+  var cfg    = window._storeCfgRaw || {};
+  var nombre = storeName || 'Mi Tienda';
+  var logo   = fixImgUrl(cfg.logo || cfg.logoUrl || '');
+  var dir    = cfg.storeLocation || '';
+  var tel    = cfg.whatsapp || storeWA || '';
+  var ban    = cfg.bannerMessage || bannerMsg || '🛒 Escanea y visita nuestra tienda';
+  var url    = window.location.href;
+  var partes = nombre.split(' ');
+  var ini    = ((partes[0]||'')[0]||'').toUpperCase() + ((partes[1]||'')[0]||'').toUpperCase();
+  var c1 = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1a73e8';
+
+  document.getElementById('flyer-modal').style.display = 'block';
+
+  for (var i = 0; i < 4; i++) {
+    var card = document.getElementById('fc' + i);
+    card.innerHTML =
+      '<div style="font-family:var(--font-d);font-size:clamp(12px,2vw,18px);font-weight:700;text-align:center;color:#1a1a2e;line-height:1.2">' + esc(nombre) + '</div>' +
+      '<div style="font-size:clamp(9px,1.2vw,12px);color:#717185;text-align:center">📱 Escanea para visitar la tienda</div>' +
+      '<div id="fqr' + i + '" style="width:min(140px,38%);aspect-ratio:1;background:#f0fdf4;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>' +
+      '<div style="display:flex;flex-direction:column;gap:2px;width:100%;align-items:center;flex:1;justify-content:center">' +
+        (dir ? '<div style="font-size:clamp(8px,1.1vw,11px);color:#1a1a2e;font-weight:500;text-align:center">📍 ' + esc(dir) + '</div>' : '') +
+        (tel ? '<div style="font-size:clamp(8px,1.1vw,11px);color:#1a1a2e;font-weight:500;text-align:center">📞 ' + esc(tel) + '</div>' : '') +
+      '</div>' +
+      '<div style="width:100%;padding:4px 6px;border-radius:4px;background:linear-gradient(135deg,' + c1 + ',#1557b0);text-align:center;font-size:clamp(8px,1.1vw,11px);font-weight:700;color:#fff;word-break:break-word">' + esc(ban) + '</div>' +
+      '<div style="font-size:clamp(6px,.9vw,9px);color:#b0b3c1;text-align:center;letter-spacing:.5px;font-weight:600;text-transform:uppercase">LandingKit</div>';
+    generarQRFlyer(i, url, logo, ini, c1);
+  }
 }
 
-function abrirFlyerQR() {
-  var cfg  = window._storeCfgRaw || {};
-  var logo = cfg.logo          || cfg.logoUrl   || '';
-  var dir  = cfg.storeLocation || '';
-  var tel  = cfg.whatsapp      || storeWA       || '';
-  var ban  = cfg.bannerMessage || bannerMsg      || '';
-  window.open(
-    'flyer-qr-landingkit.html' +
-    '?backend='   + encodeURIComponent(BACKEND)   +
-    '&store='     + encodeURIComponent(STORE_ID)  +
-    '&storeBase=' + encodeURIComponent(window.location.href.split('?')[0]) +
-    '&nombre='    + encodeURIComponent(storeName) +
-    '&logo='      + encodeURIComponent(logo)      +
-    '&ubicacion=' + encodeURIComponent(dir)       +
-    '&telefono='  + encodeURIComponent(tel)       +
-    '&banner='    + encodeURIComponent(ban),
-    '_blank'
-  );
+function generarQRFlyer(idx, url, logoSrc, ini, c1) {
+  var cont = document.getElementById('fqr' + idx);
+  if (!cont) return;
+  var SIZE = 200;
+  var tmp  = document.createElement('div');
+  tmp.style.cssText = 'position:fixed;bottom:-9999px;left:-9999px;visibility:hidden;';
+  document.body.appendChild(tmp);
+  try {
+    new QRCode(tmp, { text: url, width: SIZE, height: SIZE, colorDark: '#1a1a2e', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+  } catch(e) { try { document.body.removeChild(tmp); } catch(x){} return; }
+  setTimeout(function() {
+    var qc  = tmp.querySelector('canvas');
+    var qi  = tmp.querySelector('img');
+    var src = qc ? qc.toDataURL('image/png') : (qi ? qi.src : null);
+    try { document.body.removeChild(tmp); } catch(x){}
+    if (!src) return;
+    var out = document.createElement('canvas');
+    out.width = SIZE; out.height = SIZE;
+    var ctx = out.getContext('2d');
+    var base = new Image();
+    base.onload = function() {
+      ctx.drawImage(base, 0, 0, SIZE, SIZE);
+      var cx = SIZE/2, cy = SIZE/2, r = Math.round(SIZE * 0.14);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r+4, 0, 2*Math.PI);
+      ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+      if (logoSrc && logoSrc.length > 10) {
+        var li = new Image(); li.crossOrigin = 'anonymous';
+        li.onload = function() {
+          ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+          ctx.clip(); ctx.drawImage(li, cx-r, cy-r, r*2, r*2); ctx.restore();
+          anilloFlyer(ctx, cx, cy, r, c1);
+          mostrarFlyer(out, cont);
+        };
+        li.onerror = function() { inicialesFlyer(ctx, cx, cy, r, ini, c1, out, cont); };
+        li.src = logoSrc;
+      } else {
+        inicialesFlyer(ctx, cx, cy, r, ini, c1, out, cont);
+      }
+    };
+    base.src = src;
+  }, 200);
+}
+
+function anilloFlyer(ctx, cx, cy, r, c1) {
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+  ctx.strokeStyle = c1; ctx.lineWidth = 3; ctx.stroke();
+}
+function inicialesFlyer(ctx, cx, cy, r, ini, c1, out, cont) {
+  var g = ctx.createRadialGradient(cx-r*.25, cy-r*.25, 0, cx, cy, r);
+  g.addColorStop(0, c1); g.addColorStop(1, c1);
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold ' + Math.round(r*.88) + 'px serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText((ini||'?').slice(0,2), cx, cy+1);
+  ctx.restore(); anilloFlyer(ctx, cx, cy, r, c1);
+  mostrarFlyer(out, cont);
+}
+function mostrarFlyer(canvas, cont) {
+  canvas.style.cssText = 'display:block;width:100%;height:auto;border-radius:4px;';
+  cont.innerHTML = ''; cont.appendChild(canvas);
+}
+function cerrarFlyerModal() {
+  document.getElementById('flyer-modal').style.display = 'none';
 }
 </script>
 </body>
