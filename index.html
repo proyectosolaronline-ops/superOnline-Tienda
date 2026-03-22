@@ -326,6 +326,22 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-fo
 footer{background:var(--text);color:rgba(255,255,255,.35);text-align:center;padding:24px;font-size:12px}
 footer a{color:rgba(255,255,255,.5);text-decoration:none}
 footer a:hover{color:#fff}
+  .priv-legend{display:flex;align-items:flex-start;gap:8px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:10px 12px;font-size:12px;color:#92400e;line-height:1.5;margin:10px 0 4px}
+.priv-legend.accepted{background:#f0fdf4;border-color:#86efac;color:#166534}
+.priv-legend-ico{flex-shrink:0;font-size:14px}
+.priv-legend a{color:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
+.priv-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.priv-overlay.open{display:flex}
+.priv-modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:28px 24px 32px;animation:slideUp .28s cubic-bezier(.34,1.2,.64,1) both}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.priv-body{background:#f9f9f6;border:1.5px solid var(--border);border-radius:12px;padding:16px;font-size:13px;line-height:1.7;color:#333;margin-bottom:20px;max-height:220px;overflow-y:auto}
+.priv-body h4{font-family:var(--font-d);font-size:14px;color:var(--text);margin:10px 0 4px}
+.priv-body h4:first-child{margin-top:0}
+.priv-body p{margin-bottom:6px}
+.priv-btns{display:flex;flex-direction:column;gap:10px}
+.priv-btn-ok{width:100%;padding:13px;border-radius:10px;background:var(--primary);color:#fff;border:none;font-family:var(--font-b);font-size:14px;font-weight:600;cursor:pointer}
+.priv-btn-ok:hover{background:var(--primary-dark)}
+.priv-btn-skip{width:100%;padding:13px;border-radius:10px;background:transparent;border:1.5px solid var(--border);font-family:var(--font-b);font-size:14px;color:var(--muted);cursor:pointer}
 .suspended{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px}
 
 /* ── RESPONSIVE ── */
@@ -634,6 +650,29 @@ footer a:hover{color:#fff}
 </div>
 
 <div id="toast"></div>
+  <!-- AVISO PRIVACIDAD -->
+<div class="priv-overlay" id="priv-overlay">
+  <div class="priv-modal">
+    <div style="font-size:28px;margin-bottom:8px">🔒</div>
+    <div style="font-family:var(--font-d);font-size:20px;font-weight:700;margin-bottom:4px;color:var(--text)">Aviso de Privacidad</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Tus datos están protegidos.</div>
+    <div class="priv-body">
+      <h4>¿Qué datos recopilamos?</h4>
+      <p>Nombre, teléfono, email y dirección que proporcionas al realizar un pedido.</p>
+      <h4>¿Para qué los usamos?</h4>
+      <p><strong>Exclusivamente</strong> para procesar y responder tus solicitudes: confirmación, seguimiento y entrega. No los compartimos con terceros ni los usamos para publicidad.</p>
+      <h4>¿Quién los resguarda?</h4>
+      <p>El comercio responsable de esta tienda. Almacenados en servidores seguros de Google. No se transfieren fuera de México sin tu consentimiento.</p>
+      <h4>Derechos ARCO</h4>
+      <p>Tienes derecho de Acceso, Rectificación, Cancelación y Oposición. Contáctanos por WhatsApp o email del comercio para ejercerlos.</p>
+      <p style="color:var(--muted);font-size:11px;margin-top:8px">Ley Federal de Protección de Datos Personales · México.</p>
+    </div>
+    <div class="priv-btns">
+      <button class="priv-btn-ok" onclick="aceptarPrivacidad()">✅ Leído y aceptado</button>
+      <button class="priv-btn-skip" onclick="ignorarPrivacidad()">Ahora no</button>
+    </div>
+  </div>
+</div>
 <footer><p>Tienda powered by <a href="#" target="_blank">LandingKit</a> &nbsp;·&nbsp; Compra segura y confiable</p></footer>
 
 <script>
@@ -1212,6 +1251,41 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeLightbox();
   if (e.key === 'ArrowRight') lbNext();
   if (e.key === 'ArrowLeft') lbPrev();
+});
+  // ══ PRIVACIDAD ══
+var PRIVACY_STATUS = localStorage.getItem('lk_priv_' + STORE_ID) || 'pending';
+
+function initPrivacidad() {
+  if (PRIVACY_STATUS === 'pending') abrirPrivacidad();
+}
+function abrirPrivacidad() {
+  document.getElementById('priv-overlay').classList.add('open');
+}
+function aceptarPrivacidad() {
+  PRIVACY_STATUS = 'accepted';
+  localStorage.setItem('lk_priv_' + STORE_ID, 'accepted');
+  document.getElementById('priv-overlay').classList.remove('open');
+  actualizarLeyenda();
+}
+function ignorarPrivacidad() {
+  PRIVACY_STATUS = 'dismissed';
+  localStorage.setItem('lk_priv_' + STORE_ID, 'dismissed');
+  document.getElementById('priv-overlay').classList.remove('open');
+  actualizarLeyenda();
+}
+function actualizarLeyenda() {
+  var el = document.getElementById('priv-legend-el');
+  if (!el) return;
+  if (PRIVACY_STATUS === 'accepted') {
+    el.className = 'priv-legend accepted';
+    el.innerHTML = '<span class="priv-legend-ico">✅</span><span>Has leído y aceptado nuestro <a onclick="abrirPrivacidad()">Aviso de Privacidad</a>. Tus datos se usan únicamente para responder tus solicitudes.</span>';
+  } else {
+    el.className = 'priv-legend';
+    el.innerHTML = '<span class="priv-legend-ico">🔒</span><span>Al enviar aceptas nuestro <a onclick="abrirPrivacidad()">Aviso de Privacidad</a>. Tus datos se usan <strong>únicamente</strong> para responder tus solicitudes.</span>';
+  }
+}
+document.getElementById('priv-overlay').addEventListener('click', function(e) {
+  if (e.target === this) ignorarPrivacidad();
 });
 </script>
 </body>
