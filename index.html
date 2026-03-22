@@ -466,7 +466,9 @@ function handleBrandTap() {
   clearTimeout(tapTimer);
   if (tapCount >= 5) {
     tapCount = 0; brand.classList.remove('tapping');
-    setTimeout(function(){ document.getElementById('owner-bg').classList.add('on'); }, 200);
+    setTimeout(function(){
+      window.open('editor-apariencia.html?backend=' + encodeURIComponent(BACKEND) + '&store=' + encodeURIComponent(STORE_ID), '_blank');
+    }, 200);
     return;
   }
   tapTimer = setTimeout(function(){ tapCount = 0; brand.classList.remove('tapping'); }, 1500);
