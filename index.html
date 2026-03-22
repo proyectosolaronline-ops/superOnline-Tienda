@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --primary:#1a73e8;--primary-dark:#1557b0;--primary-light:#e8f0fe;--primary-mid:#4285f4;
@@ -716,11 +717,6 @@ function handleBrandTap() {
 if (tapCount >= 5) {
     tapCount = 0; brand.classList.remove('tapping');
     setTimeout(function(){ document.getElementById('owner-bg').classList.add('on'); }, 200);
-    return;
-  }
-  if (tapCount >= 3) {
-    tapCount = 0; brand.classList.remove('tapping');
-    abrirFlyerModal();
     return;
   }
   tapTimer = setTimeout(function(){ tapCount = 0; brand.classList.remove('tapping'); }, 1500);
