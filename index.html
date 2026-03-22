@@ -642,6 +642,7 @@ footer a:hover{color:#fff}
     <div class="owner-modal-sub">Eres el dueno de esta tienda? Accede a tu panel de gestion.</div>
     <button class="owner-btn primary" onclick="goToOwnerPanel()">Ir al panel de gestion</button>
     <button class="owner-btn accent" onclick="goToEditorApariencia()">🎨 Editor de apariencia</button>
+    <button class="owner-btn primary" onclick="abrirFlyerQR()">🖨️ Flyer QR</button>
     <button class="owner-btn ghost" onclick="closeOwnerModal()">Cancelar</button>
   </div>
 </div>
@@ -1292,6 +1293,26 @@ function actualizarLeyenda() {
 document.getElementById('priv-overlay').addEventListener('click', function(e) {
   if (e.target === this) ignorarPrivacidad();
 });
+  // ══ FLYER QR ══
+function abrirFlyerQR() {
+  var cfg   = window._storeCfgRaw || {};
+  var logo  = cfg.logo          || cfg.logoUrl       || '';
+  var dir   = cfg.storeLocation || '';
+  var tel   = cfg.whatsapp      || cfg.ownerPhone     || storeWA || '';
+  var ban   = cfg.bannerMessage || bannerMsg          || '';
+  window.open(
+    'flyer-qr-landingkit.html' +
+    '?backend='   + encodeURIComponent(BACKEND)   +
+    '&store='     + encodeURIComponent(STORE_ID)  +
+    '&storeBase=' + encodeURIComponent(window.location.href.split('?')[0]) +
+    '&nombre='    + encodeURIComponent(storeName) +
+    '&logo='      + encodeURIComponent(logo)      +
+    '&ubicacion=' + encodeURIComponent(dir)       +
+    '&telefono='  + encodeURIComponent(tel)       +
+    '&banner='    + encodeURIComponent(ban),
+    '_blank'
+  );
+}
 </script>
 </body>
 </html>
