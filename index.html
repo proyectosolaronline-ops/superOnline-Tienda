@@ -642,7 +642,7 @@ footer a:hover{color:#fff}
     <div class="owner-modal-sub">Eres el dueno de esta tienda? Accede a tu panel de gestion.</div>
     <button class="owner-btn primary" onclick="goToOwnerPanel()">Ir al panel de gestion</button>
     <button class="owner-btn accent" onclick="goToEditorApariencia()">🎨 Editor de apariencia</button>
-    <button class="owner-btn primary" onclick="abrirFlyerQR()">🖨️ Flyer QR</button>
+  '<button class="owner-btn primary" onclick="abrirFlyerQR()">🖨️ Flyer QR</button>' +
     <button class="owner-btn ghost" onclick="closeOwnerModal()">Cancelar</button>
   </div>
 </div>
@@ -737,6 +737,7 @@ window.addEventListener('load', async function() {
     var iR = await get('store.info');
     if (!iR) { showV('suspended'); return; }
     var s = iR.store, cfg = s.config || {};
+    window._storeCfgRaw = cfg;
     currency  = cfg.currency  || 'MXN';
     storeWA   = cfg.whatsapp  || '';
     bannerMsg = cfg.bannerMessage || '';
@@ -1293,13 +1294,30 @@ function actualizarLeyenda() {
 document.getElementById('priv-overlay').addEventListener('click', function(e) {
   if (e.target === this) ignorarPrivacidad();
 });
-  // ══ FLYER QR ══
+ // ══ FLYER QR — botón flotante solo para dueño ══
+(function() {
+  var btn = document.createElement('button');
+  btn.id = 'btn-flyer-qr';
+  btn.innerHTML = '🖨️';
+  btn.title = 'Flyer QR';
+  btn.style.cssText = 'display:none;position:fixed;bottom:84px;right:24px;z-index:90;width:52px;height:52px;border-radius:50%;background:var(--cta);color:#fff;border:none;cursor:pointer;font-size:20px;box-shadow:0 4px 16px rgba(255,105,0,.4);transition:transform .2s';
+  btn.onmouseenter = function(){ this.style.transform='scale(1.08)'; };
+  btn.onmouseleave = function(){ this.style.transform='scale(1)'; };
+  btn.onclick = abrirFlyerQR;
+  document.body.appendChild(btn);
+})();
+
+function mostrarBtnFlyer() {
+  var b = document.getElementById('btn-flyer-qr');
+  if (b) b.style.display = 'flex';
+}
+
 function abrirFlyerQR() {
-  var cfg   = window._storeCfgRaw || {};
-  var logo  = cfg.logo          || cfg.logoUrl       || '';
-  var dir   = cfg.storeLocation || '';
-  var tel   = cfg.whatsapp      || cfg.ownerPhone     || storeWA || '';
-  var ban   = cfg.bannerMessage || bannerMsg          || '';
+  var cfg  = window._storeCfgRaw || {};
+  var logo = cfg.logo          || cfg.logoUrl   || '';
+  var dir  = cfg.storeLocation || '';
+  var tel  = cfg.whatsapp      || storeWA       || '';
+  var ban  = cfg.bannerMessage || bannerMsg      || '';
   window.open(
     'flyer-qr-landingkit.html' +
     '?backend='   + encodeURIComponent(BACKEND)   +
