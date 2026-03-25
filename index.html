@@ -1330,110 +1330,118 @@ function applyFont(font) {
   document.documentElement.style.setProperty('--font-d', "'" + font + "', sans-serif");
   document.documentElement.style.setProperty('--font-b', "'" + font + "', sans-serif");
 }
-// ── PWA — MANIFEST DINÁMICO ──────────────────────────────────
-function installPWA(name, iconUrl, primaryColor) {
-  // Actualizar meta tags con datos reales de la tienda
-  var titleMeta = document.getElementById('pwa-apple-title');
-  if (titleMeta) titleMeta.content = name;
+// ── PWA — INSTALACIÓN OPTIMIZADA ─────────────────────────────────────
+function installPWA(storeName, logoUrl, primaryColor) {
+  const finalName = storeName || 'Tienda Online';
+  const finalShortName = finalName.split(' ')[0] || 'Tienda';
+  const finalThemeColor = primaryColor || '#1a73e8';
 
-  var themeMeta = document.getElementById('pwa-theme-color');
-  if (themeMeta) themeMeta.content = primaryColor || '#1a73e8';
+  // 1. Actualizar meta tags estáticos (Apple + Theme)
+  const titleMeta = document.getElementById('pwa-apple-title');
+  if (titleMeta) titleMeta.content = finalName;
 
-  // Ícono — usar logo de la tienda si existe
+  const themeMeta = document.getElementById('pwa-theme-color');
+  if (themeMeta) themeMeta.content = finalThemeColor;
 
+  const appleIcon = document.getElementById('pwa-apple-icon');
+  if (appleIcon) appleIcon.href = './icons/icon-192.png';
 
-var icon192 = './icons/icon-192.png';
-  var icon512 = './icons/icon-512.png';
-  
-  // Apple touch icon
-  var appleIcon = document.getElementById('pwa-apple-icon');
-  if (appleIcon) appleIcon.href = icon192;
+  // 2. Actualizar el manifest estático con datos dinámicos de la tienda
+  fetch('manifest.json')
+    .then(r => r.json())
+    .then(manifest => {
+      // Actualizamos solo lo que cambia
+      manifest.name = finalName;
+      manifest.short_name = finalShortName;
+      manifest.description = `Tienda online ${finalName} – Explora nuestro catálogo`;
+      manifest.theme_color = finalThemeColor;
 
-  // Construir manifest dinámico como blob
-  var manifest = {
-    name:             name || 'Tienda',
-    short_name:       (name || 'Tienda').split(' ')[0],
-    description:      'Tienda online — ' + (name || 'LandingKit'),
-    start_url:        './index.html',
-    display:          'standalone',
-    background_color: '#ffffff',
-    theme_color:      primaryColor || '#1a73e8',
-    orientation:      'portrait',
-    icons: [
-      { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-      { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-    ]
-  };
+      // Icono dinámico si la tienda tiene logo personalizado
+      if (logoUrl && logoUrl.length > 10) {
+        manifest.icons = [
+          { src: logoUrl, sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: logoUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
+          { src: logoUrl, sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: logoUrl, sizes: "512x512", type: "image/png", purpose: "maskable" }
+        ];
+      }
 
-var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-  var manifestURL = URL.createObjectURL(blob);
-  var linkEl = document.querySelector('link[rel="manifest"]');
-  if (linkEl) linkEl.href = manifestURL;
+      // Sobrescribimos el link del manifest con versión actualizada (Blob)
+      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+      const manifestURL = URL.createObjectURL(blob);
 
-  // Botón "Instalar app" — mostrar solo si el navegador soporta PWA
-  _pwaSetupInstallBtn(name);
+      let link = document.querySelector('link[rel="manifest"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'manifest';
+        document.head.appendChild(link);
+      }
+      link.href = manifestURL;
+
+      // Limpiar URL anterior para evitar fugas de memoria
+      if (window._lastManifestURL) URL.revokeObjectURL(window._lastManifestURL);
+      window._lastManifestURL = manifestURL;
+    })
+    .catch(err => console.warn('No se pudo actualizar manifest dinámico:', err));
+
+  // 3. Configurar botón de instalación personalizado
+  setupInstallButton();
 }
 
-var _deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  _deferredPrompt = e;
-  // Mostrar botón de instalación si está en el DOM
-  var btn = document.getElementById('pwa-install-btn');
-  if (btn) btn.style.display = '';
-});
-
-function _pwaSetupInstallBtn(name) {
+// Función auxiliar para el botón de instalación (mejor UX)
+function setupInstallButton() {
   if (document.getElementById('pwa-install-btn')) return;
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  var isAndroid = /android/i.test(navigator.userAgent);
-  if (!isIOS && !isAndroid) return; // Solo móvil
 
-  var btn = document.createElement('button');
+  const btn = document.createElement('button');
   btn.id = 'pwa-install-btn';
-  btn.style.cssText = [
-    'position:fixed;bottom:88px;right:16px;z-index:89',
-    'background:var(--primary);color:#fff;border:none;border-radius:99px',
-    'padding:10px 18px;font-size:12px;font-weight:700;cursor:pointer',
-    'box-shadow:0 4px 16px rgba(0,0,0,.25);font-family:var(--font-b)',
-    'display:flex;align-items:center;gap:6px;white-space:nowrap'
-  ].join(';');
-  btn.innerHTML = '📲 Agregar a inicio';
+  btn.style.cssText = `
+    position:fixed; bottom:88px; right:16px; z-index:89;
+    background:var(--primary); color:#fff; border:none; border-radius:99px;
+    padding:10px 18px; font-size:12px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,.25); font-family:var(--font-b);
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+  `;
+  btn.innerHTML = '📲 Agregar a pantalla de inicio';
 
-  btn.onclick = function() {
-    if (_deferredPrompt) {
-      // Android Chrome — usar prompt nativo
-      _deferredPrompt.prompt();
-      _deferredPrompt.userChoice.then(function(r) {
-        if (r.outcome === 'accepted') btn.remove();
-        _deferredPrompt = null;
+  btn.onclick = () => {
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      window.deferredPrompt.userChoice.then((choice) => {
+        if (choice.outcome === 'accepted') btn.style.display = 'none';
+        window.deferredPrompt = null;
       });
-    } else if (isIOS) {
-      // iOS Safari — mostrar instrucciones ya que no hay prompt nativo
-      _pwaShowIOSInstructions();
+    } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      showIOSInstallInstructions();
     }
   };
+
   document.body.appendChild(btn);
 }
 
-function _pwaShowIOSInstructions() {
-  var el = document.createElement('div');
-  el.style.cssText = [
-    'position:fixed;bottom:0;left:0;right:0;z-index:9999',
-    'background:#fff;border-top:1px solid #e5e7eb',
-    'padding:20px 20px 32px;text-align:center',
-    'box-shadow:0 -8px 24px rgba(0,0,0,.12);border-radius:16px 16px 0 0'
-  ].join(';');
-  el.innerHTML =
-    '<div style="font-size:24px;margin-bottom:8px">📲</div>' +
-    '<div style="font-weight:700;font-size:15px;margin-bottom:6px">Agregar a pantalla de inicio</div>' +
-    '<div style="font-size:13px;color:#6b7280;margin-bottom:16px;line-height:1.5">' +
-      'Toca <strong>Compartir</strong> <span style="font-size:16px">⬆️</span> en Safari<br>' +
-      'luego selecciona <strong>"Agregar a inicio"</strong>' +
-    '</div>' +
-    '<button onclick="this.parentNode.remove()" style="padding:10px 28px;background:#f3f4f6;border:none;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer">Cerrar</button>';
+function showIOSInstallInstructions() {
+  // (mantén tu función _pwaShowIOSInstructions si ya la tienes, o usa esta versión más limpia)
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#fff;border-top:1px solid #e5e7eb;padding:20px 20px 32px;text-align:center;box-shadow:0 -8px 24px rgba(0,0,0,.12);border-radius:16px 16px 0 0';
+  el.innerHTML = `
+    <div style="font-size:24px;margin-bottom:8px">📲</div>
+    <div style="font-weight:700;font-size:15px;margin-bottom:6px">Agregar a pantalla de inicio</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:16px;line-height:1.5">
+      Toca <strong>Compartir</strong> <span style="font-size:16px">⬆️</span> en Safari<br>
+      luego selecciona <strong>"Agregar a inicio"</strong>
+    </div>
+    <button onclick="this.parentNode.remove()" style="padding:10px 28px;background:#f3f4f6;border:none;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer">Cerrar</button>
+  `;
   document.body.appendChild(el);
 }
+
+// Capturar el evento beforeinstallprompt una sola vez
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'flex';
+});
 
 function toast(msg) {
   var t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block';
