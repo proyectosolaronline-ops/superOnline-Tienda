@@ -1340,9 +1340,11 @@ function installPWA(name, iconUrl, primaryColor) {
   if (themeMeta) themeMeta.content = primaryColor || '#1a73e8';
 
   // Ícono — usar logo de la tienda si existe
-  var icon192 = iconUrl || 'https://via.placeholder.com/192x192/1a73e8/ffffff?text=' + encodeURIComponent((name||'T')[0].toUpperCase());
-  var icon512 = iconUrl || 'https://via.placeholder.com/512x512/1a73e8/ffffff?text=' + encodeURIComponent((name||'T')[0].toUpperCase());
 
+
+var icon192 = './icons/icon-192.png';
+  var icon512 = './icons/icon-512.png';
+  
   // Apple touch icon
   var appleIcon = document.getElementById('pwa-apple-icon');
   if (appleIcon) appleIcon.href = icon192;
