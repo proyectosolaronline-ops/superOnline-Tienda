@@ -1363,8 +1363,10 @@ function installPWA(name, iconUrl, primaryColor) {
     ]
   };
 
-  // El manifest.json estático ya está en el repo
-  // Solo actualizamos meta tags dinámicos con nombre e ícono reales
+var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  var manifestURL = URL.createObjectURL(blob);
+  var linkEl = document.querySelector('link[rel="manifest"]');
+  if (linkEl) linkEl.href = manifestURL;
 
   // Botón "Instalar app" — mostrar solo si el navegador soporta PWA
   _pwaSetupInstallBtn(name);
