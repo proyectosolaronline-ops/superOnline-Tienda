@@ -1321,7 +1321,7 @@ function updateBanner() {
   }
 }
 
-function showV(name) { ['loading','suspended','catalog'].forEach(function(v){ document.getElementById('v-' + v).style.display = v === name ? 'block' : 'none'; }); if (name === 'catalog') { actualizarLeyenda(); initPrivacidad(); }}
+function showV(name) { ['loading','suspended','catalog'].forEach(function(v){ document.getElementById('v-' + v).style.display = v === name ? 'block' : 'none'; }); if (name === 'catalog') { actualizarLeyenda(); initPrivacidad(); initMap(); } }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmt(n) { return new Intl.NumberFormat('es-MX', { style:'currency', currency:currency }).format(Number(n||0)); }
 function fixImgUrl(url) {
