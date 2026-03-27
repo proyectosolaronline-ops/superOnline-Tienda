@@ -430,6 +430,17 @@ footer a:hover{color:#fff}
 @media(min-width:1024px){
   .grid{grid-template-columns:repeat(4,1fr);gap:16px}
 }
+  /* ── MAPA ── */
+.store-map-section{padding:0 max(16px,calc((100vw - 1200px)/2)) 48px}
+.store-map-wrap{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;background:var(--surface2)}
+.store-map-header{padding:16px 20px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.store-map-icon{width:36px;height:36px;border-radius:8px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.store-map-title{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text)}
+.store-map-addr{font-size:12px;color:var(--muted);margin-top:2px}
+.store-map-frame{width:100%;height:320px;border:none;display:block}
+.store-map-btn{margin-left:auto;padding:7px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.store-map-btn:hover{background:var(--primary-dark)}
+@media(max-width:600px){.store-map-frame{height:240px}.store-map-section{padding:0 10px 32px}}
 </style>
 </head>
 <body>
@@ -691,8 +702,29 @@ footer a:hover{color:#fff}
     </div>
   </div>
 </div>
-<footer><p>Tienda powered by <a href="#" target="_blank">LandingKit</a> &nbsp;·&nbsp; Compra segura y confiable</p></footer>
+  <!-- ── MAPA ── -->
+<section class="store-map-section" id="map-section" style="display:none">
+  <div class="store-map-wrap">
+    <div class="store-map-header">
+      <div class="store-map-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="store-map-title">Encuéntranos aquí</div>
+        <div class="store-map-addr" id="map-addr-text">Cargando ubicación...</div>
+      </div>
+      <a class="store-map-btn" id="map-directions-btn" href="#" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Cómo llegar
+      </a>
+    </div>
+    <iframe id="map-iframe" class="store-map-frame" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src=""></iframe>
+  </div>
+</section>
 
+<footer><p>Tienda powered by <a href="#" target="_blank">LandingKit</a> &nbsp;·&nbsp; Compra segura y confiable</p></footer>
 <script>
 const params   = new URLSearchParams(location.search);
 const BACKEND  = params.get('backend') || window.LK_BACKEND || '';
@@ -1289,7 +1321,7 @@ function updateBanner() {
   }
 }
 
-function showV(name) { ['loading','suspended','catalog'].forEach(function(v){ document.getElementById('v-' + v).style.display = v === name ? 'block' : 'none'; }); if (name === 'catalog') { actualizarLeyenda(); initPrivacidad(); } }
+function showV(name) { ['loading','suspended','catalog'].forEach(function(v){ document.getElementById('v-' + v).style.display = v === name ? 'block' : 'none'; }); if (name === 'catalog') { actualizarLeyenda(); initPrivacidad(); initMap(); }}
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmt(n) { return new Intl.NumberFormat('es-MX', { style:'currency', currency:currency }).format(Number(n||0)); }
 function fixImgUrl(url) {
