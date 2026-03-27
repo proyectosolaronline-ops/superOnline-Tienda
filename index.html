@@ -1671,6 +1671,24 @@ function cerrarFlyerModal() {
 </script>
 
   <script src="lk-guardian.js"></script>
+  function initMap() {
+  try {
+    var cfg = window._storeCfgRaw || {};
+    var addr = (cfg.storeLocation || '').trim();
+    if (!addr) return;
+    var sec    = document.getElementById('map-section');
+    var frame  = document.getElementById('map-iframe');
+    var addrEl = document.getElementById('map-addr-text');
+    var dirBtn = document.getElementById('map-directions-btn');
+    if (!sec || !frame || !addrEl || !dirBtn) return;
+    addrEl.textContent = addr;
+    frame.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
+    dirBtn.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
+    sec.style.display = '';
+  } catch(e) {
+    console.warn('initMap error:', e);
+  }
+}
   <script>
   // Registrar Service Worker — requerido para PWA en Chrome Android
   if ('serviceWorker' in navigator) {
