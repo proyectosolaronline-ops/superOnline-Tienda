@@ -4,6 +4,96 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tienda</title>
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test logo y banner</title>
+<style>
+body{font-family:sans-serif;background:#f0f0f0;margin:0;padding:20px}
+.hero{background:#1a73e8;padding:20px;border-radius:12px;color:#fff}
+.banner-msg{background:rgba(0,0,0,.3);padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:12px;display:none}
+.logo{width:68px;height:68px;border-radius:12px;object-fit:cover;margin-bottom:12px;display:block;border:2px solid rgba(255,255,255,.4)}
+h1{margin:0;font-size:24px}
+.resultado{margin-top:20px;background:#fff;padding:16px;border-radius:10px;font-size:13px;color:#333;word-break:break-all}
+</style>
+</head>
+<body>
+
+<div class="hero" id="hero">
+  <img id="logo-img" class="logo" style="display:none" src="" alt="Logo">
+  <div class="banner-msg" id="banner-msg"></div>
+  <h1 id="nombre">Nombre tienda</h1>
+</div>
+
+<div class="resultado" id="resultado">Cargando...</div>
+
+<script>
+const params   = new URLSearchParams(location.search);
+const BACKEND  = params.get('backend') || localStorage.getItem('ld_backend') || '';
+const STORE_ID = params.get('store')   || localStorage.getItem('ld_store')   || '';
+
+function fixImgUrl(url) {
+  if (!url) return '';
+  var m = url.match(/[?&]id=([\w-]+)/);
+  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+  var m2 = url.match(/\/d\/([\w-]+)/);
+  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  return url;
+}
+
+window.addEventListener('load', async function() {
+  if (!BACKEND || !STORE_ID) {
+    document.getElementById('resultado').textContent = 'Faltan backend y store en la URL';
+    return;
+  }
+  try {
+    var r = await fetch(BACKEND + '?action=store.info&storeId=' + STORE_ID);
+    var d = await r.json();
+    if (!d.ok) { document.getElementById('resultado').textContent = 'Error: ' + JSON.stringify(d); return; }
+
+    var s   = d.store;
+    var cfg = (typeof s.config === 'string') ? JSON.parse(s.config) : (s.config || {});
+
+    document.getElementById('resultado').innerHTML =
+      '<b>logo:</b> ' + (cfg.logo || cfg.logoUrl || 'NO HAY') + '<br>' +
+      '<b>bannerMessage:</b> ' + (cfg.bannerMessage || 'NO HAY') + '<br>' +
+      '<b>bannerLink:</b> ' + (cfg.bannerLink || 'NO HAY');
+
+    // Nombre
+    document.getElementById('nombre').textContent = s.name || 'Tienda';
+
+    // Logo
+    var logoSrc = cfg.logo || cfg.logoUrl || '';
+    if (logoSrc) {
+      var img = document.getElementById('logo-img');
+      img.src = logoSrc;
+      img.style.display = 'block';
+      img.onerror = function() {
+        this.src = fixImgUrl(logoSrc);
+      };
+    }
+
+    // Banner mensaje
+    if (cfg.bannerMessage) {
+      var bar = document.getElementById('banner-msg');
+      if (cfg.bannerLink) {
+        bar.innerHTML = '<a href="' + cfg.bannerLink + '" style="color:#fff;text-decoration:underline">' + cfg.bannerMessage + '</a>';
+      } else {
+        bar.textContent = cfg.bannerMessage;
+      }
+      bar.style.display = 'block';
+    }
+
+  } catch(e) {
+    document.getElementById('resultado').textContent = 'Error: ' + e.message;
+  }
+});
+</script>
+</body>
+</html>
+ 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <meta name="mobile-web-app-capable" content="yes">
