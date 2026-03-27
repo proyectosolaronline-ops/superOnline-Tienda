@@ -1633,7 +1633,20 @@ function mostrarFlyer(canvas, cont) {
 }
 function cerrarFlyerModal() {
   document.getElementById('flyer-modal').style.display = 'none';
-}
+}<!-- ── SECCIÓN UBICACIÓN ── -->
+<section id="store-location-section" style="display:none; padding:40px max(16px,calc((100vw - 1200px)/2)); background:var(--surface); border-top:1px solid var(--border)">
+  <div style="max-width:700px; margin:0 auto">
+    <div style="margin-bottom:20px">
+      <h2 style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">📍 ¿Dónde encontrarnos?</h2>
+      <p id="store-location-text" style="font-size:14px;color:var(--muted);line-height:1.6"></p>
+    </div>
+    <div id="store-map-container" style="border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;height:280px;background:var(--surface2)"></div>
+    <button id="store-maps-btn" onclick="" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:all .2s;box-shadow:0 2px 8px rgba(26,115,232,.3)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Abrir en Google Maps
+    </button>
+  </div>
+</section>
 </script>
   <script src="lk-guardian.js"></script>
   <script>
