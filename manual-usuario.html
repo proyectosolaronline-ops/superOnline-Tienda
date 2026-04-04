@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — LandingKit</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a26;
+  --border: #2a2a3e;
+  --accent: #00e5a0;
+  --accent2: #6366f1;
+  --cta: #ff6900;
+  --text: #f0f0f8;
+  --muted: #7070a0;
+  --font-d: 'Syne', sans-serif;
+  --font-b: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── CURSOR ── */
+.cursor { width: 12px; height: 12px; background: var(--accent); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform .15s, background .2s; mix-blend-mode: screen; }
+.cursor-ring { width: 36px; height: 36px; border: 1.5px solid var(--accent); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: transform .08s; opacity: .5; }
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: .4;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,229,160,.12) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+@keyframes pulseGlow { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(99,102,241,.15);
+  border: 1px solid rgba(99,102,241,.3);
+  border-radius: 99px;
+  padding: 6px 16px;
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: #a5b4fc;
+  margin-bottom: 28px;
+  animation: fadeUp .8s ease both;
+}
+.hero h1 {
+  font-family: var(--font-d);
+  font-size: clamp(40px, 8vw, 80px);
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -.03em;
+  margin-bottom: 20px;
+  animation: fadeUp .8s .1s ease both;
+}
+.hero h1 span { color: var(--accent); }
+.hero p {
+  font-size: 17px; color: var(--muted); max-width: 520px; line-height: 1.7;
+  margin-bottom: 48px;
+  animation: fadeUp .8s .2s ease both;
+}
+.hero-nav {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  animation: fadeUp .8s .3s ease both;
+}
+.hero-btn {
+  padding: 14px 28px; border-radius: 12px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; font-family: var(--font-b); transition: all .2s;
+  display: flex; align-items: center; gap: 8px; text-decoration: none;
+}
+.hero-btn.primary { background: var(--accent); color: #000; }
+.hero-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,229,160,.3); }
+.hero-btn.ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.hero-btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.hero-btn.cta { background: var(--cta); color: #fff; }
+.hero-btn.cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,105,0,.3); }
+.scroll-hint {
+  position: absolute; bottom: 32px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  animation: fadeUp 1s .6s ease both;
+}
+.scroll-arrow { width: 20px; height: 20px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); animation: bounce 1.5s infinite; }
+@keyframes bounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(4px)} }
+
+/* ── NAV ── */
+.sticky-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,10,15,.85); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  transform: translateY(-100%); transition: transform .3s;
+}
+.sticky-nav.visible { transform: translateY(0); }
+.nav-logo { font-family: var(--font-d); font-size: 16px; font-weight: 800; }
+.nav-logo span { color: var(--accent); }
+.nav-links { display: flex; gap: 6px; }
+.nav-link {
+  padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: transparent; color: var(--muted);
+  font-family: var(--font-b); transition: all .15s; text-decoration: none;
+}
+.nav-link:hover, .nav-link.active { color: var(--accent); background: rgba(0,229,160,.08); }
+
+/* ── SECTIONS ── */
+.section {
+  max-width: 900px; margin: 0 auto; padding: 80px 24px;
+}
+.section-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 16px;
+}
+.section-tag::before { content: ''; width: 24px; height: 1.5px; background: var(--accent); }
+.section h2 {
+  font-family: var(--font-d); font-size: clamp(28px, 4vw, 44px); font-weight: 800;
+  line-height: 1.1; margin-bottom: 14px; letter-spacing: -.02em;
+}
+.section p.lead { font-size: 16px; color: var(--muted); line-height: 1.7; margin-bottom: 48px; max-width: 600px; }
+
+/* ── STEPS ── */
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step {
+  display: grid; grid-template-columns: 60px 1fr; gap: 24px;
+  padding: 32px 0; border-bottom: 1px solid var(--border);
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .5s, transform .5s;
+}
+.step.visible { opacity: 1; transform: translateY(0); }
+.step:last-child { border-bottom: none; }
+.step-num {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-size: 22px; font-weight: 800;
+  flex-shrink: 0;
+}
+.step-num.green { background: rgba(0,229,160,.12); color: var(--accent); border: 1px solid rgba(0,229,160,.2); }
+.step-num.indigo { background: rgba(99,102,241,.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,.2); }
+.step-num.orange { background: rgba(255,105,0,.12); color: #fdba74; border: 1px solid rgba(255,105,0,.2); }
+.step-content h3 { font-family: var(--font-d); font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.step-content p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+.step-emoji { font-size: 32px; margin-bottom: 8px; display: block; }
+
+/* ── PHONE MOCKUP ── */
+.phone-demo {
+  display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap;
+  margin: 48px 0;
+}
+.phone {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  position: relative;
+}
+.phone::before {
+  content: '';
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 60px; height: 6px; background: var(--border); border-radius: 99px; z-index: 2;
+}
+.phone-screen {
+  padding: 28px 12px 12px;
+  min-height: 380px;
+  display: flex; flex-direction: column;
+}
+.phone-bar {
+  background: var(--accent2); color: #fff;
+  font-size: 9px; font-weight: 700; padding: 8px 10px;
+  border-radius: 8px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.phone-hero-img {
+  height: 80px; background: linear-gradient(135deg, #1a73e8, #0d47a1);
+  border-radius: 8px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; position: relative; overflow: hidden;
+}
+.phone-hero-img::after {
+  content: '🛍️'; position: absolute; font-size: 36px; opacity: .15;
+  bottom: -8px; right: -8px;
+}
+.phone-products {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+}
+.phone-product {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.phone-product-img { font-size: 20px; }
+.phone-product-name { font-size: 7px; color: var(--muted); text-align: center; }
+.phone-product-price { font-size: 8px; font-weight: 700; color: var(--accent); }
+
+.phone-login {
+  display: flex; flex-direction: column; gap: 8px; padding: 8px 0;
+}
+.phone-field {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+}
+.phone-field-label { font-size: 7px; color: var(--muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .06em; }
+.phone-field-val { font-size: 11px; color: var(--text); }
+.phone-btn {
+  background: var(--accent2); color: #fff;
+  border-radius: 8px; padding: 10px; text-align: center;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.phone-btn.green { background: var(--accent); color: #000; }
+.phone-btn.orange { background: var(--cta); }
+.phone-code {
+  background: var(--surface); border: 1.5px solid var(--accent2);
+  border-radius: 8px; padding: 12px; text-align: center;
+  font-family: var(--mono); font-size: 20px; font-weight: 700;
+  letter-spacing: 6px; color: var(--accent2);
+}
+
+.phone-demo-text { flex: 1; min-width: 200px; }
+.phone-demo-text h3 { font-family: var(--font-d); font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+.phone-demo-text p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 16px; }
+
+/* ── CARDS GRID ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 40px 0; }
+.card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 24px;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity .4s, transform .4s, border-color .2s;
+}
+.card.visible { opacity: 1; transform: translateY(0); }
+.card:hover { border-color: var(--accent); }
+.card-ico { font-size: 32px; margin-bottom: 14px; }
+.card h4 { font-family: var(--font-d); font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ── TIP BOX ── */
+.tip {
+  background: rgba(0,229,160,.06); border: 1px solid rgba(0,229,160,.2);
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; gap: 12px; align-items: flex-start;
+  margin: 24px 0;
+}
+.tip-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.tip p { font-size: 13px; color: var(--text); line-height: 1.6; }
+.tip strong { color: var(--accent); }
+
+.warn {
+  background: rgba(255,105,0,.06); border: 1px solid rgba(255,105,0,.2);
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; gap: 12px; align-items: flex-start;
+  margin: 24px 0;
+}
+.warn p { font-size: 13px; color: var(--text); line-height: 1.6; }
+.warn strong { color: var(--cta); }
+
+/* ── DIVIDER ── */
+.divider {
+  border: none; border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+/* ── INTERACTIVE DEMO ── */
+.demo-box {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 20px; overflow: hidden; margin: 40px 0;
+}
+.demo-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.demo-tab {
+  padding: 14px 20px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; background: transparent;
+  color: var(--muted); font-family: var(--font-b);
+  white-space: nowrap; border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.demo-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.demo-panel { display: none; padding: 28px; }
+.demo-panel.active { display: block; }
+
+/* ── FAQ ── */
+.faq { display: flex; flex-direction: column; gap: 8px; margin: 32px 0; }
+.faq-item {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; overflow: hidden; cursor: pointer;
+  transition: border-color .15s;
+}
+.faq-item:hover { border-color: var(--accent); }
+.faq-q {
+  padding: 18px 20px; font-size: 14px; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  user-select: none;
+}
+.faq-arrow { font-size: 18px; color: var(--muted); transition: transform .25s; flex-shrink: 0; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--accent); }
+.faq-a {
+  max-height: 0; overflow: hidden; transition: max-height .35s ease;
+  font-size: 13px; color: var(--muted); line-height: 1.7;
+}
+.faq-a-inner { padding: 0 20px 18px; }
+.faq-item.open .faq-a { max-height: 200px; }
+
+/* ── PROGRESS BAR ── */
+.reading-bar {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  z-index: 200; transition: width .1s;
+}
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 60px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 13px;
+}
+.footer strong { color: var(--accent); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── RESPONSIVE ── */
+@media(max-width: 600px) {
+  .phone-demo { justify-content: center; }
+  .sticky-nav .nav-links { gap: 2px; }
+  .nav-link { padding: 6px 8px; font-size: 11px; }
+  .step { grid-template-columns: 48px 1fr; gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="reading-bar" id="reading-bar"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav class="sticky-nav" id="sticky-nav">
+  <div class="nav-logo">Landing<span>Kit</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#tienda">🛍 Tienda</a>
+    <a class="nav-link" href="#panel">📦 Panel</a>
+    <a class="nav-link" href="#editor">🎨 Editor</a>
+    <a class="nav-link" href="#faq">❓ FAQ</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">📖 Manual de usuario</div>
+  <h1>Tu tienda,<br><span>sin complicaciones</span></h1>
+  <p>Aprende a usar tu tienda en línea, tu panel de gestión y el editor de apariencia. Todo explicado paso a paso.</p>
+  <div class="hero-nav">
+    <a class="hero-btn primary" href="#tienda">🛍 La tienda</a>
+    <a class="hero-btn ghost" href="#panel">📦 Panel dueño</a>
+    <a class="hero-btn cta" href="#editor">🎨 Editor</a>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-arrow"></div>
+    Desliza para explorar
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SECCIÓN 1: TIENDA -->
+<section class="section" id="tienda">
+  <div class="section-tag">Módulo 1</div>
+  <h2>La tienda pública 🛍</h2>
+  <p class="lead">Tu tienda es pública — cualquier persona puede verla sin registrarse. Aquí tus clientes exploran productos, los agregan al carrito y te contactan.</p>
+
+  <div class="phone-demo">
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-bar">
+          <span>🏪 Mi Tienda</span>
+          <span>🔗 Compartir</span>
+        </div>
+        <div class="phone-hero-img">🛍</div>
+        <div style="font-size:8px;color:var(--muted);margin-bottom:6px">📦 Catálogo de productos</div>
+        <div class="phone-products">
+          <div class="phone-product"><div class="phone-product-img">👗</div><div class="phone-product-name">Blusa floral</div><div class="phone-product-price">$280</div></div>
+          <div class="phone-product"><div class="phone-product-img">👟</div><div class="phone-product-name">Tenis sport</div><div class="phone-product-price">$650</div></div>
+          <div class="phone-product"><div class="phone-product-img">👜</div><div class="phone-product-name">Bolsa piel</div><div class="phone-product-price">$420</div></div>
+        </div>
+        <div style="margin-top:8px;background:var(--accent2);color:#fff;border-radius:8px;padding:8px;text-align:center;font-size:9px;font-weight:700">🛒 Ver catálogo completo →</div>
+      </div>
+    </div>
+    <div class="phone-demo-text">
+      <h3>Lo que ven tus clientes</h3>
+      <p>Tu tienda muestra tu nombre, logo, imagen de portada y catálogo de productos. Todo se actualiza automáticamente cuando haces cambios.</p>
+      <div class="tip">
+        <div class="tip-icon">💡</div>
+        <p>Si tienes más de 9 productos, aparece el botón <strong>"Ver catálogo completo"</strong> que abre todos los productos con filtros por categoría.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num green">1</div>
+      <div class="step-content">
+        <span class="step-emoji">🔍</span>
+        <h3>Explorar productos</h3>
+        <p>Los clientes pueden ver todos tus productos en el catálogo. Pueden filtrar por categoría tocando los chips de colores. Al tocar un producto ven la imagen grande, descripción y precio.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num green">2</div>
+      <div class="step-content">
+        <span class="step-emoji">🛒</span>
+        <h3>Agregar al carrito</h3>
+        <p>Cada producto tiene un botón naranja para agregar al carrito. El carrito aparece flotante en la esquina y muestra cuántos productos hay. Al tocar el carrito se abre el resumen del pedido.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num green">3</div>
+      <div class="step-content">
+        <span class="step-emoji">📱</span>
+        <h3>Contactar por WhatsApp</h3>
+        <p>El botón verde flotante de WhatsApp conecta directamente con la tienda. También pueden generar un PDF de su lista de productos y enviarlo por WhatsApp para consultar disponibilidad.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num green">4</div>
+      <div class="step-content">
+        <span class="step-emoji">📤</span>
+        <h3>Compartir la tienda</h3>
+        <p>El botón gris de compartir abre un popup con código QR y opción de compartir el link directamente por WhatsApp — el cliente elige a qué contacto enviarlo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-box">
+    <div class="demo-tabs">
+      <button class="demo-tab active" onclick="showTab('t1','tab1')">Categorías</button>
+      <button class="demo-tab" onclick="showTab('t2','tab1')">Carrito</button>
+      <button class="demo-tab" onclick="showTab('t3','tab1')">Compartir QR</button>
+      <button class="demo-tab" onclick="showTab('t4','tab1')">Búsqueda Google</button>
+    </div>
+    <div class="demo-panel active" id="t1">
+      <p style="font-size:14px;color:var(--muted);line-height:1.7">Los productos se organizan automáticamente por las <strong style="color:var(--text)">categorías que asignas</strong> al crearlos. En el catálogo aparecen chips de colores para filtrar — toca "Todos" para ver todo, o cualquier categoría para filtrar. Si una categoría se llama <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:12px">modal 1</code>, <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:12px">modal 2</code> etc., ese producto aparece en el popup especial de la tienda.</p>
+    </div>
+    <div class="demo-panel" id="t2">
+      <p style="font-size:14px;color:var(--muted);line-height:1.7">Al agregar productos al carrito, aparece un <strong style="color:var(--text)">botón naranja flotante</strong> con el número de items. Al abrirlo ves el resumen con totales. Puedes modificar cantidades o eliminar productos. Al finalizar, el sistema te lleva al formulario de pedido o al flujo de WhatsApp según el plan de la tienda.</p>
+    </div>
+    <div class="demo-panel" id="t3">
+      <p style="font-size:14px;color:var(--muted);line-height:1.7">El botón <strong style="color:var(--text)">"Compartir tienda"</strong> abre un popup con un código QR único de la tienda — ideal para imprimir en tarjetas o volantes. También incluye el botón <strong style="color:var(--accent)">Compartir por WhatsApp</strong> que abre directamente WhatsApp con el link de la tienda para que el cliente elija a quién enviárselo.</p>
+    </div>
+    <div class="demo-panel" id="t4">
+      <p style="font-size:14px;color:var(--muted);line-height:1.7">Si alguien llega a tu tienda desde <strong style="color:var(--text)">una búsqueda en Google</strong>, la tienda detecta automáticamente lo que buscaba y filtra los productos que coincidan. Aparece un banner azul que dice <em>"Mostrando resultados para: flores"</em> — el cliente puede cerrarlo para ver todo el catálogo.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SECCIÓN 2: PANEL DUEÑO -->
+<section class="section" id="panel">
+  <div class="section-tag">Módulo 2</div>
+  <h2>Panel del dueño 📦</h2>
+  <p class="lead">El panel es tu centro de control. Desde aquí ves pedidos, estadísticas y accedes a la configuración de tu tienda. Solo tú puedes acceder.</p>
+
+  <div class="phone-demo">
+    <div class="phone-demo-text">
+      <h3>Acceso seguro con código</h3>
+      <p>Ya no necesitas recordar contraseñas largas. El acceso es con tu email y un código de 8 caracteres que te llega al correo.</p>
+      <div class="tip">
+        <div class="tip-icon">🔒</div>
+        <p>El código expira en <strong>15 minutos</strong>. Si no lo usas a tiempo, simplemente solicita uno nuevo.</p>
+      </div>
+      <div class="warn">
+        <div class="tip-icon">⚠️</div>
+        <p>Usa el <strong>email correcto</strong> — el que registraste con tu tienda. Si lo olvidaste, contacta al administrador para actualizarlo.</p>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="phone-screen">
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="font-size:24px;margin-bottom:4px">🔑</div>
+          <div style="font-family:var(--font-d);font-size:13px;font-weight:800">Accede a tu tienda</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Escribe tu email para recibir un código</div>
+        </div>
+        <div class="phone-login">
+          <div class="phone-field">
+            <div class="phone-field-label">Email</div>
+            <div class="phone-field-val">tu@email.com</div>
+          </div>
+          <div class="phone-btn">Enviar código →</div>
+          <div style="text-align:center;font-size:9px;color:var(--muted)">— o ingresa como operador —</div>
+          <div class="phone-field">
+            <div class="phone-field-label">Código recibido</div>
+            <div class="phone-code" style="font-size:16px;padding:8px;margin-top:4px">BXB9VJEN</div>
+          </div>
+          <div class="phone-btn green">Ingresar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-ico">📊</div>
+      <h4>Estadísticas</h4>
+      <p>Ve de un vistazo cuántos pedidos, clientes y productos activos tienes. Los ingresos totales se calculan automáticamente.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">📦</div>
+      <h4>Pedidos</h4>
+      <p>Los pedidos nuevos aparecen con un badge rojo. Puedes ver el detalle, cambiar el estado y notificar al cliente.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">🛍️</div>
+      <h4>Catálogo</h4>
+      <p>Agrega, edita o desactiva productos desde tu panel. Las imágenes se suben directamente desde tu teléfono.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">👥</div>
+      <h4>Clientes</h4>
+      <p>Consulta la lista de clientes registrados, su historial de pedidos y si son clientes mayoristas.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">⚙️</div>
+      <h4>Configuración</h4>
+      <p>Cambia tu número de WhatsApp, moneda y preferencias de notificación por correo.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico">🎨</div>
+      <h4>Editor de apariencia</h4>
+      <p>Accede al editor para cambiar colores, logo, banner y descripción de tu tienda.</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num indigo">1</div>
+      <div class="step-content">
+        <span class="step-emoji">✉️</span>
+        <h3>Paso 1 — Escribe tu email</h3>
+        <p>Abre el panel del dueño y escribe el email con el que registraste tu tienda. Toca "Enviar código".</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num indigo">2</div>
+      <div class="step-content">
+        <span class="step-emoji">📬</span>
+        <h3>Paso 2 — Revisa tu correo</h3>
+        <p>Recibirás un correo de LandingKit con un código de 8 caracteres. Tendrás 15 minutos para usarlo.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num indigo">3</div>
+      <div class="step-content">
+        <span class="step-emoji">🔓</span>
+        <h3>Paso 3 — Ingresa el código</h3>
+        <p>Escribe el código en el campo y toca "Ingresar". Entrarás directamente a tu panel sin más pasos.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">👨‍💼</div>
+    <p>¿Tienes empleados? Puedes agregar <strong>operadores</strong> que accedan con email y contraseña propia, con permisos limitados — ellos no pueden cambiar la configuración de la tienda.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SECCIÓN 3: EDITOR DE APARIENCIA -->
+<section class="section" id="editor">
+  <div class="section-tag">Módulo 3</div>
+  <h2>Editor de apariencia 🎨</h2>
+  <p class="lead">Personaliza el look de tu tienda sin necesitar conocimientos técnicos. Cambia colores, sube tu logo, agrega una imagen de portada y más.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num orange">1</div>
+      <div class="step-content">
+        <span class="step-emoji">🖼️</span>
+        <h3>Logo de tu tienda</h3>
+        <p>Sube tu logo tocando el botón de cámara (foto nueva) o archivos (imagen guardada). El logo aparece en la parte superior de tu tienda. Se recomienda imagen cuadrada.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num orange">2</div>
+      <div class="step-content">
+        <span class="step-emoji">🌅</span>
+        <h3>Imagen de portada (banner)</h3>
+        <p>El banner es la imagen grande que aparece al abrir tu tienda. Usa una foto de tus productos, tu local o un diseño atractivo. Cuando hay banner, el nombre de la tienda se oculta para que luzca mejor.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num orange">3</div>
+      <div class="step-content">
+        <span class="step-emoji">🎨</span>
+        <h3>Color principal</h3>
+        <p>El color principal afecta botones, chips y acentos de toda la tienda. Elige el que mejor represente tu marca. También puedes cambiar el color del texto y el color de los botones de acción.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num orange">4</div>
+      <div class="step-content">
+        <span class="step-emoji">📢</span>
+        <h3>Mensaje banner</h3>
+        <p>Escribe un mensaje corto que aparecerá en una barra destacada al abrir la tienda — ideal para promociones, horarios o avisos importantes. El cliente puede cerrarlo con la X.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num orange">5</div>
+      <div class="step-content">
+        <span class="step-emoji">📍</span>
+        <h3>Ubicación de tu tienda</h3>
+        <p>Escribe la dirección o ciudad de tu tienda. También puedes tocar el botón 📍 para detectar tu ubicación actual automáticamente — el sistema la convierte a texto legible.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num orange">6</div>
+      <div class="step-content">
+        <span class="step-emoji">📱</span>
+        <h3>Redes sociales</h3>
+        <p>Agrega tu link de Facebook e Instagram. Aparecerán como iconos en la parte inferior de tu tienda para que los clientes te sigan.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <div class="tip-icon">💾</div>
+    <p>Recuerda siempre tocar el botón <strong>"Guardar cambios"</strong> al final. Los cambios no se aplican solos — necesitas guardar para que tu tienda se actualice.</p>
+  </div>
+
+  <div class="warn">
+    <div class="tip-icon">🖼️</div>
+    <p>Las imágenes deben estar en <strong>Google Drive</strong> o puedes subirlas directamente desde el editor. No uses imágenes de sitios externos — pueden dejar de funcionar.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-tag">Preguntas frecuentes</div>
+  <h2>¿Tienes dudas? ❓</h2>
+  <p class="lead">Las preguntas más comunes respondidas de forma clara.</p>
+
+  <div class="faq">
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Cómo comparten el link de mi tienda mis clientes? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Toca el botón "Compartir tienda" en tu tienda. Se abre un popup con el código QR y un botón verde para compartir el link por WhatsApp. El cliente elige el contacto al que quiere enviar el link.</div></div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">No me llegó el código de acceso, ¿qué hago? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Revisa tu carpeta de spam o correo no deseado. Si no está, toca "Reenviar código" y se generará uno nuevo. El código anterior queda inválido automáticamente. Si el problema persiste, verifica que estás usando el email correcto.</div></div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Mis clientes necesitan registrarse para comprar? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Depende de tu plan. En planes Light, los clientes no se registran — todo se maneja por WhatsApp. En planes Standard y Full, los clientes pueden registrarse para hacer pedidos en el sistema y tener su historial.</div></div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Cómo agrego un producto nuevo? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Entra al panel del dueño y toca "Catálogo". Ahí verás el botón para agregar un producto nuevo. Completa nombre, precio, categoría e imagen. El producto aparecerá en tu tienda inmediatamente después de guardarlo.</div></div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Puedo tener empleados con acceso limitado? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Sí. Desde tu panel puedes agregar operadores con su propio email y contraseña. Ellos pueden ver pedidos y catálogo, pero no pueden cambiar la configuración ni la apariencia de la tienda.</div></div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Por qué mis imágenes no se ven en la tienda? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Las imágenes deben estar en Google Drive con acceso público ("cualquiera con el link"). Si subes la imagen desde el editor de apariencia directamente, esto se hace automático. Si usas links externos de otras páginas, pueden dejar de funcionar.</div></div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">¿Dónde veo los pedidos nuevos? <span class="faq-arrow">⌄</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Los pedidos nuevos aparecen en el panel del dueño con un badge rojo en el botón "Pedidos". También recibes una notificación por correo electrónico cada vez que entra un pedido nuevo, si tienes las notificaciones activadas en configuración.</div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<footer class="footer">
+  <div style="font-size:28px;margin-bottom:12px">🛍️</div>
+  <p>Manual de usuario — <strong>LandingKit</strong></p>
+  <p style="margin-top:6px;font-size:12px">Tu tienda en línea, sin complicaciones.</p>
+</footer>
+
+<script>
+// ── CURSOR ──
+var cur = document.getElementById('cursor');
+var ring = document.getElementById('cursor-ring');
+document.addEventListener('mousemove', function(e) {
+  cur.style.left  = (e.clientX - 6) + 'px';
+  cur.style.top   = (e.clientY - 6) + 'px';
+  ring.style.left = (e.clientX - 18) + 'px';
+  ring.style.top  = (e.clientY - 18) + 'px';
+});
+document.querySelectorAll('a,button,.faq-item,.card').forEach(function(el) {
+  el.addEventListener('mouseenter', function() { cur.style.transform = 'scale(2)'; cur.style.background = '#6366f1'; });
+  el.addEventListener('mouseleave', function() { cur.style.transform = 'scale(1)'; cur.style.background = 'var(--accent)'; });
+});
+
+// ── READING BAR ──
+window.addEventListener('scroll', function() {
+  var scrollTop = window.scrollY;
+  var docHeight = document.body.scrollHeight - window.innerHeight;
+  document.getElementById('reading-bar').style.width = (scrollTop / docHeight * 100) + '%';
+
+  // sticky nav
+  var nav = document.getElementById('sticky-nav');
+  nav.classList.toggle('visible', scrollTop > 80);
+
+  // active nav link
+  var sections = ['tienda','panel','editor','faq'];
+  sections.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var rect = el.getBoundingClientRect();
+    var link = document.querySelector('a[href="#' + id + '"]');
+    if (link) link.classList.toggle('active', rect.top <= 80 && rect.bottom > 80);
+  });
+
+  // animate steps and cards
+  document.querySelectorAll('.step, .card').forEach(function(el) {
+    var rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 60) el.classList.add('visible');
+  });
+});
+
+// ── TABS ──
+function showTab(tabId, group) {
+  document.querySelectorAll('.demo-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.demo-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── FAQ ──
+function toggleFaq(item) {
+  var isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(f) { f.classList.remove('open'); });
+  if (!isOpen) item.classList.add('open');
+}
+
+// ── INIT ANIMATIONS ──
+setTimeout(function() {
+  document.querySelectorAll('.step, .card').forEach(function(el) {
+    var rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 60) el.classList.add('visible');
+  });
+}, 100);
+
+// Stagger cards
+document.querySelectorAll('.card').forEach(function(card, i) {
+  card.style.transitionDelay = (i * 0.08) + 's';
+});
+document.querySelectorAll('.step').forEach(function(step, i) {
+  step.style.transitionDelay = (i * 0.1) + 's';
+});
+</script>
+</body>
+</html>
