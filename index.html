@@ -2309,6 +2309,66 @@ function closeCatalogModal() {
 if ('serviceWorker' in navigator) {
   // Service worker registration can be added here if needed
 }
+
+// ============================================================
+// LÓGICA "CÓMO LLEGAR" - PREGUNTAR ANTES DE ABRIR MAPA
+// ============================================================
+
+function preguntarYGuirHaciaTienda() {
+    // Mostrar confirmación personalizada
+    const confirmar = confirm(
+        "🗺️ ¿Quieres que te guíe hasta la tienda física?\n\n" +
+        "Se abrirá un mapa con la ubicación de nuestra tienda y la ruta desde tu posición actual.\n\n" +
+        "✅ Aceptar para continuar\n" +
+        "❌ Cancelar para cerrar"
+    );
+    
+    if (confirmar) {
+        // Obtener storeId de la URL o de una variable global
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeId = urlParams.get('store') || window.STORE_ID || '';
+        
+        if (!storeId) {
+            alert('❌ No se pudo identificar la tienda. Contacta al administrador.');
+            return;
+        }
+        
+        // Construir URL del mapa guía
+        const mapaUrl = `mapa_guia.html?store=${encodeURIComponent(storeId)}`;
+        
+        // Abrir en nueva pestaña
+        window.open(mapaUrl, '_blank');
+    }
+}
+
+// Asignar al botón "Cómo llegar" si existe
+document.addEventListener('DOMContentLoaded', function() {
+    const btnComoLlegar = document.getElementById('btn-como-llegar');
+    if (btnComoLlegar) {
+        // Eliminar cualquier evento anterior y asignar el nuevo
+        btnComoLlegar.removeEventListener('click', preguntarYGuirHaciaTienda);
+        btnComoLlegar.addEventListener('click', preguntarYGuirHaciaTienda);
+    }
+});
+
+
+  <!-- Agregar donde quieras que aparezca el botón -->
+<button id="btn-como-llegar" class="btn-como-llegar" style="
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+">
+    🗺️ ¿Cómo llegar a la tienda física?
+</button>
+  
 </script>
 </body>
 </html>
