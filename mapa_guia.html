@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Guía hacia la tienda</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        .header { background: #1a73e8; color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 16px; font-weight: 600; }
+        .close-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; }
+        #map { flex: 1; width: 100%; }
+        .info-panel { background: white; padding: 12px 16px; border-top: 1px solid #ddd; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .distance { color: #16a34a; font-weight: 600; }
+        .btn-waze { background: #33ccff; color: #1a1a1a; border: none; padding: 8px 16px; border-radius: 25px; font-weight: 600; cursor: pointer; }
+        .btn-google { background: #1a73e8; color: white; border: none; padding: 8px 16px; border-radius: 25px; font-weight: 600; cursor: pointer; }
+        @media (max-width: 600px) { .info-panel { flex-direction: column; align-items: stretch; } }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🗺️ Guía hacia la tienda</h1>
+    <button class="close-btn" onclick="window.close()">✕ Cerrar</button>
+</div>
+
+<div id="map"></div>
+
+<div class="info-panel" id="info-panel">
+    <div>📍 <span id="store-name">Cargando tienda...</span></div>
+    <div>📏 Distancia: <span id="distance" class="distance">calculando...</span></div>
+    <div style="display: flex; gap: 8px;">
+        <button class="btn-waze" id="btn-waze" onclick="abrirWaze()">🚗 Abrir en Waze</button>
+        <button class="btn-google" id="btn-google" onclick="abrirGoogleMaps()">🗺️ Google Maps</button>
+    </div>
+</div>
+
+<script>
+    // Configuración
+    const BACKEND = 'https://script.google.com/macros/s/AKfycbwUhTHQkBhLIvF9KgP2bHpVeufIEaPCXZWo9-azz7mYrEEA79BPFCQxE68YQQxE5iw/exec';
+    const urlParams = new URLSearchParams(window.location.search);
+    const STORE_ID = urlParams.get('store') || '';
+    
+    let map;
+    let routingControl = null;
+    let storeLocation = null;
+    let userLocation = null;
+    
+    async function cargarTienda() {
+        if (!STORE_ID) {
+            alert('No se pudo identificar la tienda');
+            return;
+        }
+        
+        try {
+            const url = `${BACKEND}?action=store.info&storeId=${STORE_ID}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (!data.ok || !data.store) throw new Error('No se pudo cargar la tienda');
+            
+            const store = data.store;
+            const config = store.config || {};
+            
+            storeLocation = {
+                lat: parseFloat(config.locationLat),
+                lng: parseFloat(config.locationLng),
+                name: store.name || 'Tienda',
+                address: config.storeLocation || ''
+            };
+            
+            document.getElementById('store-name').textContent = storeLocation.name;
+            
+            if (isNaN(storeLocation.lat) || isNaN(storeLocation.lng)) {
+                alert('⚠️ Esta tienda aún no ha configurado su ubicación física.');
+                return;
+            }
+            
+            // Obtener ubicación del usuario
+            obtenerUbicacionUsuario();
+            
+        } catch (err) {
+            console.error(err);
+            alert('Error al cargar la tienda');
+        }
+    }
+    
+    function obtenerUbicacionUsuario() {
+        if (!navigator.geolocation) {
+            alert('Tu navegador no soporta geolocalización');
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLocation = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                };
+                iniciarMapa();
+            },
+            (err) => {
+                console.error(err);
+                alert('⚠️ No pudimos obtener tu ubicación. Activa el GPS y recarga la página.');
+                // Mostrar mapa sin ubicación del usuario (solo la tienda)
+                iniciarMapaSinUsuario();
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+    
+    function calcularDistancia(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    
+    function iniciarMapa() {
+        if (!storeLocation) return;
+        
+        const centro = userLocation || storeLocation;
+        
+        map = L.map('map').setView([centro.lat, centro.lng], 14);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Marcador de la tienda
+        const storeIcon = L.divIcon({
+            html: `<div style="background:#1a73e8; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.2);"><span style="color:white; font-size:18px;">🏪</span></div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+        
+        L.marker([storeLocation.lat, storeLocation.lng], { icon: storeIcon })
+            .addTo(map)
+            .bindPopup(`<b>${storeLocation.name}</b><br>${storeLocation.address || ''}`);
+        
+        if (userLocation) {
+            // Marcador del usuario
+            const userIcon = L.divIcon({
+                html: `<div style="background:#16a34a; width:24px; height:24px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.2);"></div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            
+            L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+                .addTo(map)
+                .bindPopup('📍 Tu ubicación actual');
+            
+            // Calcular distancia
+            const distancia = calcularDistancia(userLocation.lat, userLocation.lng, storeLocation.lat, storeLocation.lng);
+            document.getElementById('distance').textContent = `${distancia.toFixed(2)} km`;
+            
+            // Trazar ruta
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userLocation.lat, userLocation.lng),
+                    L.latLng(storeLocation.lat, storeLocation.lng)
+                ],
+                routeWhileDragging: false,
+                showAlternatives: true,
+                lineOptions: { styles: [{ color: '#16a34a', weight: 5 }] },
+                createMarker: () => null,
+                show: false
+            }).addTo(map);
+            
+            // Ajustar vista para mostrar toda la ruta
+            const bounds = L.latLngBounds([userLocation, storeLocation]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } else {
+            map.setView([storeLocation.lat, storeLocation.lng], 15);
+            document.getElementById('distance').textContent = 'Activa GPS para ver distancia';
+        }
+    }
+    
+    function iniciarMapaSinUsuario() {
+        if (!storeLocation) return;
+        
+        map = L.map('map').setView([storeLocation.lat, storeLocation.lng], 14);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OSM',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+        
+        const storeIcon = L.divIcon({
+            html: `<div style="background:#1a73e8; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid white;"><span style="color:white; font-size:18px;">🏪</span></div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+        
+        L.marker([storeLocation.lat, storeLocation.lng], { icon: storeIcon })
+            .addTo(map)
+            .bindPopup(`<b>${storeLocation.name}</b>`);
+        
+        document.getElementById('distance').textContent = 'Activa GPS';
+    }
+    
+    function abrirWaze() {
+        if (!storeLocation) return;
+        const url = `https://waze.com/ul?ll=${storeLocation.lat},${storeLocation.lng}&navigate=yes`;
+        window.open(url, '_blank');
+    }
+    
+    function abrirGoogleMaps() {
+        if (!storeLocation) return;
+        let destino = `${storeLocation.lat},${storeLocation.lng}`;
+        if (userLocation) {
+            destino = `${userLocation.lat},${userLocation.lng}/${storeLocation.lat},${storeLocation.lng}`;
+        }
+        const url = `https://www.google.com/maps/dir/${destino}`;
+        window.open(url, '_blank');
+    }
+    
+    window.abrirWaze = abrirWaze;
+    window.abrirGoogleMaps = abrirGoogleMaps;
+    
+    cargarTienda();
+</script>
+</body>
+</html>
