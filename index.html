@@ -1096,32 +1096,42 @@ function initMap() {
   var lng  = parseFloat(cfg.locationLng  || '');
   var addr = (cfg.storeLocation || '').trim();
 
-  var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-  if (!tieneCoords && !addr) return;
-
   var sec    = document.getElementById('map-section');
   var frame  = document.getElementById('map-iframe');
   var addrEl = document.getElementById('map-addr-text');
   var dirBtn = document.getElementById('map-directions-btn');
-  if (!sec || !frame || !addrEl || !dirBtn) return;
 
-  var mapsUrl;
+  if (!sec || !frame) return;
+
+  var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+  var embedUrl;
+
   if (tieneCoords) {
     addrEl.textContent = addr || (lat.toFixed(5) + ', ' + lng.toFixed(5));
-    frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng
-              + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
-    mapsUrl = 'https://www.google.com/maps/dir/?api=1'
-            + '&destination=' + lat + ',' + lng
-            + '&travelmode=driving';
-  } else {
+    
+    // Nueva forma recomendada (sin output=embed)
+    embedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d\( {lat}!2d \){lng}!3d\( {lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z \){lat.toFixed(6)}%2C\( {lng.toFixed(6)}!5e0!3m2!1ses!2smx!4v \){Date.now()}`;
+    
+    // Alternativa más simple y estable (Place mode)
+    // embedUrl = `https://www.google.com/maps/embed/v1/place?key=TU_API_KEY&q=\( {lat}, \){lng}`;
+    
+  } else if (addr) {
     addrEl.textContent = addr;
-    frame.src  = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
-    mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
+    embedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d300000!2d-99.0!3d20.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z${encodeURIComponent(addr)}!5e0!3m2!1ses!2smx`;
+  } else {
+    sec.style.display = 'none';
+    return;
   }
 
-  dirBtn.onclick = function() { window.open(mapsUrl, '_blank', 'noopener'); };
-  dirBtn.style.cursor = 'pointer';
+  frame.src = embedUrl;
   sec.style.display = '';
+
+  // Botón "Cómo llegar"
+  var mapsUrl = tieneCoords 
+    ? `https://www.google.com/maps/dir/?api=1&destination=\( {lat}, \){lng}&travelmode=driving`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
+
+  dirBtn.onclick = () => window.open(mapsUrl, '_blank', 'noopener');
 }
 
 // ── API ───────────────────────────────────────────────────────
