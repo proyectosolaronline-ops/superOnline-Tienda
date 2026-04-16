@@ -1090,6 +1090,8 @@ function showSuspended(nombre, motivo) {
 }
 
 // ── MAPA ──────────────────────────────────────────────────────
+
+// ── MAPA ──────────────────────────────────────────────────────
 function initMap() {
   var cfg  = window._storeCfgRaw || {};
   var lat  = parseFloat(cfg.locationLat  || '');
@@ -1097,30 +1099,47 @@ function initMap() {
   var addr = (cfg.storeLocation || '').trim();
 
   var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-  if (!tieneCoords && !addr) return;
+  var tieneAddr   = addr.length > 5;   // mínimo para considerar válida
+
+  if (!tieneCoords && !tieneAddr) {
+    document.getElementById('map-section').style.display = 'none';
+    return;
+  }
 
   var sec    = document.getElementById('map-section');
   var frame  = document.getElementById('map-iframe');
   var addrEl = document.getElementById('map-addr-text');
   var dirBtn = document.getElementById('map-directions-btn');
+
   if (!sec || !frame || !addrEl || !dirBtn) return;
 
-  var mapsUrl;
+  var mapsUrl = '';
+
   if (tieneCoords) {
+    // Prioridad 1: Coordenadas (más preciso)
     addrEl.textContent = addr || (lat.toFixed(5) + ', ' + lng.toFixed(5));
-    frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng
-              + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
-    mapsUrl = 'https://www.google.com/maps/dir/?api=1'
-            + '&destination=' + lat + ',' + lng
-            + '&travelmode=driving';
-  } else {
+    
+    frame.src = `https://maps.google.com/maps?q=\( {lat}, \){lng}&z=17&output=embed&hl=es&markers=\( {lat}, \){lng}`;
+
+    mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=\( {lat}, \){lng}&travelmode=driving&dir_action=navigate`;
+  } 
+  else {
+    // Prioridad 2: Solo dirección textual
     addrEl.textContent = addr;
-    frame.src  = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
-    mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
+    
+    frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(addr)}&output=embed&hl=es&z=15`;
+
+    mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}&travelmode=driving`;
   }
 
-  dirBtn.onclick = function() { window.open(mapsUrl, '_blank', 'noopener'); };
+  // Asignamos la acción al botón (esto resuelve el problema principal)
+  dirBtn.onclick = function() {
+    if (mapsUrl) {
+      window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
   dirBtn.style.cursor = 'pointer';
+
   sec.style.display = '';
 }
 
