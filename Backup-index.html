@@ -1090,12 +1090,13 @@ function showSuspended(nombre, motivo) {
 }
 
 // ── MAPA ──────────────────────────────────────────────────────
-function initMap() {
+
   var cfg  = window._storeCfgRaw || {};
   var lat  = parseFloat(cfg.locationLat  || '');
   var lng  = parseFloat(cfg.locationLng  || '');
   var addr = (cfg.storeLocation || '').trim();
 
+  // Necesitamos al menos coordenadas o texto de dirección
   var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
   if (!tieneCoords && !addr) return;
 
@@ -1106,13 +1107,23 @@ function initMap() {
   if (!sec || !frame || !addrEl || !dirBtn) return;
 
   if (tieneCoords) {
+    // ── Modo coordenadas exactas (pin del editor) ──────────────
+    // Muestra el texto de dirección como etiqueta, pero usa lat/lng para TODO lo demás
     addrEl.textContent = addr || (lat.toFixed(5) + ', ' + lng.toFixed(5));
+
+    // iframe: center + marker con las coordenadas exactas
+    // q=lat,lng centra Y pone el pin exacto en ese punto
     frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng
               + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
+
+    // Botón "Cómo llegar": abre Google Maps con destino en las coordenadas exactas
+    // dir_action=navigate activa navegación directa desde la posición del usuario
     dirBtn.href = 'https://www.google.com/maps/dir/?api=1'
                 + '&destination=' + lat + ',' + lng
                 + '&travelmode=driving';
+
   } else {
+    // ── Fallback: solo texto de dirección (sin coordenadas guardadas) ──
     addrEl.textContent = addr;
     frame.src  = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
     dirBtn.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
