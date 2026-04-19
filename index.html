@@ -423,14 +423,22 @@ footer a:hover{color:#fff}
 .cat-modal-cart{position:sticky;bottom:0;background:var(--cta);color:#fff;padding:12px 20px;display:none;align-items:center;justify-content:space-between;cursor:pointer;flex-shrink:0}
 .cat-modal-cart.on{display:flex}
 @media(min-width:1024px){.grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+
+  .brand-icon{cursor:pointer;transition:opacity .18s,transform .18s}
+.brand-icon:hover{opacity:.75;transform:scale(1.1)}
+.brand-icon:active{transform:scale(.95)}
 </style>
 </head>
 <body>
 
 <nav class="navbar" id="navbar">
   <div class="brand" id="store-brand" onclick="handleBrandTap()">
-    <div class="brand-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+   <div class="brand-icon" onclick="window.open('https://directorio.easylink.mx','_blank')" title="Directorio EasyLink" style="cursor:pointer;background:transparent;border:none;padding:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+        <path d="M5 9c-1.5.3-2.5.8-2.5 1.5 0 1.5 4.25 2.75 9.5 2.75s9.5-1.25 9.5-2.75c0-.7-1-1.2-2.5-1.5" stroke-opacity=".45" stroke-width="1.2"/>
+      </svg>
     </div>
     <span id="brand-text">Tienda</span>
     <div class="tap-ring"></div>
