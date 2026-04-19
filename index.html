@@ -1930,8 +1930,8 @@ function mostrarFormTelefono() {
   document.getElementById('csm-main-block').style.display = 'none';
   document.getElementById('csm-phone-block').style.display = 'block';
 }
-
-function confirmarConTelefono() {
+//---------------------------------------
+async function confirmarConTelefono() {
   var tel = (document.getElementById('csm-telefono').value || '').trim();
   var err = document.getElementById('csm-err');
   if (!tel || tel.replace(/\D/g,'').length < 8) {
@@ -1940,21 +1940,77 @@ function confirmarConTelefono() {
     return;
   }
   err.style.display = 'none';
-  var phone = storeWA.replace(/\D/g,'');
-  if (!phone) { toast('Esta tienda no tiene WhatsApp configurado'); return; }
-  
-  var msg = 'Hola! Quiero hacer un pedido en *' + storeName + '*:\n\n';
+
+  var btnConfirm = document.querySelector('#csm-phone-block .csm-btn-primary');
+  if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Registrando...'; }
+
+  // ── 1. DETECTAR CIUDAD POR IP ──
+  var ubicacion = '';
+  try {
+    var geoRes = await fetch('https://ipapi.co/json/').then(function(r){ return r.json(); });
+    if (geoRes && geoRes.city) {
+      ubicacion = (geoRes.city||'') + (geoRes.region ? ', '+geoRes.region : '') + (geoRes.country_name ? ', '+geoRes.country_name : '');
+    }
+  } catch(e) {}
+
+  // ── 2. REGISTRAR CLIENTE (evita duplicados por teléfono) ──
+  var customerId = '', customerName = 'Cliente Tel';
+  try {
+    var regRes = await post('customer.registerPhone', {
+      phone: tel,
+      location: ubicacion,
+      storeName: storeName
+    });
+    if (regRes && regRes.ok) {
+      customerId   = regRes.customerId || '';
+      customerName = regRes.name || ('Cliente ' + tel.slice(-4));
+    }
+  } catch(e) { console.warn('registerPhone:', e); }
+
+  // ── 3. CREAR PEDIDO EN BACKEND ──
+  var orderId = '', orderLink = '';
+  try {
+    var orderRes = await post('order.create', {
+      customerId:    customerId,
+      customerName:  customerName,
+      customerPhone: tel,
+      customerEmail: '',
+      items: cart.map(function(c){ return { productId: c.productId, qty: c.qty }; }),
+      notes: 'Pedido WhatsApp — Tel: ' + tel + (ubicacion ? ' — ' + ubicacion : ''),
+      source: 'whatsapp-phone'
+    });
+    if (orderRes && orderRes.ok) {
+      orderId   = orderRes.orderId   || '';
+      orderLink = orderRes.orderLink || '';
+    }
+  } catch(e) { console.warn('order.create:', e); }
+
+  // ── 4. ENVIAR POR WHATSAPP AL DUEÑO ──
+  var phone = (storeWA || '').replace(/\D/g,'');
+  if (!phone) {
+    toast('Esta tienda no tiene WhatsApp configurado');
+    if (btnConfirm) { btnConfirm.disabled=false; btnConfirm.textContent='Enviar pedido por WhatsApp'; }
+    return;
+  }
+
+  var msg = '🛍️ *Nuevo pedido* — ' + storeName + '\n';
+  msg += '━━━━━━━━━━━━━━━━━\n';
   cart.forEach(function(c, i) {
-    msg += (i+1) + '. ' + c.name + ' x' + c.qty + ' — ' + fmt(c.price * c.qty) + '\n';
+    msg += (i+1)+'. '+c.name+' x'+c.qty+' — '+fmt(c.price*c.qty)+(c.sinStock?' ⚠️':'')+'\n';
   });
-  msg += '\nTotal estimado: *' + fmt(cartTotal()) + '*';
-  msg += '\n\nMi número de contacto: *' + tel + '*';
-  
+  msg += '━━━━━━━━━━━━━━━━━\n';
+  msg += '💰 *Total: ' + fmt(cartTotal()) + '*\n';
+  msg += '📞 *Tel cliente: ' + tel + '*\n';
+  if (ubicacion) msg += '📍 ' + ubicacion + '\n';
+  if (orderId)   msg += '🔖 Pedido #' + orderId + '\n';
+  if (orderLink) msg += '🔗 ' + orderLink + '\n';
+
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
-  
+
   cart = []; save(); renderGrid(); updateNav();
   closeSuggestModal(); closeCart();
-  toast('Pedido enviado — te contactaremos pronto');
+  if (btnConfirm) { btnConfirm.disabled=false; btnConfirm.textContent='Enviar pedido por WhatsApp'; }
+  toast('✅ Pedido registrado y enviado');
 }
 
 function _doShowCheckout() {
