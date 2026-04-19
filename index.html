@@ -427,6 +427,167 @@ footer a:hover{color:#fff}
 </head>
 <body>
 
+
+  
+<!-- INICIO BOTÓN PARA REEMPLAZAR BANNER -->
+
+<!-- BARRA LED ALIEN - PIE DE PÁGINA -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    /* Contenedor barra LED */
+    .barra-led-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    /* Barra LED */
+    .barra-led {
+        display: none;
+        background: #1a1a1a;
+        color: #00ff00;
+        border: none;
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: normal;
+        border-radius: 0px;
+        cursor: pointer;
+        width: auto;
+        max-width: 350px;
+        text-decoration: none;
+        font-family: 'Share Tech Mono', monospace;
+        letter-spacing: 3px;
+        overflow: hidden;
+        white-space: nowrap;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        border-left: 3px solid #00ff00;
+        animation: parpadeo-led 2s step-end infinite;
+        text-transform: uppercase;
+        line-height: 1.4;
+    }
+
+    /* Efecto de LEDs encendidos */
+    .barra-led::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(0, 255, 0, 0.05) 50%, 
+            transparent 100%);
+        pointer-events: none;
+    }
+
+    /* Texto con scroll */
+    .texto-led {
+        display: inline-block;
+        animation: scroll-led 12s linear infinite;
+        padding-left: 100%;
+        color: #00ff00;
+        text-shadow: 0 0 5px #00ff00;
+    }
+
+    /* Scroll LED */
+    @keyframes scroll-led {
+        0% { transform: translateX(0%); }
+        100% { transform: translateX(-100%); }
+    }
+
+    /* Parpadeo sutil tipo LED */
+    @keyframes parpadeo-led {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.85; }
+    }
+
+    /* Hover */
+    .barra-led:hover {
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+        border-left-width: 5px;
+    }
+
+    .barra-led:hover .texto-led {
+        animation-play-state: paused;
+    }
+
+    .barra-led.visible {
+        display: block;
+    }
+
+    /* Aparición LED */
+    @keyframes aparecer-led {
+        0% { opacity: 0; transform: translateX(20px); }
+        100% { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Desaparición LED */
+    @keyframes desaparecer-led {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(20px); display: none; }
+    }
+</style>
+
+<a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" class="barra-led" id="barraLed">
+    <span class="texto-led">👽 ENCUENTRA MÁS TIENDAS EN DIRECTORIO EASYLINK 👾 &nbsp;&nbsp;&nbsp; 👽 ENCUENTRA MÁS TIENDAS EN DIRECTORIO EASYLINK 👾</span>
+</a>
+
+<script>
+    (function() {
+        const barra = document.getElementById('barraLed');
+        let intervaloAparicion;
+        let timeoutOcultar;
+
+        function mostrarBarra() {
+            barra.style.animation = 'aparecer-led 0.4s forwards';
+            barra.classList.add('visible');
+            
+            timeoutOcultar = setTimeout(() => {
+                barra.style.animation = 'desaparecer-led 0.3s forwards';
+                setTimeout(() => {
+                    barra.classList.remove('visible');
+                    barra.style.animation = '';
+                }, 300);
+            }, 10000);
+        }
+
+        function iniciarCiclo() {
+            setTimeout(() => mostrarBarra(), 1000);
+            intervaloAparicion = setInterval(() => mostrarBarra(), 60000);
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearInterval(intervaloAparicion);
+                clearTimeout(timeoutOcultar);
+                barra.classList.remove('visible');
+            } else {
+                iniciarCiclo();
+            }
+        });
+
+        barra.addEventListener('click', function() {
+            this.style.opacity = '0.5';
+            setTimeout(() => this.style.opacity = '', 100);
+        });
+
+        iniciarCiclo();
+
+        window.addEventListener('beforeunload', function() {
+            clearInterval(intervaloAparicion);
+            clearTimeout(timeoutOcultar);
+        });
+    })();
+</script>
+<!-- FIN BARRA LED -->
+
+  
+<!-- FIN BOTÓN PARA REEMPLAZAR BANNER -->
+
+
 <nav class="navbar" id="navbar" style="display: flex; align-items: center; gap: 8px;">
   
   <!-- ÍCONO MAPA CON RUTAS - Diseño profesional -->
