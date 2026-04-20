@@ -841,10 +841,16 @@ footer a:hover{color:#fff}
 
 <div class="cat-modal-bg" id="cat-modal-bg">
   <div class="cat-modal">
-    <div class="cat-modal-hdr">
-      <div class="cat-modal-title">🛍 Catálogo completo</div>
-      <button class="cat-modal-close" onclick="closeCatalogModal()">✕</button>
-    </div>
+  <div class="cat-modal-hdr">
+  <div class="cat-modal-title">🛍 Catálogo completo</div>
+  <div style="display:flex;align-items:center;gap:8px;flex:1;margin:0 12px;background:#f1f3f6;border-radius:99px;padding:6px 12px;border:1.5px solid var(--border)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="cat-modal-search" type="search" placeholder="Buscar en catálogo..." autocomplete="off"
+      style="border:none;outline:none;background:transparent;font-size:13px;font-family:var(--font-b);color:var(--text);width:100%"
+      oninput="filterCatalogModalSearch(this.value)"/>
+  </div>
+  <button class="cat-modal-close" onclick="closeCatalogModal()">✕</button>
+</div>
     <div class="cat-modal-filters" id="cat-modal-filters"></div>
     <div class="cat-modal-grid">
       <div class="grid" id="cat-modal-grid-el"></div>
@@ -2866,7 +2872,19 @@ function filterCatalogModal(cat, el) {
   var isLight = PLAN_FEATURES.catalogOnly;
   renderCatalogModalGrid(list, isMayorista, isLight);
 }
-
+function filterCatalogModalSearch(val) {
+  var modalPattern = /^modal\s*[1-4]$/i;
+  var q = (val || '').trim().toLowerCase();
+  var isMayorista = customer ? customer.isMayorista || false : false;
+  var isLight = PLAN_FEATURES.catalogOnly;
+  var list = products.filter(function(p) {
+    if (p.category && modalPattern.test(p.category.trim())) return false;
+    if (!q) return true;
+    var haystack = ((p.name||'') + ' ' + (p.category||'') + ' ' + (p.description||'')).toLowerCase();
+    return q.split(/\s+/).every(function(w) { return haystack.includes(w); });
+  });
+  renderCatalogModalGrid(list, isMayorista, isLight);
+}
 function renderCatalogModalGrid(list, isMayorista, isLight) {
   var g = document.getElementById('cat-modal-grid-el');
   if (!list.length) {
