@@ -3126,33 +3126,6 @@ function closeCatalogModal() {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 </style>
-    <!-- ── MODAL: AVISO AL DUEÑO EN CAMINO ─────────────────────── -->
-<style>
-#transit-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
-#transit-modal-bg.on{display:flex}
-.transit-modal{background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:360px;padding:26px 22px 22px;box-shadow:var(--shadow-xl);text-align:center}
-.transit-modal-icon{font-size:38px;margin-bottom:10px}
-.transit-modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
-.transit-modal-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
-.transit-btns{display:flex;flex-direction:column;gap:9px}
-.transit-btn-yes{padding:12px;background:#25d366;color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:all .15s}
-.transit-btn-yes:hover{background:#1db954}
-.transit-btn-no{padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r);font-size:12px;cursor:pointer;font-family:var(--font-b);transition:all .15s}
-.transit-btn-no:hover{border-color:var(--text);color:var(--text)}
-</style>
 
-<div id="transit-modal-bg">
-  <div class="transit-modal">
-    <div class="transit-modal-icon">🚶</div>
-    <div class="transit-modal-title">¿Avisamos que vas en camino?</div>
-    <div class="transit-modal-sub">Podemos notificar al negocio por WhatsApp para que se preparen antes de que llegues.</div>
-    <div class="transit-btns">
-      <button class="transit-btn-yes" id="transit-notify-btn">Sí, avisar por WhatsApp</button>
-      <button class="transit-btn-no" id="transit-skip-btn">No, solo llevarme ahí</button>
-    </div>
-  </div>
-</div>
-
-<script>
 </body>
 </html>
