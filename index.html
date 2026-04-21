@@ -1596,6 +1596,8 @@ function showSuspended(nombre, motivo, bannerRaw) {
 }
 
 // ── MAPA ───────────────8888888888888888888888888888888888───────────────────────────────────────
+
+// ── MAPA ──────────────────────────────────────────────────────
 function initMap() {
   var cfg  = window._storeCfgRaw || {};
   var lat  = parseFloat(cfg.locationLat  || '');
@@ -1613,15 +1615,18 @@ function initMap() {
   var mapsUrl;
   if (tieneCoords) {
     addrEl.textContent = addr || (lat.toFixed(5) + ', ' + lng.toFixed(5));
-    frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
-    mapsUrl   = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=driving';
+    frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng
+              + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
+    mapsUrl = 'https://www.google.com/maps/dir/?api=1'
+            + '&destination=' + lat + ',' + lng
+            + '&travelmode=driving';
   } else {
     addrEl.textContent = addr;
     frame.src  = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
-    mapsUrl    = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
+    mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
   }
 
-  // NUEVO: interceptar clic en "Cómo llegar"
+  // Interceptar clic en "Cómo llegar" → mostrar modal primero
   dirBtn.removeAttribute('href');
   dirBtn.style.cursor = 'pointer';
   dirBtn.onclick = function(e) {
@@ -1633,7 +1638,7 @@ function initMap() {
   sec.style.display = '';
 }
 
-// ── MODAL DE AVISO ──────────────────────────────────────────────
+// ── MODAL: AVISO AL DUEÑO EN CAMINO ──────────────────────────
 function abrirTransitModal() {
   document.getElementById('transit-modal-bg').classList.add('on');
 }
@@ -1641,67 +1646,89 @@ function cerrarTransitModal() {
   document.getElementById('transit-modal-bg').classList.remove('on');
 }
 
-document.getElementById('transit-modal-bg').addEventListener('click', function(e) {
-  if (e.target === this) { cerrarTransitModal(); irAMaps(); }
-});
+// Cerrar al hacer clic fuera del modal → ir directo a Maps
+document.addEventListener('DOMContentLoaded', function() {
 
-document.getElementById('transit-skip-btn').addEventListener('click', function() {
-  cerrarTransitModal();
-  irAMaps();
-});
+  var bg = document.getElementById('transit-modal-bg');
+  if (bg) {
+    bg.addEventListener('click', function(e) {
+      if (e.target === this) { cerrarTransitModal(); irAMaps(); }
+    });
+  }
 
-document.getElementById('transit-notify-btn').addEventListener('click', function() {
-  var btn = this;
-  btn.disabled = true;
-  btn.textContent = 'Obteniendo ubicación...';
+  var skipBtn = document.getElementById('transit-skip-btn');
+  if (skipBtn) {
+    skipBtn.addEventListener('click', function() {
+      cerrarTransitModal();
+      irAMaps();
+    });
+  }
 
-  // Intentar geolocalización del usuario
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        var userLat = pos.coords.latitude;
-        var userLng = pos.coords.longitude;
-        // Geocodificación inversa con API gratuita
-        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + userLat + '&lon=' + userLng + '&accept-language=es')
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            var ciudad = data.address.city || data.address.town || data.address.village || data.address.county || '';
-            var estado = data.address.state || '';
-            var origen = ciudad ? (ciudad + (estado ? ', ' + estado : '')) : 'ubicación desconocida';
-            enviarAvisoTransito(origen, userLat, userLng);
-          })
-          .catch(function() { enviarAvisoTransito('', userLat, userLng); });
-      },
-      function() {
-        // Si rechaza ubicación: enviar aviso sin coordenadas
-        enviarAvisoTransito('', null, null);
-      },
-      { timeout: 6000, maximumAge: 60000 }
-    );
-  } else {
-    enviarAvisoTransito('', null, null);
+  var notifyBtn = document.getElementById('transit-notify-btn');
+  if (notifyBtn) {
+    notifyBtn.addEventListener('click', function() {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Obteniendo ubicación...';
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            var userLat = pos.coords.latitude;
+            var userLng = pos.coords.longitude;
+            // Geocodificación inversa gratuita
+            fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='
+                  + userLat + '&lon=' + userLng + '&accept-language=es')
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                var ciudad = data.address.city
+                          || data.address.town
+                          || data.address.village
+                          || data.address.county || '';
+                var estado = data.address.state || '';
+                var origen = ciudad
+                  ? (ciudad + (estado ? ', ' + estado : ''))
+                  : 'ubicación desconocida';
+                enviarAvisoTransito(btn, origen, userLat, userLng);
+              })
+              .catch(function() {
+                enviarAvisoTransito(btn, '', userLat, userLng);
+              });
+          },
+          function() {
+            // Usuario rechazó geolocalización
+            enviarAvisoTransito(btn, '', null, null);
+          },
+          { timeout: 6000, maximumAge: 60000 }
+        );
+      } else {
+        enviarAvisoTransito(btn, '', null, null);
+      }
+    });
   }
 });
 
-async function enviarAvisoTransito(origen, userLat, userLng) {
+async function enviarAvisoTransito(btn, origen, userLat, userLng) {
   var phone = (storeWA || '').replace(/\D/g, '');
 
-  // Calcular tiempo estimado si hay coordenadas del destino y del origen
-  var cfg      = window._storeCfgRaw || {};
-  var destLat  = parseFloat(cfg.locationLat || '');
-  var destLng  = parseFloat(cfg.locationLng || '');
+  // Calcular distancia/tiempo estimado si hay coordenadas de ambos extremos
+  var cfg     = window._storeCfgRaw || {};
+  var destLat = parseFloat(cfg.locationLat || '');
+  var destLng = parseFloat(cfg.locationLng || '');
   var tiempoStr = '';
+
   if (userLat !== null && userLng !== null && !isNaN(destLat) && !isNaN(destLng)) {
     var dist = calcDistKm(userLat, userLng, destLat, destLng);
-    var mins = Math.round((dist / 30) * 60); // ~30 km/h en ciudad
-    if (mins < 2)  tiempoStr = 'ya está muy cerca';
+    var mins = Math.round((dist / 30) * 60); // ~30 km/h promedio ciudad
+    if      (mins < 2)  tiempoStr = 'ya está muy cerca';
     else if (mins < 60) tiempoStr = 'aprox. ' + mins + ' min';
-    else tiempoStr = 'aprox. ' + Math.round(mins/60) + ' h ' + (mins%60) + ' min';
+    else                tiempoStr = 'aprox. ' + Math.round(mins / 60) + ' h '
+                                  + (mins % 60) + ' min';
   }
 
-  // Construir mensaje
-  var hora = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  var nombre = customer ? customer.name || '' : '';
+  // Construir mensaje WhatsApp
+  var hora    = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  var nombre  = customer ? (customer.name || '') : '';
   var numCart = PLAN_FEATURES.catalogOnly ? lightList.length : cartCount();
 
   var msg = '🚶 *Aviso: cliente en camino* — ' + storeName + '\n';
@@ -1710,21 +1737,27 @@ async function enviarAvisoTransito(origen, userLat, userLng) {
   if (origen)    msg += '📍 Viene desde: ' + origen + '\n';
   if (tiempoStr) msg += '🕐 Tiempo estimado: ' + tiempoStr + '\n';
   msg += '⏰ Hora de aviso: ' + hora + '\n';
-  if (numCart > 0) msg += '🛒 ' + numCart + ' producto' + (numCart !== 1 ? 's' : '') + ' en su solicitud\n';
+  if (numCart > 0) msg += '🛒 ' + numCart + ' producto'
+                        + (numCart !== 1 ? 's' : '') + ' en su solicitud\n';
   msg += '━━━━━━━━━━━━━━\n';
-  msg += 'Se preparó para recibirlos con anticipación 👋';
+  msg += 'Prepárate para recibirles 👋';
 
   cerrarTransitModal();
 
   if (phone) {
     window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
-    // Pequeña pausa antes de abrir Maps para no bloquear el popup
+    // Pequeña pausa para que el popup no sea bloqueado antes de abrir Maps
     setTimeout(irAMaps, 600);
   } else {
     irAMaps();
   }
 
   toast('Aviso enviado — abriendo ruta...');
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Sí, avisar por WhatsApp';
+  }
 }
 
 function irAMaps() {
@@ -1732,16 +1765,18 @@ function irAMaps() {
   if (url) window.open(url, '_blank');
 }
 
-// Fórmula Haversine para distancia en km
+// Fórmula de Haversine — distancia en km entre dos coordenadas
 function calcDistKm(lat1, lng1, lat2, lng2) {
-  var R = 6371;
+  var R    = 6371;
   var dLat = (lat2 - lat1) * Math.PI / 180;
   var dLng = (lng2 - lng1) * Math.PI / 180;
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-          Math.sin(dLng/2) * Math.sin(dLng/2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var a    = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+           + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+           * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+  
+  
 // ── API ────────────────8888888888888888888888888888888888888888───────────────────────────────────────
 async function get(a) {
   try {
@@ -3121,27 +3156,60 @@ function closeCatalogModal() {
 </style>
 <!-- ── MODAL: AVISO AL DUEÑO EN CAMINO ─────────────────────── -->
 <style>
-#transit-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
-#transit-modal-bg.on{display:flex}
-.transit-modal{background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:360px;padding:26px 22px 22px;box-shadow:var(--shadow-xl);text-align:center}
-.transit-modal-icon{font-size:38px;margin-bottom:10px}
-.transit-modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
-.transit-modal-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
-.transit-btns{display:flex;flex-direction:column;gap:9px}
-.transit-btn-yes{padding:12px;background:#25d366;color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:all .15s}
-.transit-btn-yes:hover{background:#1db954}
-.transit-btn-no{padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r);font-size:12px;cursor:pointer;font-family:var(--font-b);transition:all .15s}
-.transit-btn-no:hover{border-color:var(--text);color:var(--text)}
+#transit-modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55); z-index: 600;
+  align-items: center; justify-content: center;
+  padding: 16px; backdrop-filter: blur(4px);
+}
+#transit-modal-bg.on { display: flex; }
+.transit-modal {
+  background: var(--surface); border-radius: var(--r-xl);
+  width: 100%; max-width: 360px; padding: 26px 22px 22px;
+  box-shadow: var(--shadow-xl); text-align: center;
+}
+.transit-modal-icon  { font-size: 38px; margin-bottom: 10px; }
+.transit-modal-title {
+  font-family: var(--font-d); font-size: 18px; font-weight: 700;
+  color: var(--text); margin-bottom: 6px;
+}
+.transit-modal-sub {
+  font-size: 13px; color: var(--muted);
+  line-height: 1.6; margin-bottom: 20px;
+}
+.transit-btns   { display: flex; flex-direction: column; gap: 9px; }
+.transit-btn-yes {
+  padding: 12px; background: #25d366; color: #fff;
+  border: none; border-radius: var(--r); font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: var(--font-b);
+  transition: all .15s;
+}
+.transit-btn-yes:hover  { background: #1db954; }
+.transit-btn-yes:disabled { background: #a5d6a7; cursor: default; }
+.transit-btn-no {
+  padding: 11px; background: transparent; color: var(--muted);
+  border: 1px solid var(--border); border-radius: var(--r);
+  font-size: 12px; cursor: pointer; font-family: var(--font-b);
+  transition: all .15s;
+}
+.transit-btn-no:hover { border-color: var(--text); color: var(--text); }
 </style>
 
 <div id="transit-modal-bg">
   <div class="transit-modal">
     <div class="transit-modal-icon">🚶</div>
     <div class="transit-modal-title">¿Avisamos que vas en camino?</div>
-    <div class="transit-modal-sub">Podemos notificar al negocio por WhatsApp para que se preparen antes de que llegues.</div>
+    <div class="transit-modal-sub">
+      Podemos notificar al negocio por WhatsApp para que se
+      preparen antes de que llegues.
+    </div>
     <div class="transit-btns">
-      <button class="transit-btn-yes" id="transit-notify-btn">Sí, avisar por WhatsApp</button>
-      <button class="transit-btn-no" id="transit-skip-btn">No, solo llevarme ahí</button>
+      <button class="transit-btn-yes" id="transit-notify-btn">
+        Sí, avisar por WhatsApp
+      </button>
+      <button class="transit-btn-no" id="transit-skip-btn">
+        No, solo llevarme ahí
+      </button>
     </div>
   </div>
 </div>
