@@ -1520,7 +1520,7 @@ window.addEventListener('load', async function() {
     updateNav();
     actualizarVisibilidadWA();
     updateBanner();
-    initMap();
+    initMap(cfg);
     showV('catalog');
     installPWA(storeName, fixImgUrl(cfg.logo || ''), cfg.primaryColor || '#1a73e8');
 
@@ -1599,12 +1599,15 @@ function showSuspended(nombre, motivo, bannerRaw) {
 
 // ── MAPA ──────────────────────────────────────────────────────
 function initMap() {
-  var cfg  = window._storeCfgRaw || {};
+  var cfg  = cfg = cfgOverride  ||  window._storeCfgRaw || {};
   var lat  = parseFloat(cfg.locationLat  || '');
   var lng  = parseFloat(cfg.locationLng  || '');
   var addr = (cfg.storeLocation || '').trim();
   var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-  if (!tieneCoords && !addr) return;
+  if (!tieneCoords && !addr) {
+    if (!cfgOverride) setTimeout(function(){ initMap(); }, 1500);
+    return;
+  }
 
   var sec    = document.getElementById('map-section');
   var frame  = document.getElementById('map-iframe');
