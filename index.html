@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo + Banner - Demo</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f0f2f5;
+  }
+
+  /* ========== ESTILOS DEL HERO (BANNER) ========== */
+  .hero {
+    background: var(--primary, #1a73e8);
+    padding: 60px max(16px, calc((100vw - 1200px)/2));
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 620px;
+  }
+
+  /* ========== ESTILOS DEL LOGO ========== */
+  .hero-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    object-fit: cover;
+    margin-bottom: 20px;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+
+  /* Texto de ejemplo para ver que el logo está arriba */
+  .hero-inner h1 {
+    color: white;
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  .hero-inner p {
+    color: rgba(255,255,255,0.85);
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== BANNER + LOGO ==================== -->
+<div class="hero" id="heroBanner">
+  <div class="hero-inner">
+    <!-- 
+      ⬇️⬇️⬇️ LOGO - se inserta AQUÍ (dentro de hero-inner, al principio) 
+    -->
+    <img class="hero-logo" id="storeLogo" src="" alt="Logo de la tienda">
+    
+    <!-- Contenido de texto de ejemplo (para ver que el logo está arriba) -->
+    <h1>Tienda Ejemplo</h1>
+    <p>Este es un banner de demostración con logo arriba</p>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CÓDIGO PARA CARGAR LOGO Y BANNER (SIN BACKEND, SOLO DEMO)
+  // ============================================================
+  
+  // 🔹 DATOS DE EJEMPLO (cambia estas URLs por las que quieras probar)
+  const configEjemplo = {
+    logoUrl: "https://picsum.photos/id/104/200/200",  // URL del logo (cámbiala)
+    bannerUrl: "https://picsum.photos/id/104/1200/400" // URL del banner de fondo (cámbiala)
+  };
+
+  // 1️⃣ CARGAR LOGO
+  const logoImg = document.getElementById('storeLogo');
+  if (configEjemplo.logoUrl) {
+    logoImg.src = configEjemplo.logoUrl;
+    logoImg.alt = "Logo de la tienda";
+    // Si la imagen falla, opcional: mostrar un emoji o texto
+    logoImg.onerror = function() {
+      this.style.display = 'none';
+      console.warn('No se pudo cargar el logo');
+    };
+  } else {
+    logoImg.style.display = 'none';
+  }
+
+  // 2️⃣ CARGAR BANNER (fondo del hero)
+  const heroDiv = document.getElementById('heroBanner');
+  if (configEjemplo.bannerUrl) {
+    heroDiv.style.backgroundImage = 'url(' + configEjemplo.bannerUrl + ')';
+    heroDiv.style.backgroundSize = 'cover';
+    heroDiv.style.backgroundPosition = 'center';
+    heroDiv.style.backgroundRepeat = 'no-repeat';
+  }
+</script>
+
+</body>
+</html>
