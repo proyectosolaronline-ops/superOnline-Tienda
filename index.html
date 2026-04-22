@@ -423,269 +423,38 @@ footer a:hover{color:#fff}
 .cat-modal-cart{position:sticky;bottom:0;background:var(--cta);color:#fff;padding:12px 20px;display:none;align-items:center;justify-content:space-between;cursor:pointer;flex-shrink:0}
 .cat-modal-cart.on{display:flex}
 @media(min-width:1024px){.grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+
+/* CAMBIO 8 - Estilos toggle stock */
+.stock-toggle-wrap{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.stock-toggle-label{font-size:13px;font-weight:600;color:var(--text)}
+.stock-toggle-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:22px;cursor:pointer;transition:.2s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;bottom:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked + .toggle-slider{background:var(--primary)}
+.toggle-switch input:checked + .toggle-slider::before{transform:translateX(18px)}
+.store-stock{font-size:10px;font-weight:600;display:inline-block;padding:2px 7px;border-radius:99px;margin-top:3px}
+.stock-ok{background:#dcfce7;color:#166534}
+.stock-low{background:#fef9c3;color:#854d0e}
+.stock-out{background:#fee2e2;color:#991b1b}
 </style>
 </head>
 <body>
 
-
-  
-<!-- INICIO BOTÓN PARA REEMPLAZAR BANNER --------------------------------------------------------------------------------------------------------------------------------->
-
-<!-- BARRA LED ALIEN - PIE DE PÁGINA -->
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
-    /* Contenedor barra LED */
-    .barra-led-container {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-    }
-
-    /* Barra LED */
-    .barra-led {
-        display: none;
-        background: #1a1a1a;
-        color: #00ff00;
-        border: none;
-        padding: 8px 20px;
-        font-size: 14px;
-        font-weight: normal;
-        border-radius: 0px;
-        cursor: pointer;
-        width: auto;
-        max-width: 350px;
-        text-decoration: none;
-        font-family: 'Share Tech Mono', monospace;
-        letter-spacing: 3px;
-        overflow: hidden;
-        white-space: nowrap;
-        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-        border-left: 3px solid #00ff00;
-        animation: parpadeo-led 2s step-end infinite;
-        text-transform: uppercase;
-        line-height: 1.4;
-    }
-
-    /* Efecto de LEDs encendidos */
-    .barra-led::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, 
-            transparent 0%, 
-            rgba(0, 255, 0, 0.05) 50%, 
-            transparent 100%);
-        pointer-events: none;
-    }
-
-    /* Texto con scroll */
-    .texto-led {
-        display: inline-block;
-        animation: scroll-led 12s linear infinite;
-        padding-left: 100%;
-        color: #00ff00;
-        text-shadow: 0 0 5px #00ff00;
-    }
-
-    /* Scroll LED */
-    @keyframes scroll-led {
-        0% { transform: translateX(0%); }
-        100% { transform: translateX(-100%); }
-    }
-
-    /* Parpadeo sutil tipo LED */
-    @keyframes parpadeo-led {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.85; }
-    }
-
-    /* Hover */
-    .barra-led:hover {
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
-        border-left-width: 5px;
-    }
-
-    .barra-led:hover .texto-led {
-        animation-play-state: paused;
-    }
-
-    .barra-led.visible {
-        display: block;
-    }
-
-    /* Aparición LED */
-    @keyframes aparecer-led {
-        0% { opacity: 0; transform: translateX(20px); }
-        100% { opacity: 1; transform: translateX(0); }
-    }
-
-    /* Desaparición LED */
-    @keyframes desaparecer-led {
-        0% { opacity: 1; transform: translateX(0); }
-        100% { opacity: 0; transform: translateX(20px); display: none; }
-    }
-</style>
-
-<a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" class="barra-led" id="barraLed">
-    <span class="texto-led">👽 Con Un Click encontraras mas tiendas EasyLink !!! 👾 &nbsp;&nbsp;&nbsp; 👽 promociones sorpresas en tiendas Easylink !!! 👾</span>
-</a>
-
-<script>
-    (function() {
-        const barra = document.getElementById('barraLed');
-        let intervaloAparicion;
-        let timeoutOcultar;
-
-        function mostrarBarra() {
-            barra.style.animation = 'aparecer-led 0.4s forwards';
-            barra.classList.add('visible');
-            
-            timeoutOcultar = setTimeout(() => {
-                barra.style.animation = 'desaparecer-led 0.3s forwards';
-                setTimeout(() => {
-                    barra.classList.remove('visible');
-                    barra.style.animation = '';
-                }, 300);
-            }, 10000);
-        }
-
-        function iniciarCiclo() {
-            setTimeout(() => mostrarBarra(), 1000);
-            intervaloAparicion = setInterval(() => mostrarBarra(), 60000);
-        }
-
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                clearInterval(intervaloAparicion);
-                clearTimeout(timeoutOcultar);
-                barra.classList.remove('visible');
-            } else {
-                iniciarCiclo();
-            }
-        });
-
-        barra.addEventListener('click', function() {
-            this.style.opacity = '0.5';
-            setTimeout(() => this.style.opacity = '', 100);
-        });
-
-        iniciarCiclo();
-
-        window.addEventListener('beforeunload', function() {
-            clearInterval(intervaloAparicion);
-            clearTimeout(timeoutOcultar);
-        });
-    })();
-</script>
-<!-- FIN BARRA LED -->
-
-  
-<!-- FIN BOTÓN PARA REEMPLAZAR BANNER -->
-
-
-<nav class="navbar" id="navbar" style="display: flex; align-items: center; gap: 8px;">
-  
-  <!-- ÍCONO MAPA CON RUTAS - Diseño profesional -->
-  <div class="brand-icon" style="display: flex; flex-direction: column; align-items: center;">
-    <a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       style="display: flex; align-items: center; justify-content: center; text-decoration: none;">
-      
-      <div class="map-container" style="position: relative; cursor: pointer;">
-        <!-- NUEVO SVG: Mapa con ruta trazada y marcador -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" 
-             stroke-linecap="round" stroke-linejoin="round"
-             style="width: 44px; height: 44px; color: #e2e8f0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
-          
-          <!-- Mapa base plegado -->
-          <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" />
-          <!-- Pliegue del mapa -->
-          <path d="M8 2v16M16 6v16" opacity="0.4" />
-          
-          <!-- Ruta trazada (path de navegación) -->
-          <path d="M12 8a3 3 0 00-3 3c0 3 3 6 3 6s3-3 3-6a3 3 0 00-3-3z" fill="#38bdf8" fill-opacity="0.15" />
-          
-          <!-- Marcador de destino (pin) -->
-          <circle cx="12" cy="11" r="1.5" fill="#38bdf8" stroke="none" />
-          
-          <!-- Efecto de brillo en el pin -->
-          <circle cx="12" cy="11" r="3" stroke="#38bdf8" stroke-width="0.5" opacity="0.4" />
-        </svg>
-        
-        <!-- Texto "vamos al directorio" encima del mapa -->
-        <div style="position: absolute; top: -28px; left: 50%; transform: translateX(-50%); 
-                    white-space: nowrap; font-size: 10px; font-weight: 500; letter-spacing: 0.5px;
-                    display: flex; gap: 4px; font-family: system-ui, -apple-system, sans-serif;">
-          <span style="color: #94a3b8; transition: color 0.3s ease;">vamos</span>
-          <span style="color: #64748b; transition: color 0.3s ease;">al</span>
-          <span style="color: #38bdf8; transition: all 0.3s ease;" class="directorio-text">directorio</span>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  <!-- TEXTO + CONTADOR: Panel admin -->
-  <div class="brand" id="store-brand" onclick="handleBrandTap()" style="display: flex; align-items: center; gap: 0; cursor: pointer;">
+<nav class="navbar" id="navbar">
+  <div class="brand" id="store-brand" onclick="handleBrandTap()">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    </div>
     <span id="brand-text">Tienda</span>
     <div class="tap-ring"></div>
     <div class="tap-count" id="tap-count">0</div>
   </div>
-
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
-<!-- ESTILOS DE ANIMACIÓN -->
-<style>
-  .map-container svg {
-    animation: float 6s ease-in-out infinite;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-2px); }
-  }
-  
-  .map-container:hover svg {
-    color: #38bdf8 !important;
-    transform: scale(1.08) translateY(-2px);
-    filter: drop-shadow(0 4px 8px rgba(56,189,248,0.3));
-  }
-  
-  .map-container:hover .directorio-text {
-    color: #0ea5e9 !important;
-    letter-spacing: 0.8px;
-    text-shadow: 0 0 8px rgba(56,189,248,0.5);
-  }
-  
-  .map-container:hover span:first-child {
-    color: #cbd5e1 !important;
-  }
-  
-  .map-container:hover span:nth-child(2) {
-    color: #94a3b8 !important;
-  }
-  
-  .map-container,
-  .map-container svg,
-  .map-container span {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  /* Alineación del navbar */
-  #navbar {
-    padding: 8px 16px;
-  }
-</style>
-
-  
-  <div id="store-msg-bar" style="display:none!important"></div>
+<div id="store-msg-bar" style="display:none!important"></div>
 
 <div id="v-loading"><div class="loading"><div class="spinner"></div>Cargando tienda...</div></div>
 
@@ -802,6 +571,17 @@ footer a:hover{color:#fff}
   <div id="smart-banner" style="display:none"></div>
 
   <section class="catalog">
+    <!-- CAMBIO 7 - Toggle stock -->
+    <div class="stock-toggle-wrap">
+      <div>
+        <div class="stock-toggle-label">Mostrar disponibilidad</div>
+        <div class="stock-toggle-sub">Badge de stock en cada producto</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="stockToggleGlobal" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
     <div class="search-bar-wrap">
       <div class="search-bar-inner">
         <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -841,16 +621,10 @@ footer a:hover{color:#fff}
 
 <div class="cat-modal-bg" id="cat-modal-bg">
   <div class="cat-modal">
-  <div class="cat-modal-hdr">
-  <div class="cat-modal-title">🛍 Catálogo completo</div>
-  <div style="display:flex;align-items:center;gap:8px;flex:1;margin:0 12px;background:#f1f3f6;border-radius:99px;padding:6px 12px;border:1.5px solid var(--border)">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="cat-modal-search" type="search" placeholder="Buscar en catálogo..." autocomplete="off"
-      style="border:none;outline:none;background:transparent;font-size:13px;font-family:var(--font-b);color:var(--text);width:100%"
-      oninput="filterCatalogModalSearch(this.value)"/>
-  </div>
-  <button class="cat-modal-close" onclick="closeCatalogModal()">✕</button>
-</div>
+    <div class="cat-modal-hdr">
+      <div class="cat-modal-title">🛍 Catálogo completo</div>
+      <button class="cat-modal-close" onclick="closeCatalogModal()">✕</button>
+    </div>
     <div class="cat-modal-filters" id="cat-modal-filters"></div>
     <div class="cat-modal-grid">
       <div class="grid" id="cat-modal-grid-el"></div>
@@ -1085,7 +859,19 @@ footer a:hover{color:#fff}
     <button class="owner-btn primary" onclick="goToOwnerPanel()">Ir al panel de gestion</button>
     <button class="owner-btn accent" onclick="goToEditorApariencia()">🎨 Editor de apariencia</button>
     <button class="owner-btn primary" onclick="abrirFlyerModal();closeOwnerModal()">🖨️ Flyer QR</button>
+    <button class="owner-btn ghost" onclick="abrirDiagnostico();closeOwnerModal()">🔍 Diagnóstico logo</button>
     <button class="owner-btn ghost" onclick="closeOwnerModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DIAGNÓSTICO LOGO & BANNER -->
+<div class="modal-bg" id="diag-bg" onclick="if(event.target===this)this.classList.remove('on')" style="display:none">
+  <div style="background:#fff;border-radius:16px;padding:24px;max-width:400px;width:92%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:700">🔍 Diagnóstico Logo & Banner</div>
+      <button onclick="document.getElementById('diag-bg').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div id="diag-content">⏳ Cargando...</div>
   </div>
 </div>
 
@@ -1133,6 +919,9 @@ var BACKEND      = params.get('backend') || window.LK_BACKEND || 'https://script
 var STORE_ID     = params.get('store')   || window.LK_STORE   || localStorage.getItem('ld_store') || '';
 var OWNER_PANEL_URL = params.get('panel') || 'https://proyectosolaronline-ops.github.io/Owner-super-Online/';
 
+// CAMBIO 1 - Token de admin
+var TOKEN_ADMIN = localStorage.getItem('ld_token') || '';
+
 var products  = [];
 var cart      = JSON.parse(localStorage.getItem('c_' + STORE_ID) || '[]');
 var lightList = [];
@@ -1144,20 +933,44 @@ var _authAttempts = 0, _authBlocked = false;
 var _orderInFlight = false;
 window.STORE_BUSINESS_TYPE = 'regular';
 
-// CAMBIO IMPORTANTE: catalogOnly = false para activar el carrito
 var PLAN_FEATURES = {
-  catalogOnly:       false,  // ← AHORA EL CARRITO ESTÁ ACTIVADO
-  allowOrders:       true,
-  allowCustomers:    true,
-  allowMayorista:    true,
+  catalogOnly:       false,
+  allowOrders:       false,
+  allowCustomers:    false,
+  allowMayorista:    false,
   allowPromos:       true,
-  label:             'full',
-  maxProducts:       9999,
+  label:             'light',
+  maxProducts:       50,
   maxOrders:         0,
   maxCustomers:      0,
   maxPromos:         0,
   licenseRestricted: false,
 };
+
+// CAMBIO 2 - Variable global stock
+var showStockInStore = true;
+
+// CAMBIO 3 - Funciones de stock
+function initStockToggle() {
+  var saved = localStorage.getItem('ld_show_stock_store');
+  showStockInStore = saved !== null ? saved === 'true' : true;
+  var cb = document.getElementById('stockToggleGlobal');
+  if (!cb) return;
+  cb.checked = showStockInStore;
+  cb.addEventListener('change', function(e) {
+    showStockInStore = e.target.checked;
+    localStorage.setItem('ld_show_stock_store', String(showStockInStore));
+    renderGrid();
+  });
+}
+
+function getStockDisplay(stock) {
+  if (!showStockInStore) return null;
+  var s = Number(stock || 0);
+  if (s <= 0) return { cls: 'stock-out', text: '❌ Agotado' };
+  if (s < 5)  return { cls: 'stock-low', text: '⚠️ Últimas ' + s };
+  return      { cls: 'stock-ok',  text: '📦 Stock: ' + s };
+}
 
 // ── LICENCIA ──────────────────────────────────────────────────
 function isCartAllowed() {
@@ -1181,6 +994,60 @@ function goToOwnerPanel() {
 function goToEditorApariencia() {
   var base = window.location.href.split('?')[0].replace(/[^\/]+$/, '');
   window.location.href = base + 'editor-apariencia.html?backend=' + encodeURIComponent(BACKEND) + '&store=' + encodeURIComponent(STORE_ID);
+}
+
+async function abrirDiagnostico() {
+  var bg = document.getElementById('diag-bg');
+  var content = document.getElementById('diag-content');
+  bg.style.display = 'flex';
+  content.innerHTML = '⏳ Cargando datos del backend...';
+
+  function fixUrl(url) {
+    if (!url) return '';
+    var m = url.match(/[?&]id=([\w-]+)/); if (m) return 'https://lh3.googleusercontent.com/d/'+m[1];
+    var m2 = url.match(/\/d\/([\w-]+)/);  if (m2) return 'https://lh3.googleusercontent.com/d/'+m2[1];
+    return url;
+  }
+  function imgCard(label, url) {
+    if (!url) return '<div style="margin-bottom:12px"><b>'+label+'</b><br><span style="color:#d93025;font-size:12px">❌ Sin URL guardada</span></div>';
+    var fixed = fixUrl(url);
+    var same = fixed === url ? '(misma URL)' : fixed;
+    return '<div style="margin-bottom:16px">' +
+      '<b style="font-size:12px">'+label+'</b>' +
+      '<div style="font-size:10px;font-family:monospace;background:#f0f0f0;padding:6px;border-radius:6px;word-break:break-all;margin:4px 0">'+url+'</div>' +
+      '<div style="font-size:10px;color:#888;margin-bottom:6px">fixImgUrl → '+same+'</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<div style="flex:1;min-width:120px">' +
+          '<div style="font-size:10px;color:#888;margin-bottom:3px">URL directa:</div>' +
+          '<img src="'+url+'" style="width:100%;max-height:80px;object-fit:contain;border-radius:6px;border:1px solid #ddd;background:#f8f8f8" ' +
+          'onload="this.nextSibling.textContent=\'✅ OK\';this.nextSibling.style.color=\'#00a650\'" ' +
+          'onerror="this.style.display=\'none\';this.nextSibling.textContent=\'❌ Falla\';this.nextSibling.style.color=\'#d93025\'">' +
+          '<div style="font-size:11px;font-weight:600">⏳</div>' +
+        '</div>' +
+        '<div style="flex:1;min-width:120px">' +
+          '<div style="font-size:10px;color:#888;margin-bottom:3px">fixImgUrl:</div>' +
+          '<img src="'+fixed+'" style="width:100%;max-height:80px;object-fit:contain;border-radius:6px;border:1px solid #ddd;background:#f8f8f8" ' +
+          'onload="this.nextSibling.textContent=\'✅ OK\';this.nextSibling.style.color=\'#00a650\'" ' +
+          'onerror="this.style.display=\'none\';this.nextSibling.textContent=\'❌ Falla\';this.nextSibling.style.color=\'#d93025\'">' +
+          '<div style="font-size:11px;font-weight:600">⏳</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  try {
+    var cfg = window._storeCfgRaw || {};
+    var logoUrl  = cfg.logo    || cfg.logoUrl   || '';
+    var bannerUrl = cfg.bannerUrl || cfg.banner || '';
+    var html = '<div style="font-size:13px;font-weight:600;margin-bottom:8px">Tienda: <span style="color:#1a73e8">'+storeName+'</span></div>';
+    html += imgCard('🖼 Logo', logoUrl);
+    html += imgCard('🏞 Banner', bannerUrl);
+    html += '<details style="margin-top:12px"><summary style="font-size:11px;cursor:pointer;color:#888">Ver config completo</summary>' +
+      '<pre style="font-size:9px;background:#f0f0f0;padding:8px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin-top:6px">'+JSON.stringify(cfg,null,2)+'</pre></details>';
+    content.innerHTML = html;
+  } catch(e) {
+    content.innerHTML = '<span style="color:red">Error: '+e.message+'</span>';
+  }
 }
 function toggleMayoristaCheck() { var cb = document.getElementById('am-mayorista'); cb.checked = !cb.checked; }
 
@@ -1383,16 +1250,10 @@ function showSmartBanner(raw) {
 
 // ── INICIALIZACIÓN PRINCIPAL ──────────────────────────────────
 window.addEventListener('load', async function() {
-  if (!BACKEND || !STORE_ID) {
-    var cached0 = loadCachedCatalog();
-    if (cached0 && cached0.products && cached0.products.length) {
-      products = cached0.products;
-    }
-    renderCatalog();
-    initMap();
-    showV('catalog');
-    return;
-  }
+  if (!BACKEND || !STORE_ID) { showV('suspended'); return; }
+
+  // CAMBIO 4 - Inicializar toggle stock
+  initStockToggle();
 
   var iR = null;
   for (var _try = 0; _try < 3; _try++) {
@@ -1419,12 +1280,14 @@ window.addEventListener('load', async function() {
     var cfg = (typeof rawCfg === 'string') ? JSON.parse(rawCfg) : rawCfg;
     window._storeCfgRaw = cfg;
     currency  = cfg.currency     || 'MXN';
-    storeWA   = cfg.whatsapp     || '';
+    storeWA   = cfg.whatsapp || cfg.phone || cfg.wa || cfg.telefono || cfg.tel
+              || s.whatsapp || s.phone || s.wa || s.telefono || s.tel || '';
     storeEmail = s.email || s.ownerEmail || s.owner_email || cfg.email || cfg.contactEmail || cfg.ownerEmail || '';
     bannerMsg = cfg.bannerMessage || '';
     storeName = s.name           || 'Tienda';
     window.STORE_BUSINESS_TYPE = cfg.businessType || 'regular';
     if (cfg.planFeatures) PLAN_FEATURES = Object.assign({}, PLAN_FEATURES, cfg.planFeatures);
+    if (typeof PLAN_FEATURES.allowcatalogo !== 'undefined') PLAN_FEATURES.catalogOnly = !!PLAN_FEATURES.allowcatalogo;
     // ── LICENCIA ──────────────────────────────────────────────
     var licType = (cfg.licenseType || cfg.plan || '').toString().trim().toLowerCase();
     if (licType === 'restringida' || licType === 'restricted' || licType === 'suspended' || licType === 'inactive') {
@@ -1458,24 +1321,43 @@ window.addEventListener('load', async function() {
     var cR = await getWithToken('store.catalog', token).catch(function() { return null; });
     var isMayorista = false;
 
-    if (cR !== null) {
-      // Backend respondió correctamente
-      isMayorista = cR.isMayorista || false;
-      if (customer) customer.isMayorista = isMayorista;
-      if (cR.planFeatures) PLAN_FEATURES = Object.assign({}, PLAN_FEATURES, cR.planFeatures);
-      products = (cR.products || []).filter(function(p) {
-        return p.active === true || p.active === 'TRUE';
-      });
-      if (products.length > 0) {
-        saveCachedCatalog(products);
-      }
-      // Si catálogo vacío: la tienda carga normal, el mensaje se muestra dentro del grid
-    } else {
-      // Backend no respondió — intentar con caché (silencioso, sin banner)
-      var cached = loadCachedCatalog();
-      if (cached && cached.products && cached.products.length) {
-        products = cached.products;
-        // No activar IS_OFFLINE_MODE para que el carrito funcione normal
+    // CAMBIO 5 - Prioridad a product.list con token de admin
+    if (TOKEN_ADMIN) {
+      try {
+        var adminRes = await fetch(BACKEND, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'product.list', storeId: STORE_ID, token: TOKEN_ADMIN })
+        });
+        var adminData = await adminRes.json();
+        if (adminData && adminData.products && adminData.products.length) {
+          products = adminData.products.filter(function(p) { var _a = p.active; if (_a === true || _a === 1) return true; if (typeof _a === 'string') { var _s = _a.trim().toUpperCase(); return _s === 'TRUE' || _s === '1' || _s === 'SÍ' || _s === 'SI' || _s === 'YES'; } return false; });
+          if (products.length > 0) saveCachedCatalog(products);
+        }
+      } catch(e) { console.warn('Fallback product.list falló:', e); }
+    }
+    if (!products.length) {
+      if (cR !== null) {
+        // Backend respondió correctamente
+        isMayorista = cR.isMayorista || false;
+        if (customer) customer.isMayorista = isMayorista;
+        if (cR.planFeatures) PLAN_FEATURES = Object.assign({}, PLAN_FEATURES, cR.planFeatures);
+        if (typeof PLAN_FEATURES.allowcatalogo !== 'undefined') PLAN_FEATURES.catalogOnly = !!PLAN_FEATURES.allowcatalogo;
+        products = (cR.products || []).filter(function(p) {
+          var _a = p.active; if (_a === true || _a === 1) return true; if (typeof _a === 'string') { var _s = _a.trim().toUpperCase(); return _s === 'TRUE' || _s === '1' || _s === 'SÍ' || _s === 'SI' || _s === 'YES'; } return false;
+        });
+        if (products.length > 0) {
+          saveCachedCatalog(products);
+        }
+        // Si catálogo vacío: la tienda carga normal, el mensaje se muestra dentro del grid
+      } else {
+        // Backend no respondió — intentar con caché
+        var cached = loadCachedCatalog();
+        if (cached && cached.products && cached.products.length) {
+          products = cached.products;
+          showOfflineBanner();
+          toast('Mostrando catálogo guardado');
+        }
+        // Sin caché: products queda vacío, la tienda igual carga con mapa y mensaje en grid
       }
     }
 
@@ -1520,7 +1402,7 @@ window.addEventListener('load', async function() {
     updateNav();
     actualizarVisibilidadWA();
     updateBanner();
-    initMap(cfg);
+    initMap();
     showV('catalog');
     installPWA(storeName, fixImgUrl(cfg.logo || ''), cfg.primaryColor || '#1a73e8');
 
@@ -1595,18 +1477,15 @@ function showSuspended(nombre, motivo, bannerRaw) {
   showV('suspended');
 }
 
-// ── MAPA ───────────────8888888888888888888888888888888888───────────────────────────────────────
-
-function initMap(cfgOverride) {
-  var cfg  = cfgOverride || window._storeCfgRaw || {};
+// ── MAPA ──────────────────────────────────────────────────────
+function initMap() {
+  var cfg  = window._storeCfgRaw || {};
   var lat  = parseFloat(cfg.locationLat  || '');
   var lng  = parseFloat(cfg.locationLng  || '');
   var addr = (cfg.storeLocation || '').trim();
+
   var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-  if (!tieneCoords && !addr) {
-    if (!cfgOverride) setTimeout(function(){ initMap(); }, 1500);
-    return;
-  }
+  if (!tieneCoords && !addr) return;
 
   var sec    = document.getElementById('map-section');
   var frame  = document.getElementById('map-iframe');
@@ -1614,172 +1493,23 @@ function initMap(cfgOverride) {
   var dirBtn = document.getElementById('map-directions-btn');
   if (!sec || !frame || !addrEl || !dirBtn) return;
 
-  var mapsUrl;
   if (tieneCoords) {
     addrEl.textContent = addr || (lat.toFixed(5) + ', ' + lng.toFixed(5));
     frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng
               + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
-    mapsUrl = 'https://www.google.com/maps/dir/?api=1'
-            + '&destination=' + lat + ',' + lng
-            + '&travelmode=driving';
+    dirBtn.href = 'https://www.google.com/maps/dir/?api=1'
+                + '&destination=' + lat + ',' + lng
+                + '&travelmode=driving';
   } else {
     addrEl.textContent = addr;
     frame.src  = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
-    mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
+    dirBtn.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
   }
-
-  // Interceptar clic en "Cómo llegar" → mostrar modal primero
-  dirBtn.removeAttribute('href');
-  dirBtn.style.cursor = 'pointer';
-  dirBtn.onclick = function(e) {
-    e.preventDefault();
-    window._transitMapsUrl = mapsUrl;
-    abrirTransitModal();
-  };
 
   sec.style.display = '';
 }
 
-// ── MODAL: AVISO AL DUEÑO EN CAMINO ──────────────────────────
-function abrirTransitModal() {
-  document.getElementById('transit-modal-bg').classList.add('on');
-}
-function cerrarTransitModal() {
-  document.getElementById('transit-modal-bg').classList.remove('on');
-}
-
-// Cerrar al hacer clic fuera del modal → ir directo a Maps
-document.addEventListener('DOMContentLoaded', function() {
-
-  var bg = document.getElementById('transit-modal-bg');
-  if (bg) {
-    bg.addEventListener('click', function(e) {
-      if (e.target === this) { cerrarTransitModal(); irAMaps(); }
-    });
-  }
-
-  var skipBtn = document.getElementById('transit-skip-btn');
-  if (skipBtn) {
-    skipBtn.addEventListener('click', function() {
-      cerrarTransitModal();
-      irAMaps();
-    });
-  }
-
-  var notifyBtn = document.getElementById('transit-notify-btn');
-  if (notifyBtn) {
-    notifyBtn.addEventListener('click', function() {
-      var btn = this;
-      btn.disabled = true;
-      btn.textContent = 'Obteniendo ubicación...';
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          function(pos) {
-            var userLat = pos.coords.latitude;
-            var userLng = pos.coords.longitude;
-            // Geocodificación inversa gratuita
-            fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='
-                  + userLat + '&lon=' + userLng + '&accept-language=es')
-              .then(function(r) { return r.json(); })
-              .then(function(data) {
-                var ciudad = data.address.city
-                          || data.address.town
-                          || data.address.village
-                          || data.address.county || '';
-                var estado = data.address.state || '';
-                var origen = ciudad
-                  ? (ciudad + (estado ? ', ' + estado : ''))
-                  : 'ubicación desconocida';
-                enviarAvisoTransito(btn, origen, userLat, userLng);
-              })
-              .catch(function() {
-                enviarAvisoTransito(btn, '', userLat, userLng);
-              });
-          },
-          function() {
-            // Usuario rechazó geolocalización
-            enviarAvisoTransito(btn, '', null, null);
-          },
-          { timeout: 6000, maximumAge: 60000 }
-        );
-      } else {
-        enviarAvisoTransito(btn, '', null, null);
-      }
-    });
-  }
-});
-
-async function enviarAvisoTransito(btn, origen, userLat, userLng) {
-  var phone = (storeWA || '').replace(/\D/g, '');
-
-  // Calcular distancia/tiempo estimado si hay coordenadas de ambos extremos
-  var cfg     = window._storeCfgRaw || {};
-  var destLat = parseFloat(cfg.locationLat || '');
-  var destLng = parseFloat(cfg.locationLng || '');
-  var tiempoStr = '';
-
-  if (userLat !== null && userLng !== null && !isNaN(destLat) && !isNaN(destLng)) {
-    var dist = calcDistKm(userLat, userLng, destLat, destLng);
-    var mins = Math.round((dist / 30) * 60); // ~30 km/h promedio ciudad
-    if      (mins < 2)  tiempoStr = 'ya está muy cerca';
-    else if (mins < 60) tiempoStr = 'aprox. ' + mins + ' min';
-    else                tiempoStr = 'aprox. ' + Math.round(mins / 60) + ' h '
-                                  + (mins % 60) + ' min';
-  }
-
-  // Construir mensaje WhatsApp
-  var hora    = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  var nombre  = customer ? (customer.name || '') : '';
-  var numCart = PLAN_FEATURES.catalogOnly ? lightList.length : cartCount();
-
-  var msg = '🚶 *Aviso: cliente en camino* — ' + storeName + '\n';
-  msg += '━━━━━━━━━━━━━━\n';
-  if (nombre)    msg += '👤 ' + nombre + '\n';
-  if (origen)    msg += '📍 Viene desde: ' + origen + '\n';
-  if (tiempoStr) msg += '🕐 Tiempo estimado: ' + tiempoStr + '\n';
-  msg += '⏰ Hora de aviso: ' + hora + '\n';
-  if (numCart > 0) msg += '🛒 ' + numCart + ' producto'
-                        + (numCart !== 1 ? 's' : '') + ' en su solicitud\n';
-  msg += '━━━━━━━━━━━━━━\n';
-  msg += 'Prepárate para recibirles 👋';
-
-  cerrarTransitModal();
-
-  if (phone) {
-    window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
-    // Pequeña pausa para que el popup no sea bloqueado antes de abrir Maps
-    setTimeout(irAMaps, 600);
-  } else {
-    irAMaps();
-  }
-
-  toast('Aviso enviado — abriendo ruta...');
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = 'Sí, avisar por WhatsApp';
-  }
-}
-
-function irAMaps() {
-  var url = window._transitMapsUrl;
-  if (url) window.open(url, '_blank');
-}
-
-// Fórmula de Haversine — distancia en km entre dos coordenadas
-function calcDistKm(lat1, lng1, lat2, lng2) {
-  var R    = 6371;
-  var dLat = (lat2 - lat1) * Math.PI / 180;
-  var dLng = (lng2 - lng1) * Math.PI / 180;
-  var a    = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-           + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
-           * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-  
-// ── API ────────────────8888888888888888888888888888888888888888───────────────────────────────────────
+// ── API ───────────────────────────────────────────────────────
 async function get(a) {
   try {
     var r    = await fetch(BACKEND + '?action=' + a + '&storeId=' + STORE_ID);
@@ -2033,16 +1763,11 @@ function loadMoreProducts() {
   renderGridPage(true);
 }
 
-
-
-// ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''deepseek
-
 function renderGridPage(append) {
   var list = _catalogList;
   var g = document.getElementById('grid-el');
   var isMayorista = customer ? customer.isMayorista || false : false;
   var isLight = PLAN_FEATURES.catalogOnly;
-  
   if (!list.length) {
     var ownerMail = (typeof storeEmail !== 'undefined' && storeEmail) ? storeEmail : '';
     var mailLink = ownerMail
@@ -2060,24 +1785,30 @@ function renderGridPage(append) {
     document.getElementById('load-more-btn').style.display = 'none';
     return;
   }
-  
-  // ✅ CORRECCIÓN: Mostrar TODOS los productos
-  var slice = list;
-  var hasMore = false;
+  var slice = list.slice(0, 9);
+  var hasMore = list.length > 9;
   var html = slice.map(function(p) {
     var stock = Number(p.stock || 0), inStock = stock > 0;
     var hasWholesale = isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '';
     var hasTwo   = !!(p.imageUrl && p.imageUrl2);
     var inListQty = lightList.find(function(x) { return x.productId === p.productId; });
     var inCartQty = cart.find(function(c) { return c.productId === p.productId; });
+    
+    // CAMBIO 6 - Stock badge
+    var si = getStockDisplay(p.stock);
+    var stockBadgeHTML = si ? '<span class="store-stock ' + si.cls + '">' + si.text + '</span>' : '';
+    
     var priceHTML = '<div class="price-wrap">' +
       '<span class="price-real">' + fmt(p.price) + '</span>' +
       (hasWholesale ? '<span class="price-wholesale">★ May: ' + fmt(p.wholesalePrice) + '</span>' : '') +
+      stockBadgeHTML +
       '</div>';
     var ctaHTML;
     if (window.IS_OFFLINE_MODE) {
-      var qty0 = inCartQty ? inCartQty.qty : 0;
-      ctaHTML = '<button class="add-btn ' + (qty0 > 0 ? 'in-cart' : '') + '" onclick="event.stopPropagation();addToCart(\'' + p.productId + '\')">' + (qty0 > 0 ? qty0 : '+') + '</button>';
+      var offlineWA = (typeof storeWA !== 'undefined' && storeWA) ? storeWA.replace(/\D/g, '') : '';
+      var offlineMsg = encodeURIComponent('Hola, consulto sobre el producto: ' + (p.name || ''));
+      var offlineHref = offlineWA ? 'https://wa.me/' + offlineWA + '?text=' + offlineMsg : '#';
+      ctaHTML = '<a href="' + offlineHref + '" target="_blank" onclick="event.stopPropagation()" style="padding:7px 10px;background:#25d366;color:#fff;border-radius:8px;font-size:10px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">📞 Consultar</a>';
     } else if (isLight) {
       if (!inStock) {
         ctaHTML = '<button class="add-btn verify" onclick="event.stopPropagation();toggleLightList(\'' + p.productId + '\')">⏳</button>';
@@ -2087,6 +1818,7 @@ function renderGridPage(append) {
         ctaHTML = '<button class="add-btn" onclick="event.stopPropagation();toggleLightList(\'' + p.productId + '\')">+</button>';
       }
     } else {
+      // USUARIO NO REGISTRADO: puede agregar al carrito sin restricción
       var qty2 = inCartQty ? inCartQty.qty : 0;
       ctaHTML = '<button class="add-btn ' + (qty2 > 0 ? 'in-cart' : '') + '" onclick="event.stopPropagation();addToCart(\'' + p.productId + '\')">' + (qty2 > 0 ? qty2 : '+') + '</button>';
     }
@@ -2109,10 +1841,8 @@ function renderGridPage(append) {
       '</div>' +
     '</div>';
   }).join('');
-  
   if (append) { g.innerHTML = g.innerHTML + html; } else { g.innerHTML = html; }
-  document.getElementById('load-more-btn').style.display = 'none';
-  
+  document.getElementById('load-more-btn').style.display = hasMore ? 'block' : 'none';
   slice.forEach(function(p) {
     var imgEl = document.getElementById('pimg-' + p.productId);
     var track = document.getElementById('track-' + p.productId);
@@ -2135,11 +1865,6 @@ function renderGridPage(append) {
   });
 }
 
-
-
-
-
-  
 function setSlide(pid, track, slide) {
   track.style.transform = 'translateX(' + (slide * -100) + '%)';
   var d0 = document.getElementById('dot0-' + pid), d1 = document.getElementById('dot1-' + pid);
@@ -2347,8 +2072,8 @@ function mostrarFormTelefono() {
   document.getElementById('csm-main-block').style.display = 'none';
   document.getElementById('csm-phone-block').style.display = 'block';
 }
-//---------------------------------------
-async function confirmarConTelefono() {
+
+function confirmarConTelefono() {
   var tel = (document.getElementById('csm-telefono').value || '').trim();
   var err = document.getElementById('csm-err');
   if (!tel || tel.replace(/\D/g,'').length < 8) {
@@ -2357,77 +2082,21 @@ async function confirmarConTelefono() {
     return;
   }
   err.style.display = 'none';
-
-  var btnConfirm = document.querySelector('#csm-phone-block .csm-btn-primary');
-  if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Registrando...'; }
-
-  // ── 1. DETECTAR CIUDAD POR IP ──
-  var ubicacion = '';
-  try {
-    var geoRes = await fetch('https://ipapi.co/json/').then(function(r){ return r.json(); });
-    if (geoRes && geoRes.city) {
-      ubicacion = (geoRes.city||'') + (geoRes.region ? ', '+geoRes.region : '') + (geoRes.country_name ? ', '+geoRes.country_name : '');
-    }
-  } catch(e) {}
-
-  // ── 2. REGISTRAR CLIENTE (evita duplicados por teléfono) ──
-  var customerId = '', customerName = 'Cliente Tel';
-  try {
-    var regRes = await post('customer.registerPhone', {
-      phone: tel,
-      location: ubicacion,
-      storeName: storeName
-    });
-    if (regRes && regRes.ok) {
-      customerId   = regRes.customerId || '';
-      customerName = regRes.name || ('Cliente ' + tel.slice(-4));
-    }
-  } catch(e) { console.warn('registerPhone:', e); }
-
-  // ── 3. CREAR PEDIDO EN BACKEND ──
-  var orderId = '', orderLink = '';
-  try {
-    var orderRes = await post('order.create', {
-      customerId:    customerId,
-      customerName:  customerName,
-      customerPhone: tel,
-      customerEmail: '',
-      items: cart.map(function(c){ return { productId: c.productId, qty: c.qty }; }),
-      notes: 'Pedido WhatsApp — Tel: ' + tel + (ubicacion ? ' — ' + ubicacion : ''),
-      source: 'whatsapp-phone'
-    });
-    if (orderRes && orderRes.ok) {
-      orderId   = orderRes.orderId   || '';
-      orderLink = orderRes.orderLink || '';
-    }
-  } catch(e) { console.warn('order.create:', e); }
-
-  // ── 4. ENVIAR POR WHATSAPP AL DUEÑO ──
-  var phone = (storeWA || '').replace(/\D/g,'');
-  if (!phone) {
-    toast('Esta tienda no tiene WhatsApp configurado');
-    if (btnConfirm) { btnConfirm.disabled=false; btnConfirm.textContent='Enviar pedido por WhatsApp'; }
-    return;
-  }
-
-  var msg = '🛍️ *Nuevo pedido* — ' + storeName + '\n';
-  msg += '━━━━━━━━━━━━━━━━━\n';
+  var phone = storeWA.replace(/\D/g,'');
+  if (!phone) { toast('⚠️ La tienda no tiene número de WhatsApp configurado. Contacta al dueño.'); return; }
+  
+  var msg = 'Hola! Quiero hacer un pedido en *' + storeName + '*:\n\n';
   cart.forEach(function(c, i) {
-    msg += (i+1)+'. '+c.name+' x'+c.qty+' — '+fmt(c.price*c.qty)+(c.sinStock?' ⚠️':'')+'\n';
+    msg += (i+1) + '. ' + c.name + ' x' + c.qty + ' — ' + fmt(c.price * c.qty) + '\n';
   });
-  msg += '━━━━━━━━━━━━━━━━━\n';
-  msg += '💰 *Total: ' + fmt(cartTotal()) + '*\n';
-  msg += '📞 *Tel cliente: ' + tel + '*\n';
-  if (ubicacion) msg += '📍 ' + ubicacion + '\n';
-  if (orderId)   msg += '🔖 Pedido #' + orderId + '\n';
-  if (orderLink) msg += '🔗 ' + orderLink + '\n';
-
+  msg += '\nTotal estimado: *' + fmt(cartTotal()) + '*';
+  msg += '\n\nMi número de contacto: *' + tel + '*';
+  
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
-
+  
   cart = []; save(); renderGrid(); updateNav();
   closeSuggestModal(); closeCart();
-  if (btnConfirm) { btnConfirm.disabled=false; btnConfirm.textContent='Enviar pedido por WhatsApp'; }
-  toast('✅ Pedido registrado y enviado');
+  toast('Pedido enviado — te contactaremos pronto');
 }
 
 function _doShowCheckout() {
@@ -2556,9 +2225,10 @@ async function submitAuth() {
     if (cust.isMayorista) {
       var cR = await getWithToken('store.catalog', cust.token).catch(function() { return null; });
       if (cR) {
-        products = (cR.products || []).filter(function(p) { return p.active === true || p.active === 'TRUE'; });
+        products = (cR.products || []).filter(function(p) { var _a = p.active; if (_a === true || _a === 1) return true; if (typeof _a === 'string') { var _s = _a.trim().toUpperCase(); return _s === 'TRUE' || _s === '1' || _s === 'SÍ' || _s === 'SI' || _s === 'YES'; } return false; });
         cust.isMayorista = cR.isMayorista || cust.isMayorista;
         if (cR.planFeatures) PLAN_FEATURES = Object.assign({}, PLAN_FEATURES, cR.planFeatures);
+        if (typeof PLAN_FEATURES.allowcatalogo !== 'undefined') PLAN_FEATURES.catalogOnly = !!PLAN_FEATURES.allowcatalogo;
       }
     }
     customer = cust;
@@ -2589,8 +2259,9 @@ function logoutCustomer() {
   localStorage.removeItem('u_' + STORE_ID);
   localStorage.removeItem('c_' + STORE_ID);
   getWithToken('store.catalog', '').then(function(cR) {
-    if (cR) products = (cR.products || []).filter(function(p) { return p.active === true || p.active === 'TRUE'; });
+    if (cR) products = (cR.products || []).filter(function(p) { var _a = p.active; if (_a === true || _a === 1) return true; if (typeof _a === 'string') { var _s = _a.trim().toUpperCase(); return _s === 'TRUE' || _s === '1' || _s === 'SÍ' || _s === 'SI' || _s === 'YES'; } return false; });
     if (cR && cR.planFeatures) PLAN_FEATURES = Object.assign({}, PLAN_FEATURES, cR.planFeatures);
+    if (typeof PLAN_FEATURES.allowcatalogo !== 'undefined') PLAN_FEATURES.catalogOnly = !!PLAN_FEATURES.allowcatalogo;
     updateNav(); actualizarVisibilidadWA(); updateBanner(); renderGrid();
   }).catch(function() { updateNav(); actualizarVisibilidadWA(); updateBanner(); renderGrid(); });
   toast('Sesion cerrada'); closeUserMenu();
@@ -3037,24 +2708,6 @@ function filterCatalogModal(cat, el) {
   var isLight = PLAN_FEATURES.catalogOnly;
   renderCatalogModalGrid(list, isMayorista, isLight);
 }
-function filterCatalogModalSearch(val) {
-  var modalPattern = /^modal\s*[1-4]$/i;
-  var q = (val || '').trim().toLowerCase();
-  var isMayorista = customer ? customer.isMayorista || false : false;
-  var isLight = PLAN_FEATURES.catalogOnly;
-  var list = products.filter(function(p) {
-    if (p.category && modalPattern.test(p.category.trim())) return false;
-    if (!q) return true;
-    var haystack = ((p.name||'') + ' ' + (p.category||'') + ' ' + (p.description||'')).toLowerCase();
-    return q.split(/\s+/).every(function(w) { return haystack.includes(w); });
-  });
-  renderCatalogModalGrid(list, isMayorista, isLight);
-}
-
-
-
-        ///-------------------------------------------------------deepseek
-
 
 function renderCatalogModalGrid(list, isMayorista, isLight) {
   var g = document.getElementById('cat-modal-grid-el');
@@ -3121,118 +2774,6 @@ function closeCatalogModal() {
 
 <script src="lk-guardian.js"></script>
 
-  <style>
-  /* Contenedor del mapa */
-  .map-container {
-    display: inline-block;
-    position: relative;
-  }
   
-  /* Animación de flotación - Muy sutil, cada 6 segundos */
-  .map-container svg {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-  }
-  
-  /* Brillo sutil en el punto del mapa - cada 4 segundos */
-  .map-container svg circle {
-    animation: softPulse 4s ease-in-out infinite;
-    transform-origin: center;
-  }
-  
-  @keyframes softPulse {
-    0%, 100% { opacity: 0.7; r: 2.5; }
-    50% { opacity: 1; r: 3; }
-  }
-  
-  /* Efecto hover - Suave y elegante */
-  .map-container:hover svg {
-    color: #38bdf8 !important;
-    transform: scale(1.05) translateY(-2px);
-  }
-  
-  .map-container:hover .directorio-text {
-    color: #0ea5e9 !important;
-    letter-spacing: 0.8px;
-  }
-  
-  .map-container:hover span:first-child {
-    color: #cbd5e1 !important;
-  }
-  
-  .map-container:hover span:nth-child(2) {
-    color: #94a3b8 !important;
-  }
-  
-  /* Transiciones suaves para todo */
-  .map-container,
-  .map-container svg,
-  .map-container span {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-</style>
-<!-- ── MODAL: AVISO AL DUEÑO EN CAMINO ─────────────────────── -->
-<style>
-#transit-modal-bg {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.55); z-index: 600;
-  align-items: center; justify-content: center;
-  padding: 16px; backdrop-filter: blur(4px);
-}
-#transit-modal-bg.on { display: flex; }
-.transit-modal {
-  background: var(--surface); border-radius: var(--r-xl);
-  width: 100%; max-width: 360px; padding: 26px 22px 22px;
-  box-shadow: var(--shadow-xl); text-align: center;
-}
-.transit-modal-icon  { font-size: 38px; margin-bottom: 10px; }
-.transit-modal-title {
-  font-family: var(--font-d); font-size: 18px; font-weight: 700;
-  color: var(--text); margin-bottom: 6px;
-}
-.transit-modal-sub {
-  font-size: 13px; color: var(--muted);
-  line-height: 1.6; margin-bottom: 20px;
-}
-.transit-btns   { display: flex; flex-direction: column; gap: 9px; }
-.transit-btn-yes {
-  padding: 12px; background: #25d366; color: #fff;
-  border: none; border-radius: var(--r); font-size: 13px;
-  font-weight: 600; cursor: pointer; font-family: var(--font-b);
-  transition: all .15s;
-}
-.transit-btn-yes:hover  { background: #1db954; }
-.transit-btn-yes:disabled { background: #a5d6a7; cursor: default; }
-.transit-btn-no {
-  padding: 11px; background: transparent; color: var(--muted);
-  border: 1px solid var(--border); border-radius: var(--r);
-  font-size: 12px; cursor: pointer; font-family: var(--font-b);
-  transition: all .15s;
-}
-.transit-btn-no:hover { border-color: var(--text); color: var(--text); }
-</style>
-
-<div id="transit-modal-bg">
-  <div class="transit-modal">
-    <div class="transit-modal-icon">🚶</div>
-    <div class="transit-modal-title">¿Avisamos que vas en camino?</div>
-    <div class="transit-modal-sub">
-      Podemos notificar al negocio por WhatsApp para que se
-      preparen antes de que llegues.
-    </div>
-    <div class="transit-btns">
-      <button class="transit-btn-yes" id="transit-notify-btn">
-        Sí, avisar por WhatsApp
-      </button>
-      <button class="transit-btn-no" id="transit-skip-btn">
-        No, solo llevarme ahí
-      </button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
