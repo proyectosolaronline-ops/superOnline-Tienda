@@ -2033,11 +2033,16 @@ function loadMoreProducts() {
   renderGridPage(true);
 }
 
+
+
+// ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''deepseek
+
 function renderGridPage(append) {
   var list = _catalogList;
   var g = document.getElementById('grid-el');
   var isMayorista = customer ? customer.isMayorista || false : false;
   var isLight = PLAN_FEATURES.catalogOnly;
+  
   if (!list.length) {
     var ownerMail = (typeof storeEmail !== 'undefined' && storeEmail) ? storeEmail : '';
     var mailLink = ownerMail
@@ -2055,8 +2060,10 @@ function renderGridPage(append) {
     document.getElementById('load-more-btn').style.display = 'none';
     return;
   }
-  var slice = list.slice(0, 9);
-  var hasMore = list.length > 9;
+  
+  // ✅ CORRECCIÓN: Mostrar TODOS los productos
+  var slice = list;
+  var hasMore = false;
   var html = slice.map(function(p) {
     var stock = Number(p.stock || 0), inStock = stock > 0;
     var hasWholesale = isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '';
@@ -2080,7 +2087,6 @@ function renderGridPage(append) {
         ctaHTML = '<button class="add-btn" onclick="event.stopPropagation();toggleLightList(\'' + p.productId + '\')">+</button>';
       }
     } else {
-      // USUARIO NO REGISTRADO: puede agregar al carrito sin restricción
       var qty2 = inCartQty ? inCartQty.qty : 0;
       ctaHTML = '<button class="add-btn ' + (qty2 > 0 ? 'in-cart' : '') + '" onclick="event.stopPropagation();addToCart(\'' + p.productId + '\')">' + (qty2 > 0 ? qty2 : '+') + '</button>';
     }
@@ -2103,8 +2109,10 @@ function renderGridPage(append) {
       '</div>' +
     '</div>';
   }).join('');
+  
   if (append) { g.innerHTML = g.innerHTML + html; } else { g.innerHTML = html; }
-  document.getElementById('load-more-btn').style.display = hasMore ? 'block' : 'none';
+  document.getElementById('load-more-btn').style.display = 'none';
+  
   slice.forEach(function(p) {
     var imgEl = document.getElementById('pimg-' + p.productId);
     var track = document.getElementById('track-' + p.productId);
@@ -2127,6 +2135,11 @@ function renderGridPage(append) {
   });
 }
 
+
+
+
+
+  
 function setSlide(pid, track, slide) {
   track.style.transform = 'translateX(' + (slide * -100) + '%)';
   var d0 = document.getElementById('dot0-' + pid), d1 = document.getElementById('dot1-' + pid);
@@ -3037,6 +3050,12 @@ function filterCatalogModalSearch(val) {
   });
   renderCatalogModalGrid(list, isMayorista, isLight);
 }
+
+
+
+        ///-------------------------------------------------------deepseek
+
+
 function renderCatalogModalGrid(list, isMayorista, isLight) {
   var g = document.getElementById('cat-modal-grid-el');
   if (!list.length) {
