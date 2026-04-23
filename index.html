@@ -1199,26 +1199,125 @@ function initMap(cfgOverride) {
     if (!cfgOverride) setTimeout(function(){ initMap(); }, 1500);
     return;
   }
-  var sec    = document.getElementById('map-section');
-  var frame  = document.getElementById('map-iframe');
-  var addrEl = document.getElementById('map-addr-text');
-  var dirBtn = document.getElementById('map-directions-btn');
-  if (!sec || !frame || !addrEl || !dirBtn) return;
+
+  var sec = document.getElementById('map-section');
+  if (!sec) return;
+
+  // ✅ Calcular URLs de mapa
   var mapsUrl;
   if (tieneCoords) {
-    addrEl.textContent = addr || (lat.toFixed(5) + ', ' + lng.toFixed(5));
-    frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng + '&z=17&output=embed&hl=es&markers=' + lat + ',' + lng;
     mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=driving';
   } else {
-    addrEl.textContent = addr;
-    frame.src  = 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
     mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
   }
-  dirBtn.removeAttribute('href');
-  dirBtn.style.cursor = 'pointer';
-  dirBtn.onclick = function(e) { e.preventDefault(); window._transitMapsUrl = mapsUrl; abrirTransitModal(); };
+  window._transitMapsUrl = mapsUrl;
+  window._mapEmbedSrc = tieneCoords
+    ? 'https://maps.google.com/maps?q=' + lat + ',' + lng + '&z=17&output=embed&hl=es'
+    : 'https://maps.google.com/maps?q=' + encodeURIComponent(addr) + '&output=embed&hl=es&z=15';
+
+  var displayAddr = addr || (tieneCoords ? (lat.toFixed(5) + ', ' + lng.toFixed(5)) : '');
+
+  // ✅ Reemplazar contenido del map-section con solo la tarjeta clickeable
+  sec.innerHTML =
+    '<div onclick="abrirMapModal()" style="'
+    + 'display:flex;align-items:center;gap:14px;'
+    + 'background:var(--surface);border:1.5px solid var(--border);'
+    + 'border-radius:var(--r-lg);padding:16px 20px;cursor:pointer;'
+    + 'transition:all .2s;box-shadow:var(--shadow-sm);'
+    + 'margin:0 max(16px,calc((100vw - 1200px)/2)) 32px;"'
+    + ' onmouseover="this.style.borderColor=\'var(--primary)\';this.style.boxShadow=\'var(--shadow)\'"'
+    + ' onmouseout="this.style.borderColor=\'var(--border)\';this.style.boxShadow=\'var(--shadow-sm)\'">'
+    // Icono
+    + '<div style="width:44px;height:44px;border-radius:10px;background:var(--primary-light);'
+    + 'display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+    + '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>'
+    + '</svg></div>'
+    // Texto
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;">📍 Domicilio de la tienda</div>'
+    + '<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+    + esc(displayAddr || 'Ver ubicación en mapa')
+    + '</div>'
+    + '</div>'
+    // Flecha
+    + '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+    + '<span style="font-size:12px;font-weight:600;color:var(--primary);white-space:nowrap;">Cómo llegar</span>'
+    + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<polyline points="9 18 15 12 9 6"/>'
+    + '</svg></div>'
+    + '</div>';
+
   sec.style.display = '';
 }
+
+// ✅ Modal del mapa — se abre al clickear la tarjeta
+function abrirMapModal() {
+  var existing = document.getElementById('map-fullmodal-bg');
+  if (existing) { existing.classList.add('on'); _cargarMapaModal(); return; }
+
+  // Crear modal si no existe
+  var bg = document.createElement('div');
+  bg.id = 'map-fullmodal-bg';
+  bg.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
+  bg.innerHTML =
+    '<div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:560px;overflow:hidden;box-shadow:var(--shadow-xl);animation:slideUp .28s cubic-bezier(.34,1.2,.64,1) both">'
+    // Header
+    + '<div style="padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">'
+    + '<div>'
+    + '<div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text);">📍 Domicilio de la tienda</div>'
+    + '<div id="map-modal-addr" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>'
+    + '</div>'
+    + '<button onclick="cerrarMapModal()" style="width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--muted);">✕</button>'
+    + '</div>'
+    // Mapa
+    + '<div style="position:relative;width:100%;height:300px;background:var(--surface2);">'
+    + '<div id="map-modal-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);font-size:13px;">'
+    + '<div class="spinner"></div>Cargando mapa...</div>'
+    + '<iframe id="map-modal-iframe" style="width:100%;height:100%;border:none;display:none;" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onload="this.style.display=\'block\';document.getElementById(\'map-modal-loading\').style.display=\'none\'"></iframe>'
+    + '</div>'
+    // Botones
+    + '<div style="padding:14px 20px 20px;display:flex;gap:10px;">'
+    + '<button onclick="cerrarMapModal();abrirTransitModal();" style="flex:1;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);display:flex;align-items:center;justify-content:center;gap:7px;">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Cómo llegar</button>'
+    + (window.storeWA
+      ? '<button onclick="window.open(\'https://wa.me/\'+storeWA.replace(/\\D/g,\'\'),\'_blank\')" style="padding:12px 16px;background:#25d366;color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);">💬 WhatsApp</button>'
+      : '')
+    + '</div>'
+    + '</div>';
+
+  bg.addEventListener('click', function(e) { if (e.target === this) cerrarMapModal(); });
+  document.body.appendChild(bg);
+  bg.classList.add('on');
+  bg.style.display = 'flex';
+  _cargarMapaModal();
+}
+
+function _cargarMapaModal() {
+  var bg = document.getElementById('map-fullmodal-bg');
+  if (!bg) return;
+  bg.style.display = 'flex';
+
+  var iframe  = document.getElementById('map-modal-iframe');
+  var addrEl  = document.getElementById('map-modal-addr');
+  var cfg     = window._storeCfgRaw || {};
+  var addr    = (cfg.storeLocation || '').trim();
+  var lat     = parseFloat(cfg.locationLat || '');
+  var lng     = parseFloat(cfg.locationLng || '');
+  var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+
+  if (addrEl) addrEl.textContent = addr || (tieneCoords ? lat.toFixed(5) + ', ' + lng.toFixed(5) : '');
+  if (iframe && window._mapEmbedSrc && !iframe.src) {
+    iframe.src = window._mapEmbedSrc;
+  }
+}
+
+function cerrarMapModal() {
+  var bg = document.getElementById('map-fullmodal-bg');
+  if (bg) bg.style.display = 'none';
+}
+
+// ── El resto sin cambios ──────────────────────────────────────────
 
 function abrirTransitModal() { document.getElementById('transit-modal-bg').classList.add('on'); }
 function cerrarTransitModal() { document.getElementById('transit-modal-bg').classList.remove('on'); }
@@ -1362,7 +1461,6 @@ function openSvcModal(pid) {
   document.body.style.overflow = 'hidden';
 }
 function closeSvcModal() { document.getElementById('svc-modal-bg').classList.remove('on'); document.body.style.overflow = ''; }
-
 function resolveCategory(raw) {
   if (!raw) return null;
   var trimmed = raw.trim().toLowerCase();
