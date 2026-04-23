@@ -1585,13 +1585,26 @@ function renderGridPage(append) {
   var isMayorista = customer ? customer.isMayorista || false : false;
   var isLight = PLAN_FEATURES.catalogOnly;
   // ✅ PON ESTO:
+
 if (!list.length) {
-    var msg = _searchQuery
-      ? '🔍 Sin resultados para "' + _searchQuery + '"'
-      : (products.length === 0
-          ? '⚠️ No se pudieron cargar los productos. <button onclick="location.reload()" style="background:none;border:none;color:var(--primary);font-weight:600;cursor:pointer;font-family:var(--font-b)">Reintentar</button>'
-          : '📭 Sin productos en esta categoría');
-    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:52px 24px 60px;color:var(--muted);font-size:13px">' + msg + '</div>';
+    var msg;
+    if (_searchQuery) {
+      msg = '<div style="font-size:28px;margin-bottom:12px">🔍</div>'
+          + '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Sin resultados para "' + _searchQuery + '"</div>'
+          + '<div style="font-size:12px;color:var(--muted)">Intenta con otro término</div>';
+    } else if (products.length === 0) {
+      msg = '<div style="font-size:44px;margin-bottom:14px">🛍️</div>'
+          + '<div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">'
+          + (storeName || 'Gracias por visitarnos') + '</div>'
+          + '<div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:280px;margin:0 auto">'
+          + 'Catálogo en preparación.<br>¡Muy pronto tendremos productos para ti!'
+          + '</div>'
+          + (storeWA ? '<div style="margin-top:18px"><a href="https://wa.me/' + storeWA.replace(/\D/g,'') + '" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:#25d366;color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">💬 Consultar por WhatsApp</a></div>' : '');
+    } else {
+      msg = '<div style="font-size:28px;margin-bottom:10px">📭</div>'
+          + '<div style="font-size:13px;color:var(--muted)">Sin productos en esta categoría</div>';
+    }
+    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:52px 24px 60px;">' + msg + '</div>';
     document.getElementById('load-more-btn').style.display = 'none';
     return;
   }
