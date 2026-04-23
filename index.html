@@ -1089,9 +1089,17 @@ window.addEventListener('load', async function() {
       var cached = loadCachedCatalog();
       if (cached && cached.products && cached.products.length) {
         products = cached.products;
-      } else {
-        localStorage.removeItem('cache_catalog_' + STORE_ID);
-      }
+      // ✅ PON:
+} else {
+    // Caché expirada o inválida — limpiar para forzar fetch fresco en próxima carga
+    localStorage.removeItem('cache_catalog_' + STORE_ID);
+    if (document.getElementById('grid-el')) {
+      document.getElementById('grid-el').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;padding:52px 24px;color:var(--muted);font-size:13px">' +
+        '⚠️ Sin conexión al catálogo. <button onclick="location.reload()" style="background:none;border:none;color:var(--primary);font-weight:600;cursor:pointer;font-family:var(--font-b)">Reintentar</button>' +
+        '</div>';
+    }
+  }
     }
     if (products.length > 0) {
       var statProd = document.getElementById('stat-productos');
@@ -1478,11 +1486,14 @@ function renderGridPage(append) {
   var g = document.getElementById('grid-el');
   var isMayorista = customer ? customer.isMayorista || false : false;
   var isLight = PLAN_FEATURES.catalogOnly;
-  if (!list.length) {
-    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:52px 24px 60px">'
-      + '<div class="spinner" style="margin:0 auto 16px"></div>'
-      + '<p style="font-size:13px;color:var(--muted)">Cargando productos...</p>'
-      + '</div>';
+  // ✅ PON ESTO:
+if (!list.length) {
+    var msg = _searchQuery
+      ? '🔍 Sin resultados para "' + _searchQuery + '"'
+      : (products.length === 0
+          ? '⚠️ No se pudieron cargar los productos. <button onclick="location.reload()" style="background:none;border:none;color:var(--primary);font-weight:600;cursor:pointer;font-family:var(--font-b)">Reintentar</button>'
+          : '📭 Sin productos en esta categoría');
+    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:52px 24px 60px;color:var(--muted);font-size:13px">' + msg + '</div>';
     document.getElementById('load-more-btn').style.display = 'none';
     return;
   }
@@ -2150,7 +2161,8 @@ function filterCatalogModalSearch(val) {
 }
 function renderCatalogModalGrid(list, isMayorista, isLight) {
   var g = document.getElementById('cat-modal-grid-el');
-  if (!list.length) { g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Sin productos</div>'; return; }
+  if (!list.length) { g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Sin productos</div>';
+                     return; }
   g.innerHTML = list.map(function(p) {
     var stock = Number(p.stock||0), inStock = stock > 0;
     var hasWholesale = isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '';
@@ -2188,20 +2200,26 @@ function planLimitInfo() {
 }
 
 // ── POLLING TIEMPO REAL — recarga catálogo cada 10s ──────────
+// ✅ PON ESTO:
 var _pollingActive = false;
 var _lastProductHash = '';
 
 function hashProducts(prods) {
-  return (prods || []).map(function(p) { return p.productId + ':' + p.stock + ':' + p.price; }).join('|');
+  return (prods || []).map(function(p) {
+    return p.productId + ':' + p.stock + ':' + p.price;
+  }).join('|');
 }
 
 async function pollCatalog() {
-  if (!BACKEND || !STORE_ID) return;
+  if (!BACKEND || !STORE_ID || !products.length) return; // no pollear si aún no cargó
   try {
     var token = customer ? customer.token || '' : '';
     var cR = await getWithToken('store.catalog', token).catch(function() { return null; });
-    if (!cR || !cR.products) return;
-    var fresh = (cR.products || []).filter(function(p) { return p.active === true || p.active === 'TRUE'; });
+    if (!cR || !cR.products || !cR.products.length) return; // ignorar respuestas vacías
+    var fresh = cR.products.filter(function(p) {
+      return p.active === true || p.active === 'TRUE';
+    });
+    if (!fresh.length) return; // nunca sobreescribir con lista vacía
     var newHash = hashProducts(fresh);
     if (newHash !== _lastProductHash) {
       _lastProductHash = newHash;
@@ -2215,14 +2233,15 @@ async function pollCatalog() {
 }
 
 function startPolling() {
-  if (_pollingActive) return;
+  if (_pollingActive || !products.length) return; // solo arrancar si ya hay productos
   _pollingActive = true;
   _lastProductHash = hashProducts(products);
-  setInterval(pollCatalog, 10000); // cada 10 segundos
+  setInterval(pollCatalog, 15000); // 15s en lugar de 10s para reducir carga
 }
 
-// Arrancar polling cuando la tienda esté lista
-document.addEventListener('tienda-lista', startPolling);
+document.addEventListener('tienda-lista', function() {
+  setTimeout(startPolling, 3000); // esperar 3s después de carga inicial
+});
 </script>
 
 <div class="bottom-bar" id="bottom-bar" style="display:none">
