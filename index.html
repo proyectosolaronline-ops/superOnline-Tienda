@@ -1108,7 +1108,8 @@ function showSmartBanner(raw) {
 window.addEventListener('load', async function() {
   if (!BACKEND || !STORE_ID) {
     var cached0 = loadCachedCatalog();
-    if (cached0 && cached0.products && cached0.products.length) { products = cached0.products; }
+    if (cached0 && cached0.products && cached0.products.length)
+    { products = cached0.products; }
     renderCatalog(); initMap(); showV('catalog'); return;
   }
   var iR = null;
@@ -1217,6 +1218,8 @@ window.addEventListener('load', async function() {
     showV('catalog');
     installPWA(storeName, fixImgUrl(cfg.logo || ''), cfg.primaryColor || '#1a73e8');
     document.dispatchEvent(new Event('tienda-lista'));
+    // ── VIDEO DEL DUEÑO ──
+initVideoOwnerTienda(cfg.videoOwnerUrl || '');
   } catch(e) {
     console.error('INIT ERROR:', e);
     try { renderCatalog(); } catch(e2) {}
@@ -2124,12 +2127,21 @@ function showV(name) {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmt(n) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: currency }).format(Number(n||0)); }
-function fixImgUrl(url) {
+
+  function fixImgUrl(url, isVideo) {
   if (!url) return '';
   var m = url.match(/[?&]id=([\w-]+)/);
-  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+  if (m) {
+    return isVideo
+      ? 'https://drive.google.com/uc?export=download&id=' + m[1]
+      : 'https://lh3.googleusercontent.com/d/' + m[1];
+  }
   var m2 = url.match(/\/d\/([\w-]+)/);
-  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  if (m2) {
+    return isVideo
+      ? 'https://drive.google.com/uc?export=download&id=' + m2[1]
+      : 'https://lh3.googleusercontent.com/d/' + m2[1];
+  }
   return url;
 }
 function toast(msg) {
@@ -2433,6 +2445,189 @@ function startPolling() {
 document.addEventListener('tienda-lista', function() {
   setTimeout(startPolling, 3000); // esperar 3s después de carga inicial
 });
+  // ╔═══════════════════════════════════════════════════════════════╗
+//  VIDEO DEL DUEÑO
+// ╚═══════════════════════════════════════════════════════════════╝
+
+var _videoOwnerTimer = null;
+var _videoOwnerSeen  = false;
+
+function initVideoOwner() {
+  var seen = sessionStorage.getItem('lk_video_owner_seen_' + STORE_ID);
+  if (seen === '1') {
+    _videoOwnerSeen = true;
+    return;
+  }
+
+  var cfg = window._storeCfgRaw || {};
+  var videoUrl = cfg.videoOwnerUrl || '';
+  
+  if (!videoUrl || videoUrl.length < 10) return;
+
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
+
+  mini.style.display = 'block';
+  mini.src = videoUrl;
+  mini.load();
+  mini.play().catch(function() {});
+
+  _videoOwnerTimer = setTimeout(function() {
+    fadeOutMiniVideo();
+  }, 10000);
+}
+
+function fadeOutMiniVideo() {
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini || _videoOwnerSeen) return;
+  
+  mini.classList.add('video-fading');
+  setTimeout(function() {
+    mini.style.display = 'none';
+    mini.classList.remove('video-fading');
+  }, 500);
+}
+
+function openVideoFullscreen() {
+  var mini = document.getElementById('video-owner-mini');
+  var cfg  = window._storeCfgRaw || {};
+  var videoUrl = cfg.videoOwnerUrl || mini?.src || '';
+  
+  if (!videoUrl) return;
+
+  if (_videoOwnerTimer) {
+    clearTimeout(_videoOwnerTimer);
+    _videoOwnerTimer = null;
+  }
+
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  var fullVid = document.getElementById('video-fullscreen-el');
+  
+  if (!overlay || !fullVid) return;
+
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  
+  fullVid.src = videoUrl;
+  fullVid.style.display = 'block';
+  fullVid.load();
+  fullVid.play().catch(function() {});
+  
+  if (mini) {
+    mini.style.display = 'none';
+  }
+}
+
+function closeVideoFullscreen() {
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  var fullVid = document.getElementById('video-fullscreen-el');
+  
+  if (overlay) {
+    overlay.classList.remove('on');
+  }
+  if (fullVid) {
+    fullVid.pause();
+    fullVid.src = '';
+    fullVid.style.display = 'none';
+  }
+  document.body.style.overflow = '';
+
+  _videoOwnerSeen = true;
+  sessionStorage.setItem('lk_video_owner_seen_' + STORE_ID, '1');
+  
+  var mini = document.getElementById('video-owner-mini');
+  if (mini) {
+    mini.remove();
+  }
+}
+
+// Event listeners para los videos
+document.addEventListener('click', function(e) {
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  if (overlay && e.target === overlay) {
+    closeVideoFullscreen();
+  }
+});
+
+// Click en el mini video abre fullscreen
+var miniVid = document.getElementById('video-owner-mini');
+if (miniVid) {
+  miniVid.addEventListener('click', function(e) {
+    e.stopPropagation();
+    openVideoFullscreen();
+  });
+}
+  // ── VIDEO DEL DUEÑO — visualización en tienda ──────────────
+var _videoOwnerDismissed = false;
+
+function initVideoOwnerTienda(videoUrl) {
+  if (!videoUrl || videoUrl.length < 10) return;
+
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
+
+  // Usar URL correcta para video de Drive
+  mini.src = fixImgUrl(videoUrl, true);
+  mini.style.display = 'block';
+
+  // Auto-ocultar después de 10 segundos si no se interactuó
+  var autoHideTimer = setTimeout(function() {
+    if (!_videoOwnerDismissed) dismissVideoOwner(mini);
+  }, 10000);
+
+  // Click: abrir pantalla completa
+  mini.addEventListener('click', function() {
+    clearTimeout(autoHideTimer);
+    abrirVideoOwnerFullscreen(videoUrl, mini);
+  });
+}
+
+function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
+  // Crear overlay si no existe
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'video-fullscreen-overlay';
+    overlay.className = 'video-fullscreen-overlay';
+    overlay.innerHTML =
+      '<button class="video-fullscreen-close" id="vfs-close">✕</button>' +
+      '<video id="vfs-video" controls autoplay playsinline ' +
+      'style="max-width:96vw;max-height:96vh;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.7);cursor:pointer">' +
+      '</video>';
+    document.body.appendChild(overlay);
+  }
+
+  var vfsVideo = document.getElementById('vfs-video');
+  var vfsClose = document.getElementById('vfs-close');
+
+  vfsVideo.src = fixImgUrl(videoUrl, true);
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  vfsVideo.play().catch(function() {});
+
+  // Cerrar al terminar el video o hacer click
+  function cerrar() {
+    overlay.classList.remove('on');
+    document.body.style.overflow = '';
+    vfsVideo.pause();
+    vfsVideo.src = '';
+    // Ocultar mini permanentemente
+    dismissVideoOwner(miniEl);
+  }
+
+  vfsClose.onclick = cerrar;
+  vfsVideo.onclick = cerrar;
+  vfsVideo.onended = cerrar;
+  overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
+}
+
+function dismissVideoOwner(miniEl) {
+  if (_videoOwnerDismissed) return;
+  _videoOwnerDismissed = true;
+  if (!miniEl) return;
+  miniEl.classList.add('video-fading');
+  setTimeout(function() { miniEl.style.display = 'none'; }, 500);
+}
 </script>
 
 <div class="bottom-bar" id="bottom-bar" style="display:none">
@@ -2484,6 +2679,11 @@ document.addEventListener('tienda-lista', function() {
       <button class="transit-btn-no" id="transit-skip-btn">No, solo llevarme ahí</button>
     </div>
   </div>
+</div>
+  <!-- ═══ VIDEO FULLSCREEN OVERLAY ═══ -->
+<div id="video-fullscreen-overlay" class="video-fullscreen-overlay">
+  <button class="video-fullscreen-close" onclick="closeVideoFullscreen()">✕</button>
+  <video id="video-fullscreen-el" controls playsinline></video>
 </div>
 </body>
 </html>
