@@ -2445,3 +2445,140 @@ function startPolling() {
 document.addEventListener('tienda-lista', function() {
   setTimeout(startPolling, 3000); // esperar 3s después de carga inicial
 });
+
+// ╔═══════════════════════════════════════════════════════════════╗
+//  VIDEO DEL DUEÑO — visualización en tienda
+// ╚═══════════════════════════════════════════════════════════════╝
+
+var _videoOwnerDismissed = false;
+var _videoOwnerAutoTimer = null;
+
+function initVideoOwnerTienda(videoUrl) {
+  if (!videoUrl || videoUrl.length < 10) return;
+  if (sessionStorage.getItem('lk_video_seen_' + STORE_ID) === '1') return;
+
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
+
+  var src = fixImgUrl(videoUrl, true);
+  mini.src = src;
+  mini.style.display = 'block';
+  mini.load();
+  mini.play().catch(function() {});
+
+  _videoOwnerAutoTimer = setTimeout(function() {
+    if (!_videoOwnerDismissed) dismissVideoOwner(mini);
+  }, 10000);
+
+  mini.addEventListener('click', function(e) {
+    e.stopPropagation();
+    clearTimeout(_videoOwnerAutoTimer);
+    abrirVideoOwnerFullscreen(videoUrl, mini);
+  });
+}
+
+function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
+  var overlay  = document.getElementById('video-fullscreen-overlay');
+  var vfsVideo = document.getElementById('video-fullscreen-el');
+  var vfsClose = document.querySelector('.video-fullscreen-close');
+  if (!overlay || !vfsVideo) return;
+
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+
+  var newVid = vfsVideo.cloneNode(false);
+  newVid.id = 'video-fullscreen-el';
+  newVid.setAttribute('controls', '');
+  newVid.setAttribute('playsinline', '');
+  newVid.style.cssText = 'max-width:96vw;max-height:96vh;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.7);cursor:pointer';
+  newVid.src = fixImgUrl(videoUrl, true);
+  vfsVideo.parentNode.replaceChild(newVid, vfsVideo);
+  newVid.load();
+  newVid.play().catch(function() {});
+
+  function cerrar() {
+    overlay.classList.remove('on');
+    document.body.style.overflow = '';
+    newVid.pause();
+    newVid.src = '';
+    dismissVideoOwner(miniEl);
+  }
+
+  var newClose = vfsClose.cloneNode(true);
+  vfsClose.parentNode.replaceChild(newClose, vfsClose);
+  newClose.onclick = cerrar;
+  newVid.onclick  = cerrar;
+  newVid.onended  = cerrar;
+  overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
+}
+
+function dismissVideoOwner(miniEl) {
+  if (_videoOwnerDismissed) return;
+  _videoOwnerDismissed = true;
+  sessionStorage.setItem('lk_video_seen_' + STORE_ID, '1');
+  if (!miniEl) return;
+  miniEl.classList.add('video-fading');
+  setTimeout(function() {
+    miniEl.style.display = 'none';
+    miniEl.classList.remove('video-fading');
+  }, 500);
+}
+</script>
+
+<div class="bottom-bar" id="bottom-bar" style="display:none">
+  <a id="bb-facebook" href="#" target="_blank" class="bottom-bar-icon" style="background:#1877f2;display:none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+  </a>
+  <a id="bb-instagram" href="#" target="_blank" class="bottom-bar-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+  </a>
+</div>
+
+<script src="lk-guardian.js"></script>
+
+<style>
+.map-container{display:inline-block;position:relative}
+.map-container svg{animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.map-container svg circle{animation:softPulse 4s ease-in-out infinite;transform-origin:center}
+@keyframes softPulse{0%,100%{opacity:0.7}50%{opacity:1}}
+.map-container:hover svg{color:#38bdf8!important;transform:scale(1.05) translateY(-2px)}
+.map-container:hover .directorio-text{color:#0ea5e9!important;letter-spacing:0.8px}
+.map-container:hover span:first-child{color:#cbd5e1!important}
+.map-container:hover span:nth-child(2){color:#94a3b8!important}
+.map-container,.map-container svg,.map-container span{transition:all 0.4s cubic-bezier(0.4,0,0.2,1)}
+</style>
+
+<style>
+#transit-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+#transit-modal-bg.on{display:flex}
+.transit-modal{background:var(--surface);border-radius:var(--r-xl);width:100%;max-width:360px;padding:26px 22px 22px;box-shadow:var(--shadow-xl);text-align:center}
+.transit-modal-icon{font-size:38px;margin-bottom:10px}
+.transit-modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
+.transit-modal-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.transit-btns{display:flex;flex-direction:column;gap:9px}
+.transit-btn-yes{padding:12px;background:#25d366;color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:all .15s}
+.transit-btn-yes:hover{background:#1db954}
+.transit-btn-yes:disabled{background:#a5d6a7;cursor:default}
+.transit-btn-no{padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r);font-size:12px;cursor:pointer;font-family:var(--font-b);transition:all .15s}
+.transit-btn-no:hover{border-color:var(--text);color:var(--text)}
+</style>
+
+<div id="transit-modal-bg">
+  <div class="transit-modal">
+    <div class="transit-modal-icon">🚶</div>
+    <div class="transit-modal-title">¿Avisamos que vas en camino?</div>
+    <div class="transit-modal-sub">Podemos notificar al negocio por WhatsApp para que se preparen antes de que llegues.</div>
+    <div class="transit-btns">
+      <button class="transit-btn-yes" id="transit-notify-btn">Sí, avisar por WhatsApp</button>
+      <button class="transit-btn-no" id="transit-skip-btn">No, solo llevarme ahí</button>
+    </div>
+  </div>
+</div>
+  <!-- ═══ VIDEO FULLSCREEN OVERLAY ═══ -->
+<div id="video-fullscreen-overlay" class="video-fullscreen-overlay">
+  <button class="video-fullscreen-close" onclick="closeVideoFullscreen()">✕</button>
+  <video id="video-fullscreen-el" controls playsinline></video>
+</div>
+</body>
+</html>
