@@ -1099,32 +1099,25 @@ function usarGPS() {
 //  VIDEO DEL DUEÑO - Subir / Eliminar / Preview
 // ╚═══════════════════════════════════════════════════════════════╝
 
-var _videoFile = null;        // Archivo seleccionado
-var _videoBase64 = '';        // Base64 del video
-var _videoMimeType = '';      // Tipo MIME
-var _videoFileName = '';      // Nombre del archivo
-var _currentVideoUrl = '';    // URL actual del video en Drive
+var _videoFile = null;        
+var _videoBase64 = '';        
+var _videoMimeType = '';      
+var _videoFileName = '';      
+var _currentVideoUrl = '';    
 
-// ── Convertir archivo a base64 ────────────────────────────────
 function fileToBase64(file) {
   return new Promise(function(resolve, reject) {
     var reader = new FileReader();
     reader.onload = function() {
       var base64 = reader.result.split(',')[1];
-      if (!base64) {
-        reject(new Error('Error al leer archivo'));
-        return;
-      }
+      if (!base64) { reject(new Error('Error al leer archivo')); return; }
       resolve(base64);
     };
-    reader.onerror = function() {
-      reject(new Error('Error al leer archivo'));
-    };
+    reader.onerror = function() { reject(new Error('Error al leer archivo')); };
     reader.readAsDataURL(file);
   });
 }
 
-// ── Formatear bytes ───────────────────────────────────────────
 function formatBytes(bytes) {
   if (bytes === 0) return '0 B';
   var k = 1024;
@@ -1133,22 +1126,13 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-// ── Cargar preview del video seleccionado ─────────────────────
+// ── Cargar preview mejorado para evitar cuadro negro ──────────
 function cargarVideoPreview(input) {
   var file = input.files[0];
   if (!file) return;
 
-  // Validar tamaño máximo (50MB)
   if (file.size > 50 * 1024 * 1024) {
     mostrarVideoStatus('❌ Video muy grande. Máximo 50MB', 'error');
-    input.value = '';
-    return;
-  }
-
-  // Validar formato
-  var allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo'];
-  if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|ogg|mov|avi)$/i)) {
-    mostrarVideoStatus('❌ Formato no soportado. Usa MP4, WebM o MOV', 'error');
     input.value = '';
     return;
   }
@@ -1157,22 +1141,28 @@ function cargarVideoPreview(input) {
   _videoMimeType = file.type || 'video/mp4';
   _videoFileName = file.name || 'video_owner.mp4';
 
-  // Mostrar preview
   var url = URL.createObjectURL(file);
   var vid = document.getElementById('video-preview-el');
   var placeholder = document.getElementById('video-placeholder');
 
   if (vid) {
+    vid.pause();
     vid.src = url;
     vid.style.display = 'block';
-    vid.muted = true; // Crucial para que el navegador muestre el frame sin bloqueos
-    vid.preload = "auto"; 
+    vid.muted = true; 
+    vid.setAttribute('playsinline', 'true');
+    vid.preload = "metadata";
+    
+    // TÉCNICA CRÍTICA: Mover a 0.1s para generar miniatura
+    vid.onloadedmetadata = function() {
+      vid.currentTime = 0.1;
+    };
+    
     vid.load();
   }
   
   if (placeholder) placeholder.style.display = 'none';
 
-  // Habilitar botón de subir
   var btnSubir = document.getElementById('btn-subir-video');
   if (btnSubir) {
     btnSubir.disabled = false;
@@ -1181,10 +1171,8 @@ function cargarVideoPreview(input) {
   }
 
   mostrarVideoStatus('📹 Listo para subir', '');
-  input.value = ''; 
 }
 
-// ── Subir video del dueño ─────────────────────────────────────
 async function subirVideoOwner() {
   if (!_videoFile) {
     mostrarVideoStatus('❌ No hay video seleccionado', 'error');
@@ -1203,7 +1191,7 @@ async function subirVideoOwner() {
     mostrarVideoStatus('⏳ Convirtiendo video...', 'loading');
     var base64 = await fileToBase64(_videoFile);
     
-    if (btnSubir) btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
+    if (btnSubir) btnSubir.textContent = '⏳ Subiendo...';
     mostrarVideoStatus('⏳ Subiendo video al servidor...', 'loading');
     
     var resp = await postAPI('video.owner.upload', {
@@ -1212,22 +1200,19 @@ async function subirVideoOwner() {
       fileName: _videoFileName
     });
 
-    if (!resp || resp.error) {
-      throw new Error(resp?.error || 'Error al subir video');
-    }
+    if (!resp || resp.error) throw new Error(resp?.error || 'Error al subir video');
 
     _currentVideoUrl = resp.videoUrl || '';
     _videoFile = null;
 
-    // Actualizar preview con la URL final del servidor
     var vid = document.getElementById('video-preview-el');
-    var placeholder = document.getElementById('video-placeholder');
     if (vid) {
       vid.src = fixImgUrl(_currentVideoUrl);
       vid.style.display = 'block';
+      vid.muted = true;
+      vid.onloadedmetadata = function() { vid.currentTime = 0.1; };
       vid.load();
     }
-    if (placeholder) placeholder.style.display = 'none';
 
     var btnEliminar = document.getElementById('btn-eliminar-video');
     if (btnEliminar) btnEliminar.style.display = '';
@@ -1244,14 +1229,11 @@ async function subirVideoOwner() {
   }
 }
 
-// ── Eliminar video ────────────────────────────────────────────
 async function eliminarVideoOwner() {
   if (!confirm('¿Eliminar el video de bienvenida?')) return;
-
   try {
     mostrarVideoStatus('⏳ Eliminando...', 'loading');
     var resp = await postAPI('video.owner.delete', { storeId: STORE_ID });
-
     if (!resp || resp.error) throw new Error(resp?.error || 'Error al eliminar');
 
     _currentVideoUrl = '';
@@ -1259,10 +1241,7 @@ async function eliminarVideoOwner() {
 
     var vid = document.getElementById('video-preview-el');
     var placeholder = document.getElementById('video-placeholder');
-    if (vid) {
-      vid.style.display = 'none';
-      vid.src = '';
-    }
+    if (vid) { vid.style.display = 'none'; vid.src = ''; }
     if (placeholder) placeholder.style.display = 'flex';
 
     var btnSubir = document.getElementById('btn-subir-video');
@@ -1276,29 +1255,19 @@ async function eliminarVideoOwner() {
 
     mostrarVideoStatus('✅ Video eliminado', 'success');
     setTimeout(function() { if(typeof cargarDatos === 'function') cargarDatos(); }, 1000);
-
-  } catch (e) {
-    mostrarVideoStatus('❌ Error: ' + e.message, 'error');
-  }
+  } catch (e) { mostrarVideoStatus('❌ Error: ' + e.message, 'error'); }
 }
 
-// ── Mostrar estado del video ──────────────────────────────────
 function mostrarVideoStatus(msg, tipo) {
   var el = document.getElementById('video-status');
   if (!el) return;
   el.textContent = msg;
   el.className = 'video-status ' + (tipo || '');
   if (tipo === 'success') {
-    setTimeout(function() {
-      if (el.textContent === msg) {
-        el.textContent = '';
-        el.className = 'video-status';
-      }
-    }, 4000);
+    setTimeout(function() { if (el.textContent === msg) { el.textContent = ''; el.className = 'video-status'; } }, 4000);
   }
 }
 
-// ── Inicializar estado del video al cargar datos ──────────────
 function initVideoOwnerState(videoUrl) {
   _currentVideoUrl = videoUrl || '';
   var vid = document.getElementById('video-preview-el');
@@ -1311,26 +1280,20 @@ function initVideoOwnerState(videoUrl) {
       vid.src = fixImgUrl(videoUrl);
       vid.style.display = 'block';
       vid.muted = true;
+      vid.onloadedmetadata = function() { vid.currentTime = 0.1; };
       vid.load();
     }
     if (placeholder) placeholder.style.display = 'none';
     if (btnSubir) btnSubir.style.display = 'none';
     if (btnEliminar) btnEliminar.style.display = '';
   } else {
-    if (vid) {
-      vid.style.display = 'none';
-      vid.src = '';
-    }
+    if (vid) { vid.style.display = 'none'; vid.src = ''; }
     if (placeholder) placeholder.style.display = 'flex';
-    if (btnSubir) {
-      btnSubir.style.display = '';
-      btnSubir.disabled = true;
-    }
+    if (btnSubir) { btnSubir.style.display = ''; btnSubir.disabled = true; }
     if (btnEliminar) btnEliminar.style.display = 'none';
   }
 }
 
-// ── visualización en tienda y fullscreen ──────────────────────
 var _videoOwnerDismissed = false;
 function initVideoOwnerTienda(videoUrl) {
   if (!videoUrl || videoUrl.length < 10) return;
@@ -1338,13 +1301,8 @@ function initVideoOwnerTienda(videoUrl) {
   if (!mini) return;
   mini.src = fixImgUrl(videoUrl, true);
   mini.style.display = 'block';
-  var autoHideTimer = setTimeout(function() {
-    if (!_videoOwnerDismissed) dismissVideoOwner(mini);
-  }, 10000);
-  mini.addEventListener('click', function() {
-    clearTimeout(autoHideTimer);
-    abrirVideoOwnerFullscreen(videoUrl, mini);
-  });
+  setTimeout(function() { if (!_videoOwnerDismissed) dismissVideoOwner(mini); }, 10000);
+  mini.addEventListener('click', function() { abrirVideoOwnerFullscreen(videoUrl, mini); });
 }
 
 function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
