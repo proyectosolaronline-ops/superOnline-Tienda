@@ -532,12 +532,20 @@ let TOKEN = '';
 let IMG = { logob64:'', logomime:'', logoname:'', bannerb64:'', bannermime:'', bannername:'' };
 let currentLogo = '', currentBanner = '';
 
-function fixImgUrl(url) {
+function fixImgUrl(url, esVideo) {
   if (!url) return '';
-  const m = url.match(/[?&]id=([\w-]+)/);
-  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
-  const m2 = url.match(/\/d\/([\w-]+)/);
-  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  var m = url.match(/[?&]id=([\w-]+)/);
+  if (m) {
+    return esVideo
+      ? 'https://drive.google.com/uc?export=download&id=' + m[1]
+      : 'https://lh3.googleusercontent.com/d/' + m[1];
+  }
+  var m2 = url.match(/\/d\/([\w-]+)/);
+  if (m2) {
+    return esVideo
+      ? 'https://drive.google.com/uc?export=download&id=' + m2[1]
+      : 'https://lh3.googleusercontent.com/d/' + m2[1];
+  }
   return url;
 }
 
@@ -1202,9 +1210,8 @@ async function subirVideoOwner() {
       mimeType: _videoMimeType,
       fileName: _videoFileName
     });
-
-    if (!resp || resp.error) {
-      throw new Error(resp?.error || 'Error al subir video');
+if (!resp || !resp.ok) {
+      throw new Error((resp && resp.error) ? resp.error : 'El servidor rechazó el video');
     }
 
     // ✅ Actualizar URL del video
@@ -1309,7 +1316,7 @@ function initVideoOwnerState(videoUrl) {
 
   if (videoUrl && videoUrl.length > 10) {
     // Hay video guardado
-    vid.src = fixImgUrl(videoUrl);
+   vid.src = fixImgUrl(videoUrl, true);
     vid.style.display = 'block';
     if (placeholder) placeholder.style.display = 'none';
     vid.load();
@@ -1403,20 +1410,6 @@ function dismissVideoOwner(miniEl) {
   setTimeout(function() { miniEl.style.display = 'none'; }, 500);
 }
 
-// -------------------------- debug
-  // ── DEBUG VIDEO ────────────────────────────────────────────
-console.log('DEBUG VIDEO INICIADO');
-console.log('video-preview-el:', document.getElementById('video-preview-el'));
-console.log('btn-subir-video:', document.getElementById('btn-subir-video'));
-console.log('btn-eliminar-video:', document.getElementById('btn-eliminar-video'));
-console.log('video-status:', document.getElementById('video-status'));
-console.log('video-placeholder:', document.getElementById('video-placeholder'));
-console.log('video-owner-mini:', document.getElementById('video-owner-mini'));
-console.log('postAPI existe:', typeof postAPI);
-console.log('fixImgUrl existe:', typeof fixImgUrl);
-console.log('_videoFile inicial:', _videoFile);
-console.log('_currentVideoUrl inicial:', _currentVideoUrl);
-console.log('DEBUG VIDEO TERMINADO');
 
   
 </script>
