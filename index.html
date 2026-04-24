@@ -2451,8 +2451,7 @@ document.addEventListener('tienda-lista', function() {
 
 
 
-function initVideoOwner() {
-  var seen = sessionStorage.getItem('lk_video_owner_seen_' + STORE_ID);
+
   if (seen === '1') {
     _videoOwnerSeen = true;
     return;
@@ -2540,13 +2539,7 @@ function closeVideoFullscreen() {
   }
 }
 
-// Event listeners para los videos
-document.addEventListener('click', function(e) {
-  var overlay = document.getElementById('video-fullscreen-overlay');
-  if (overlay && e.target === overlay) {
-   
-  
-});
+
 
 
 // ╔═══════════════════════════════════════════════════════════════╗
