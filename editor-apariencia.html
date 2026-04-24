@@ -1402,6 +1402,23 @@ function dismissVideoOwner(miniEl) {
   miniEl.classList.add('video-fading');
   setTimeout(function() { miniEl.style.display = 'none'; }, 500);
 }
+
+// -------------------------- debug
+  // ── DEBUG VIDEO ────────────────────────────────────────────
+console.log('DEBUG VIDEO INICIADO');
+console.log('video-preview-el:', document.getElementById('video-preview-el'));
+console.log('btn-subir-video:', document.getElementById('btn-subir-video'));
+console.log('btn-eliminar-video:', document.getElementById('btn-eliminar-video'));
+console.log('video-status:', document.getElementById('video-status'));
+console.log('video-placeholder:', document.getElementById('video-placeholder'));
+console.log('video-owner-mini:', document.getElementById('video-owner-mini'));
+console.log('postAPI existe:', typeof postAPI);
+console.log('fixImgUrl existe:', typeof fixImgUrl);
+console.log('_videoFile inicial:', _videoFile);
+console.log('_currentVideoUrl inicial:', _currentVideoUrl);
+console.log('DEBUG VIDEO TERMINADO');
+
+  
 </script>
 </body>
 </html>
