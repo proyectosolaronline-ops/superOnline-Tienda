@@ -978,8 +978,7 @@ function guardarCoords(lat, lng) {
   document.getElementById('ed-location-lat').value = lat.toFixed(6);
   document.getElementById('ed-location-lng').value = lng.toFixed(6);
 }
-
-// ── STREET VIEW ───────────────────────────────────────────────
+<!-- ── STREET VIEW ─────────────────────────────────────────────── -->
 function abrirStreetView() {
   var lat = document.getElementById('ed-location-lat').value;
   var lng = document.getElementById('ed-location-lng').value;
@@ -1095,7 +1094,8 @@ function usarGPS() {
     reverseGeocode(lat, lng);
   }, function() { alert('No se pudo obtener tu ubicación'); }, { enableHighAccuracy: true, timeout: 8000 });
 }
-  // ╔═══════════════════════════════════════════════════════════════╗
+
+// ╔═══════════════════════════════════════════════════════════════╗
 //  VIDEO DEL DUEÑO - Subir / Eliminar / Preview
 // ╚═══════════════════════════════════════════════════════════════╝
 
@@ -1105,7 +1105,35 @@ var _videoMimeType = '';      // Tipo MIME
 var _videoFileName = '';      // Nombre del archivo
 var _currentVideoUrl = '';    // URL actual del video en Drive
 
-// -----------------------------------------Cargar preview del video seleccionado
+// ── Convertir archivo a base64 ────────────────────────────────
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = reader.result.split(',')[1];
+      if (!base64) {
+        reject(new Error('Error al leer archivo'));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = function() {
+      reject(new Error('Error al leer archivo'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Formatear bytes ───────────────────────────────────────────
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  var k = 1024;
+  var sizes = ['B', 'KB', 'MB', 'GB'];
+  var i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// ── Cargar preview del video seleccionado ─────────────────────
 function cargarVideoPreview(input) {
   var file = input.files[0];
   if (!file) return;
@@ -1129,8 +1157,28 @@ function cargarVideoPreview(input) {
   _videoMimeType = file.type || 'video/mp4';
   _videoFileName = file.name || 'video_owner.mp4';
 
+  // Mostrar preview
+  var url = URL.createObjectURL(file);
+  var vid = document.getElementById('video-preview-el');
+  var placeholder = document.getElementById('video-placeholder');
 
-// Agregar después de cargarVideoPreview() (~línea 1130)
+  vid.src = url;
+  vid.style.display = 'block';
+  if (placeholder) placeholder.style.display = 'none';
+  vid.load();
+
+  // Habilitar botón de subir
+  var btnSubir = document.getElementById('btn-subir-video');
+  if (btnSubir) {
+    btnSubir.disabled = false;
+    btnSubir.textContent = '⬆️ Subir video (' + formatBytes(file.size) + ')';
+  }
+
+  mostrarVideoStatus('📹 Listo para subir', '');
+  input.value = ''; // Limpiar input para permitir re-seleccionar el mismo archivo
+}
+
+// ── Subir video del dueño ─────────────────────────────────────
 async function subirVideoOwner() {
   if (!_videoFile) {
     mostrarVideoStatus('❌ No hay video seleccionado', 'error');
@@ -1187,27 +1235,100 @@ async function subirVideoOwner() {
     btnSubir.textContent = originalText;
   }
 }
-////--------------
+
+// ── Eliminar video ────────────────────────────────────────────
+async function eliminarVideoOwner() {
+  if (!confirm('¿Eliminar el video de bienvenida?')) return;
+
+  try {
+    mostrarVideoStatus('⏳ Eliminando...', 'loading');
+    
+    var resp = await postAPI('video.owner.delete', {
+      storeId: STORE_ID
+    });
+
+    if (!resp || resp.error) {
+      throw new Error(resp?.error || 'Error al eliminar');
+    }
+
+    _currentVideoUrl = '';
+    _videoFile = null;
+    _videoBase64 = '';
+
+    // Resetear preview
+    var vid = document.getElementById('video-preview-el');
+    var placeholder = document.getElementById('video-placeholder');
+    vid.style.display = 'none';
+    vid.src = '';
+    if (placeholder) placeholder.style.display = '';
+
+    // Resetear botones
+    var btnSubir = document.getElementById('btn-subir-video');
+    var btnEliminar = document.getElementById('btn-eliminar-video');
+    if (btnSubir) {
+      btnSubir.style.display = '';
+      btnSubir.disabled = true;
+      btnSubir.textContent = '⬆️ Subir video';
+    }
+    if (btnEliminar) btnEliminar.style.display = 'none';
+
+    mostrarVideoStatus('✅ Video eliminado', 'success');
+    
+    setTimeout(function() { cargarDatos(); }, 1000);
+
+  } catch (e) {
+    mostrarVideoStatus('❌ Error: ' + e.message, 'error');
+  }
+}
+
+// ── Mostrar estado del video ──────────────────────────────────
+function mostrarVideoStatus(msg, tipo) {
+  var el = document.getElementById('video-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'video-status ' + (tipo || '');
   
-  // Mostrar preview
-  var url = URL.createObjectURL(file);
+  if (tipo === 'success') {
+    setTimeout(function() {
+      if (el.textContent === msg) {
+        el.textContent = '';
+        el.className = 'video-status';
+      }
+    }, 4000);
+  }
+}
+
+// ── Inicializar estado del video al cargar datos ──────────────
+function initVideoOwnerState(videoUrl) {
+  _currentVideoUrl = videoUrl || '';
+  
   var vid = document.getElementById('video-preview-el');
   var placeholder = document.getElementById('video-placeholder');
-
-  vid.src = url;
-  vid.style.display = 'block';
-  if (placeholder) placeholder.style.display = 'none';
-  vid.load();
-
-  // Habilitar botón de subir
   var btnSubir = document.getElementById('btn-subir-video');
-  if (btnSubir) {
-    btnSubir.disabled = false;
-    btnSubir.textContent = '⬆️ Subir video (' + formatBytes(file.size) + ')';
-  }
+  var btnEliminar = document.getElementById('btn-eliminar-video');
 
-  mostrarVideoStatus('📹 Listo para subir', '');
-  input.value = ''; // Limpiar input para permitir re-seleccionar el mismo archivo
+  if (videoUrl && videoUrl.length > 10) {
+    // Hay video guardado
+    vid.src = fixImgUrl(videoUrl);
+    vid.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    vid.load();
+    
+    if (btnSubir) btnSubir.style.display = 'none';
+    if (btnEliminar) btnEliminar.style.display = '';
+  } else {
+    // No hay video
+    vid.style.display = 'none';
+    vid.src = '';
+    if (placeholder) placeholder.style.display = '';
+    
+    if (btnSubir) {
+      btnSubir.style.display = '';
+      btnSubir.disabled = true;
+      btnSubir.textContent = '⬆️ Subir video';
+    }
+    if (btnEliminar) btnEliminar.style.display = 'none';
+  }
 }
 
 // ── VIDEO DEL DUEÑO — visualización en tienda ──────────────
@@ -1280,131 +1401,6 @@ function dismissVideoOwner(miniEl) {
   if (!miniEl) return;
   miniEl.classList.add('video-fading');
   setTimeout(function() { miniEl.style.display = 'none'; }, 500);
-}
-// Eliminar video
-async function eliminarVideoOwner() {
-  if (!confirm('¿Eliminar el video de bienvenida?')) return;
-
-  try {
-    mostrarVideoStatus('⏳ Eliminando...', 'loading');
-    
-    var resp = await postAPI('video.owner.delete', {
-      storeId: STORE_ID
-    });
-
-    if (!resp || resp.error) {
-      throw new Error(resp?.error || 'Error al eliminar');
-    }
-
-    _currentVideoUrl = '';
-    _videoFile = null;
-    _videoBase64 = '';
-
-    // Resetear preview
-    var vid = document.getElementById('video-preview-el');
-    var placeholder = document.getElementById('video-placeholder');
-    vid.style.display = 'none';
-    vid.src = '';
-    if (placeholder) placeholder.style.display = '';
-
-    // Resetear botones
-    var btnSubir = document.getElementById('btn-subir-video');
-    var btnEliminar = document.getElementById('btn-eliminar-video');
-    if (btnSubir) {
-      btnSubir.style.display = '';
-      btnSubir.disabled = true;
-      btnSubir.textContent = '⬆️ Subir video';
-    }
-    if (btnEliminar) btnEliminar.style.display = 'none';
-
-    mostrarVideoStatus('✅ Video eliminado', 'success');
-    
-    setTimeout(function() { cargarDatos(); }, 1000);
-
-  } catch (e) {
-    mostrarVideoStatus('❌ Error: ' + e.message, 'error');
-  }
-}
-
-// Convertir archivo a base64
-function fileToBase64(file) {
-  return new Promise(function(resolve, reject) {
-    var reader = new FileReader();
-    reader.onload = function() {
-      var base64 = reader.result.split(',')[1];
-      if (!base64) {
-        reject(new Error('Error al leer archivo'));
-        return;
-      }
-      resolve(base64);
-    };
-    reader.onerror = function() {
-      reject(new Error('Error al leer archivo'));
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// Mostrar estado del video
-function mostrarVideoStatus(msg, tipo) {
-  var el = document.getElementById('video-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'video-status ' + (tipo || '');
-  
-  if (tipo === 'success') {
-    setTimeout(function() {
-      if (el.textContent === msg) {
-        el.textContent = '';
-        el.className = 'video-status';
-      }
-    }, 4000);
-  }
-}
-
-// Formatear bytes
-function formatBytes(bytes) {
-  if (bytes === 0) return '0 B';
-  var k = 1024;
-  var sizes = ['B', 'KB', 'MB', 'GB'];
-  var i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
-// Inicializar estado del video al cargar datos
-// Modificar la función cargarDatos() existente añadiendo al final:
-// initVideoOwnerState(cfg.videoOwnerUrl);
-
-function initVideoOwnerState(videoUrl) {
-  _currentVideoUrl = videoUrl || '';
-  
-  var vid = document.getElementById('video-preview-el');
-  var placeholder = document.getElementById('video-placeholder');
-  var btnSubir = document.getElementById('btn-subir-video');
-  var btnEliminar = document.getElementById('btn-eliminar-video');
-
-  if (videoUrl && videoUrl.length > 10) {
-    // Hay video guardado
-    vid.src = fixImgUrl(videoUrl);
-    vid.style.display = 'block';
-    if (placeholder) placeholder.style.display = 'none';
-    vid.load();
-    
-    if (btnSubir) btnSubir.style.display = 'none';
-    if (btnEliminar) btnEliminar.style.display = '';
-  } else {
-    // No hay video
-    vid.style.display = 'none';
-    vid.src = '';
-    if (placeholder) placeholder.style.display = '';
-    
-    if (btnSubir) {
-      btnSubir.style.display = '';
-      btnSubir.disabled = true;
-      btnSubir.textContent = '⬆️ Subir video';
-    }
-    if (btnEliminar) btnEliminar.style.display = 'none';
-  }
 }
 </script>
 </body>
