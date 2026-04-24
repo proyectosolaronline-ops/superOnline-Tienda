@@ -534,13 +534,13 @@ let currentLogo = '', currentBanner = '';
 
 function fixImgUrl(url) {
   if (!url) return '';
-  const m = url.match(/[?&]id=([\w-]+)/);
-  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
-  const m2 = url.match(/\/d\/([\w-]+)/);
-  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  // Si el link es de Google Drive, lo convertimos en un flujo de datos compatible con video
+  if (url.includes('drive.google.com')) {
+    var id = url.match(/[-\w]{25,}/);
+    if (id) return 'https://drive.google.com/uc?export=download&id=' + id[0];
+  }
   return url;
 }
-
 async function postAPI(action, data) {
   const r = await fetch(BACKEND, {
     method: 'POST',
@@ -1185,19 +1185,29 @@ function initVideoOwnerState(url) {
   _currentVideoUrl = url || '';
   var vid = document.getElementById('video-preview-el');
   var ph = document.getElementById('video-placeholder');
+  var btnS = document.getElementById('btn-subir-video');
+  var btnE = document.getElementById('btn-eliminar-video');
+
   if (url && url.length > 10) {
-    // Aplicamos fix para que no salga el icono tachado al cargar
-    vid.src = fixImgUrl(url);
-    vid.style.display = 'block';
-    vid.muted = true;
-    vid.onloadedmetadata = function() { vid.currentTime = 0.1; };
-    vid.load();
+    if (vid) {
+      // Aplicamos el fix aquí para que el navegador reconozca el video
+      vid.src = fixImgUrl(url); 
+      vid.style.display = 'block';
+      vid.muted = true;
+      // Truco para generar la miniatura automáticamente
+      vid.onloadedmetadata = function() { vid.currentTime = 0.1; };
+      vid.load();
+    }
     if (ph) ph.style.display = 'none';
-    document.getElementById('btn-subir-video').style.display = 'none';
-    document.getElementById('btn-eliminar-video').style.display = '';
+    if (btnS) btnS.style.display = 'none';
+    if (btnE) btnE.style.display = '';
+  } else {
+    if (vid) { vid.style.display = 'none'; vid.src = ''; }
+    if (ph) ph.style.display = 'flex';
+    if (btnS) { btnS.style.display = ''; btnS.disabled = true; }
+    if (btnE) btnE.style.display = 'none';
   }
 }
-
 // ── ELIMINAR Y STATUS (Manteniendo tus nombres de función) ──
 async function eliminarVideoOwner() {
   if (!confirm('¿Eliminar el video?')) return;
