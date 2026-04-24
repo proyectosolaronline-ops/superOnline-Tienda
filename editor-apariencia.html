@@ -1150,60 +1150,77 @@ function cargarVideoPreview(input) {
   input.value = ''; // Limpiar input para permitir re-seleccionar el mismo archivo
 }
 
-// Subir video al servidor
-async function subirVideoOwner() {
-  if (!_videoFile) {
-    mostrarVideoStatus('❌ Selecciona un video primero', 'error');
-    return;
-  }
+// ── VIDEO DEL DUEÑO — visualización en tienda ──────────────
+var _videoOwnerDismissed = false;
 
-  var btn = document.getElementById('btn-subir-video');
-  btn.disabled = true;
-  btn.textContent = '⏳ Convirtiendo...';
+function initVideoOwnerTienda(videoUrl) {
+  if (!videoUrl || videoUrl.length < 10) return;
 
-  try {
-    // Convertir a base64
-    mostrarVideoStatus('⏳ Procesando video...', 'loading');
-    _videoBase64 = await fileToBase64(_videoFile);
-    
-    btn.textContent = '⏳ Subiendo...';
-    mostrarVideoStatus('⏳ Subiendo al servidor...', 'loading');
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
 
-    // Llamar al backend
-    var resp = await postAPI('video.owner.upload', {
-      storeId: STORE_ID,
-      videoBase64: _videoBase64,
-      mimeType: _videoMimeType,
-      fileName: _videoFileName
-    });
+  // Usar URL correcta para video de Drive
+  mini.src = fixImgUrl(videoUrl, true);
+  mini.style.display = 'block';
 
-    if (!resp || resp.error) {
-      throw new Error(resp?.error || 'Error al subir');
-    }
+  // Auto-ocultar después de 10 segundos si no se interactuó
+  var autoHideTimer = setTimeout(function() {
+    if (!_videoOwnerDismissed) dismissVideoOwner(mini);
+  }, 10000);
 
-    _currentVideoUrl = resp.videoUrl || '';
-    
-    mostrarVideoStatus('✅ Video guardado correctamente', 'success');
-    
-    // Cambiar botones
-    btn.style.display = 'none';
-    var btnEliminar = document.getElementById('btn-eliminar-video');
-    if (btnEliminar) btnEliminar.style.display = '';
-
-    // Limpiar archivo temporal
-    _videoFile = null;
-    _videoBase64 = '';
-
-    // Recargar datos después de 1 segundo
-    setTimeout(function() { cargarDatos(); }, 1000);
-
-  } catch (e) {
-    mostrarVideoStatus('❌ Error: ' + e.message, 'error');
-    btn.disabled = false;
-    btn.textContent = '⬆️ Reintentar subida';
-  }
+  // Click: abrir pantalla completa
+  mini.addEventListener('click', function() {
+    clearTimeout(autoHideTimer);
+    abrirVideoOwnerFullscreen(videoUrl, mini);
+  });
 }
 
+function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
+  // Crear overlay si no existe
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'video-fullscreen-overlay';
+    overlay.className = 'video-fullscreen-overlay';
+    overlay.innerHTML =
+      '<button class="video-fullscreen-close" id="vfs-close">✕</button>' +
+      '<video id="vfs-video" controls autoplay playsinline ' +
+      'style="max-width:96vw;max-height:96vh;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.7);cursor:pointer">' +
+      '</video>';
+    document.body.appendChild(overlay);
+  }
+
+  var vfsVideo = document.getElementById('vfs-video');
+  var vfsClose = document.getElementById('vfs-close');
+
+  vfsVideo.src = fixImgUrl(videoUrl, true);
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  vfsVideo.play().catch(function() {});
+
+  // Cerrar al terminar el video o hacer click
+  function cerrar() {
+    overlay.classList.remove('on');
+    document.body.style.overflow = '';
+    vfsVideo.pause();
+    vfsVideo.src = '';
+    // Ocultar mini permanentemente
+    dismissVideoOwner(miniEl);
+  }
+
+  vfsClose.onclick = cerrar;
+  vfsVideo.onclick = cerrar;
+  vfsVideo.onended = cerrar;
+  overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
+}
+
+function dismissVideoOwner(miniEl) {
+  if (_videoOwnerDismissed) return;
+  _videoOwnerDismissed = true;
+  if (!miniEl) return;
+  miniEl.classList.add('video-fading');
+  setTimeout(function() { miniEl.style.display = 'none'; }, 500);
+}
 // Eliminar video
 async function eliminarVideoOwner() {
   if (!confirm('¿Eliminar el video de bienvenida?')) return;
