@@ -1105,7 +1105,7 @@ var _videoMimeType = '';      // Tipo MIME
 var _videoFileName = '';      // Nombre del archivo
 var _currentVideoUrl = '';    // URL actual del video en Drive
 
-// Cargar preview del video seleccionado
+// -----------------------------------------Cargar preview del video seleccionado
 function cargarVideoPreview(input) {
   var file = input.files[0];
   if (!file) return;
@@ -1129,6 +1129,66 @@ function cargarVideoPreview(input) {
   _videoMimeType = file.type || 'video/mp4';
   _videoFileName = file.name || 'video_owner.mp4';
 
+
+// Agregar después de cargarVideoPreview() (~línea 1130)
+async function subirVideoOwner() {
+  if (!_videoFile) {
+    mostrarVideoStatus('❌ No hay video seleccionado', 'error');
+    return;
+  }
+
+  var btnSubir = document.getElementById('btn-subir-video');
+  var originalText = btnSubir.textContent;
+  btnSubir.disabled = true;
+  btnSubir.textContent = '⏳ Convirtiendo...';
+  
+  try {
+    mostrarVideoStatus('⏳ Convirtiendo video...', 'loading');
+    var base64 = await fileToBase64(_videoFile);
+    
+    btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
+    mostrarVideoStatus('⏳ Subiendo video al servidor...', 'loading');
+    
+    var resp = await postAPI('video.owner.upload', {
+      videoBase64: base64,
+      mimeType: _videoMimeType,
+      fileName: _videoFileName
+    });
+
+    if (!resp || resp.error) {
+      throw new Error(resp?.error || 'Error al subir video');
+    }
+
+    // ✅ Actualizar URL del video
+    _currentVideoUrl = resp.videoUrl || '';
+    
+    // ✅ Limpiar archivo temporal
+    _videoFile = null;
+    _videoBase64 = '';
+
+    // Actualizar preview
+    var vid = document.getElementById('video-preview-el');
+    var placeholder = document.getElementById('video-placeholder');
+    vid.src = _currentVideoUrl;
+    vid.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    vid.load();
+
+    // Actualizar botones
+    var btnEliminar = document.getElementById('btn-eliminar-video');
+    if (btnEliminar) btnEliminar.style.display = '';
+    btnSubir.style.display = 'none';
+
+    mostrarVideoStatus('✅ Video subido correctamente', 'success');
+    
+  } catch (e) {
+    mostrarVideoStatus('❌ Error: ' + e.message, 'error');
+    btnSubir.disabled = false;
+    btnSubir.textContent = originalText;
+  }
+}
+////--------------
+  
   // Mostrar preview
   var url = URL.createObjectURL(file);
   var vid = document.getElementById('video-preview-el');
