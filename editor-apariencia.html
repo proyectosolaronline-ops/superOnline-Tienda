@@ -1187,9 +1187,19 @@ function cargarVideoPreview(input) {
 }
 
 // ── Subir video del dueño ─────────────────────────────────────
-async function subirVideoOwner() {
+  async function subirVideoOwner() {
   if (!_videoFile) {
     mostrarVideoStatus('❌ No hay video seleccionado', 'error');
+    return;
+  }
+
+  // ── LÍMITE REAL de GAS: ~4MB en base64 ──
+  var MAX_MB = 4;
+  if (_videoFile.size > MAX_MB * 1024 * 1024) {
+    mostrarVideoStatus(
+      '❌ Video demasiado grande para subir directo. Máximo ' + MAX_MB + 'MB. Comprime el video antes.',
+      'error'
+    );
     return;
   }
 
@@ -1205,14 +1215,31 @@ async function subirVideoOwner() {
     btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
     mostrarVideoStatus('⏳ Subiendo video al servidor...', 'loading');
     
-    var resp = await postAPI('video.owner.upload', {
-      videoBase64: base64,
-      mimeType: _videoMimeType,
-      fileName: _videoFileName
-    });
+// ── Debug: capturar respuesta cruda ──
+var rawResp = await fetch(BACKEND, {
+  method: 'POST',
+  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+  body: JSON.stringify({
+    action: 'video.owner.upload',
+    storeId: STORE_ID,
+    token: TOKEN,
+    videoBase64: base64,
+    mimeType: _videoMimeType,
+    fileName: _videoFileName
+  })
+});
+var rawText = await rawResp.text();
+console.log('[VIDEO UPLOAD] respuesta cruda:', rawText.slice(0, 300));
+
+var resp;
+try {
+  resp = JSON.parse(rawText);
+} catch(parseErr) {
+  throw new Error('Servidor devolvió respuesta inválida: ' + rawText.slice(0, 100));
+}
 if (!resp || !resp.ok) {
-      throw new Error((resp && resp.error) ? resp.error : 'El servidor rechazó el video');
-    }
+  throw new Error((resp && resp.error) ? resp.error : 'El servidor rechazó el video');
+}
 
     // ✅ Actualizar URL del video
     _currentVideoUrl = resp.videoUrl || '';
