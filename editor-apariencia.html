@@ -8,6 +8,7 @@
 <title>Editor de apariencia</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.gridlayer.googlemutant@0.13.6/dist/Leaflet.GoogleMutant.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;500;600;700&family=Raleway:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -54,8 +55,95 @@ input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;f
 .font-btn:hover{border-color:#6366f1}
 .font-preview{font-size:18px;font-weight:700;margin-bottom:3px;color:#111;line-height:1}
 .font-name{font-size:9px;color:#9ca3af;font-family:'DM Sans',sans-serif}
+  .font-name{font-size:9px;color:#9ca3af;font-family:'DM Sans',sans-serif}
+
+/* ── VIDEO DEL DUEÑO ──────────────────────────── */
+.video-upload-preview {
+  width: 100%;
+  max-height: 180px;
+  border-radius: 10px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.video-upload-preview video {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+}
+.video-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 13px;
+  opacity: 0.7;
+  padding: 30px;
+}
+.video-upload-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+}
+.video-upload-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1.5px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  transition: all 0.15s;
+}
+.video-upload-btn:hover {
+  border-color: #6366f1;
+  background: #f0f0ff;
+}
+.video-upload-btn.primary {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+.video-upload-btn.primary:hover {
+  background: #4f46e5;
+}
+.video-upload-btn.danger {
+  color: #ef4444;
+  border-color: #fecaca;
+  background: #fff;
+}
+.video-upload-btn.danger:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+.video-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.video-status {
+  font-size: 11px;
+  margin-top: 6px;
+  text-align: center;
+  min-height: 18px;
+}
+.video-status.success { color: #16a34a; }
+.video-status.error   { color: #ef4444; }
+.video-status.loading { color: #6366f1; }
 </style>
-</head>
+  </head>
 <body>
 
 <header>
@@ -173,7 +261,43 @@ input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;f
       </div>
     </div>
   </div>
-
+  <!-- Video del dueño -->
+  <div class="card">
+    <div class="card-title">🎥 Video del dueño (bienvenida)</div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:10px;line-height:1.5">
+      Aparece junto al logo por 10 segundos. Al hacer clic se abre en pantalla completa. Al salir, desaparece permanentemente.
+    </div>
+    
+    <!-- Preview del video -->
+    <div class="video-upload-preview" id="video-preview-container">
+      <video id="video-preview-el" controls playsinline style="display:none;width:100%;max-height:180px;"></video>
+      <div class="video-upload-placeholder" id="video-placeholder">
+        <span style="font-size:32px;">🎬</span>
+        <span>Sin video</span>
+      </div>
+    </div>
+    
+    <!-- Botones de acción -->
+    <div class="video-upload-actions">
+      <label class="video-upload-btn" style="cursor:pointer;">
+        📷 Cámara
+        <input type="file" accept="video/*" capture="environment" onchange="cargarVideoPreview(this)" style="display:none;">
+      </label>
+      <label class="video-upload-btn" style="cursor:pointer;">
+        🗂️ Archivos
+        <input type="file" accept="video/*" onchange="cargarVideoPreview(this)" style="display:none;">
+      </label>
+    </div>
+    <div class="video-upload-actions">
+      <button class="video-upload-btn primary" id="btn-subir-video" onclick="subirVideoOwner()" disabled>
+        ⬆️ Subir video
+      </button>
+      <button class="video-upload-btn danger" id="btn-eliminar-video" onclick="eliminarVideoOwner()" style="display:none;">
+        🗑️ Eliminar
+      </button>
+    </div>
+    <div class="video-status" id="video-status"></div>
+  </div>
 
   <!-- Contacto -->
   <div class="card">
@@ -214,11 +338,33 @@ input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;f
         <button type="button" onclick="buscarDireccion()" style="padding:10px 14px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0">Buscar</button>
       </div>
       <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">💡 Puedes pegar directamente un link o dirección de Google Maps</div>
+
+      <!-- Controles de capa -->
+      <div id="map-layer-btns" style="display:none;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <button type="button" onclick="setMapLayer('osm')" id="btn-layer-osm"
+          style="padding:6px 12px;border-radius:8px;border:1.5px solid #6366f1;background:#6366f1;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+          🗺️ Mapa
+        </button>
+        <button type="button" onclick="setMapLayer('satellite')" id="btn-layer-sat"
+          style="padding:6px 12px;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+          🛰️ Satélite
+        </button>
+        <button type="button" onclick="setMapLayer('topo')" id="btn-layer-topo"
+          style="padding:6px 12px;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+          🏔️ Topo
+        </button>
+        <button type="button" onclick="abrirStreetView()" id="btn-streetview"
+          style="padding:6px 12px;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+          👁️ Street View
+        </button>
+      </div>
+
       <!-- Mapa -->
       <div style="position:relative;margin-bottom:8px">
         <div id="loc-map" style="height:200px;border-radius:10px;border:1.5px solid #e5e7eb;overflow:hidden;display:none"></div>
         <button id="btn-fullscreen-map" onclick="toggleMapFullscreen()" type="button" style="display:none;position:absolute;top:8px;right:8px;z-index:999;background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:inherit;font-weight:600;color:#374151">⛶ Pantalla completa</button>
       </div>
+
       <!-- Overlay mapa pantalla completa -->
       <div id="map-fullscreen-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border-bottom:1px solid #e5e7eb">
@@ -227,6 +373,22 @@ input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;f
         </div>
         <div id="loc-map-full" style="flex:1;width:100%"></div>
       </div>
+
+      <!-- Street View embed -->
+      <div id="streetview-panel" style="display:none;border-radius:10px;overflow:hidden;border:1.5px solid #e5e7eb;margin-bottom:8px;position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+          <span style="font-size:12px;font-weight:600;color:#374151">👁️ Street View — arrastra en el mapa para cambiar punto</span>
+          <button type="button" onclick="cerrarStreetView()"
+            style="background:none;border:none;color:#6b7280;font-size:16px;cursor:pointer;line-height:1">✕</button>
+        </div>
+        <iframe id="streetview-iframe" width="100%" height="220" frameborder="0"
+          style="display:block" allowfullscreen
+          src=""></iframe>
+        <div style="padding:6px 12px;background:#fff7ed;border-top:1px solid #fed7aa">
+          <span style="font-size:10px;color:#9a3412">⚠️ Street View requiere que Google tenga cobertura en esa zona. Si no carga, la calle no tiene imágenes disponibles.</span>
+        </div>
+      </div>
+
       <div id="loc-result" style="display:none;font-size:12px;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;margin-bottom:6px"></div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:11px;color:#9ca3af">Arrastra el pin para precisar la posición</span>
@@ -365,18 +527,30 @@ input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;f
 <script>
 const params   = new URLSearchParams(location.search);
 const BACKEND  = params.get('backend') || localStorage.getItem('ld_backend') || '';
+  // ── URL del backend independiente de videos (el setup.gs) ──
+var VIDEO_BACKEND_URL = params.get('video_backend') ||
+  localStorage.getItem('lk_video_backend') ||
+  'https://script.google.com/macros/s/AKfycbxvy-Qcwaw1H2CLQ8L_P-rAHQd8pJ5v_ZjINVGDJ1yL6pW_MnQWzzXmNaDtP-oXUbuW/exec';
 let STORE_ID = params.get('store')   || localStorage.getItem('ld_store')   || '';
 let TOKEN = '';
 
 let IMG = { logob64:'', logomime:'', logoname:'', bannerb64:'', bannermime:'', bannername:'' };
 let currentLogo = '', currentBanner = '';
 
-function fixImgUrl(url) {
+function fixImgUrl(url, esVideo) {
   if (!url) return '';
-  const m = url.match(/[?&]id=([\w-]+)/);
-  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
-  const m2 = url.match(/\/d\/([\w-]+)/);
-  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+  var m = url.match(/[?&]id=([\w-]+)/);
+  if (m) {
+    return esVideo
+      ? 'https://drive.google.com/uc?export=download&id=' + m[1]
+      : 'https://lh3.googleusercontent.com/d/' + m[1];
+  }
+  var m2 = url.match(/\/d\/([\w-]+)/);
+  if (m2) {
+    return esVideo
+      ? 'https://drive.google.com/uc?export=download&id=' + m2[1]
+      : 'https://lh3.googleusercontent.com/d/' + m2[1];
+  }
   return url;
 }
 
@@ -466,33 +640,28 @@ async function cargarDatos() {
     const color = cfg.primaryColor || '#6366f1';
     document.getElementById('ed-color').value = color;
     document.getElementById('ed-hex').value   = color;
-    // Colores adicionales
     const textColor = cfg.textColor || '#ffffff';
     document.getElementById('ed-text-color').value = textColor;
     document.getElementById('ed-text-hex').value   = textColor;
     const ctaColor = cfg.ctaColor || '#ff6900';
     document.getElementById('ed-cta-color').value = ctaColor;
     document.getElementById('ed-cta-hex').value   = ctaColor;
-    // Campos negocio
     document.getElementById('ed-banner-msg').value  = cfg.bannerMessage || '';
     document.getElementById('ed-banner-link').value = cfg.bannerLink    || '';
     document.getElementById('ed-location').value    = cfg.storeLocation || '';
     if (cfg.directoryCity) document.getElementById('ed-directory-city').value = cfg.directoryCity;
     if (cfg.locationLat)   document.getElementById('ed-location-lat').value   = cfg.locationLat;
     if (cfg.locationLng)   document.getElementById('ed-location-lng').value   = cfg.locationLng;
-    // Inicializar mapa si hay coordenadas guardadas
     var _lat = parseFloat(cfg.locationLat), _lng = parseFloat(cfg.locationLng);
     setTimeout(function() { initLocMap(!isNaN(_lat)?_lat:null, !isNaN(_lng)?_lng:null); }, 300);
     document.getElementById('ed-btype').value       = cfg.businessType  || 'regular';
     document.getElementById('ed-currency').value    = cfg.currency      || 'MXN';
     document.getElementById('ed-facebook').value    = cfg.facebook      || '';
     document.getElementById('ed-instagram').value   = cfg.instagram     || '';
-    // Tipografía
     const font = cfg.fontFamily || 'Poppins';
     selectFont(font, true);
     currentLogo   = cfg.logo || '';
     currentBanner = cfg.bannerUrl || '';
-    // Logo
     if (cfg.logo) {
       const src = fixImgUrl(cfg.logo);
       const th = document.getElementById('logo-thumb');
@@ -503,7 +672,6 @@ async function cargarDatos() {
       document.getElementById('logo-lbl').textContent = 'Cambiar logo';
       document.getElementById('prev-logo').innerHTML = '<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">';
     }
-    // Banner
     if (cfg.bannerUrl) {
       const src = fixImgUrl(cfg.bannerUrl);
       const th = document.getElementById('banner-thumb');
@@ -517,6 +685,8 @@ async function cargarDatos() {
       document.getElementById('prev-banner-ph').style.display = 'none';
     }
     livePreview();
+        // Inicializar video del dueño
+    initVideoOwnerState(cfg.videoOwnerUrl || '');
   } catch(e) {}
 }
 
@@ -555,14 +725,12 @@ function livePreview() {
   const font      = document.getElementById('ed-font-val') ? document.getElementById('ed-font-val').value : 'Poppins';
   document.getElementById('prev-name').textContent = name;
   document.getElementById('prev-desc').textContent = desc;
-  // Aplicar fuente al preview
   document.getElementById('prev-name').style.fontFamily = "'" + font + "', sans-serif";
   if (/^#[0-9a-fA-F]{6}$/.test(color)) {
     document.getElementById('save-btn').style.background = ctaColor || color;
     if (!IMG.bannerb64 && !currentBanner) {
       document.getElementById('prev-banner').style.background = color;
     }
-    // Color texto del hero en preview
     document.getElementById('prev-name').style.color = textColor || '#111';
   }
 }
@@ -574,7 +742,6 @@ async function guardar() {
   errEl.style.display = 'none'; okEl.style.display = 'none';
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
-    // Cargar config actual para hacer merge y no perder campos
     let cfgActual = {};
     try {
       const rInfo = await fetch(`${BACKEND}?action=store.info&storeId=${STORE_ID}`);
@@ -593,6 +760,14 @@ async function guardar() {
       if (!r || !r.imageUrl) throw new Error('Error subiendo banner');
       bannerUrl = r.imageUrl; currentBanner = bannerUrl;
     }
+
+    // ═══════════════════════════════════════════════
+    // ✅ CONSERVAR videoOwnerUrl
+    // ═══════════════════════════════════════════════
+    var videoOwnerUrl = _currentVideoUrl || cfgActual.videoOwnerUrl || '';
+    var videoOwnerFileId = cfgActual.videoOwnerFileId || '';
+    // ═══════════════════════════════════════════════
+
     const name       = document.getElementById('ed-name').value.trim();
     const desc       = document.getElementById('ed-desc').value.trim();
     const color      = document.getElementById('ed-hex').value.trim();
@@ -612,20 +787,33 @@ async function guardar() {
     const facebook   = document.getElementById('ed-facebook').value.trim();
     const instagram  = document.getElementById('ed-instagram').value.trim();
 
-    // Merge: config actual + campos nuevos (los nuevos tienen prioridad)
     const configFinal = Object.assign({}, cfgActual, {
-      logo: logoUrl, bannerUrl: bannerUrl,
-      primaryColor: color, textColor: textColor, ctaColor: ctaColor,
-      description: desc, phone: phone, whatsapp: whatsapp,
-      bannerMessage: bannerMsg, bannerLink: bannerLink,
-      storeLocation: location, locationLat: locationLat, locationLng: locationLng,
+      logo: logoUrl,
+      bannerUrl: bannerUrl,
+      videoOwnerUrl: videoOwnerUrl,       // ✅ AGREGADO
+      videoOwnerFileId: videoOwnerFileId, // ✅ AGREGADO
+      primaryColor: color,
+      textColor: textColor,
+      ctaColor: ctaColor,
+      description: desc,
+      phone: phone,
+      whatsapp: whatsapp,
+      bannerMessage: bannerMsg,
+      bannerLink: bannerLink,
+      storeLocation: location,
+      locationLat: locationLat,
+      locationLng: locationLng,
       directoryCity: directoryCity,
-      businessType: btype, currency: currency, fontFamily: fontFamily,
-      facebook: facebook, instagram: instagram
+      businessType: btype,
+      currency: currency,
+      fontFamily: fontFamily,
+      facebook: facebook,
+      instagram: instagram
     });
 
     const res = await postAPI('store.settings.save', { name, config: configFinal });
     if (!res || res.error) throw new Error(res?.error || 'Error al guardar');
+    
     IMG.logob64 = ''; IMG.bannerb64 = '';
     okEl.style.display = 'block';
     setTimeout(() => okEl.style.display = 'none', 3000);
@@ -638,7 +826,6 @@ async function guardar() {
 }
 // ── TIPOGRAFÍA ────────────────────────────────────────────────
 function selectFont(font, silent) {
-  // Guardar valor en input oculto
   var inp = document.getElementById('ed-font-val');
   if (!inp) {
     inp = document.createElement('input');
@@ -646,7 +833,6 @@ function selectFont(font, silent) {
     document.body.appendChild(inp);
   }
   inp.value = font;
-  // Marcar activo
   document.querySelectorAll('.font-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.font === font);
   });
@@ -655,14 +841,12 @@ function selectFont(font, silent) {
 
 // ── PALETAS ───────────────────────────────────────────────────
 function selectPalette(primary, cta, text) {
-  // Aplicar colores
   document.getElementById('ed-color').value     = primary;
   document.getElementById('ed-hex').value       = primary;
   document.getElementById('ed-cta-color').value = cta;
   document.getElementById('ed-cta-hex').value   = cta;
   document.getElementById('ed-text-color').value = text;
   document.getElementById('ed-text-hex').value   = text;
-  // Marcar activo
   document.querySelectorAll('.palette-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.primary === primary);
   });
@@ -688,33 +872,51 @@ function volverTienda() {
 // ── MAPA LEAFLET ──────────────────────────────────────────────
 var _locMap = null, _locMarker = null;
 var _locMapFull = null, _locMarkerFull = null;
+var _currentLayer = 'osm';
 
-function initLocMap(lat, lng) {
-  var el = document.getElementById('loc-map');
-  if (_locMap) { _locMap.remove(); _locMap = null; }
-  el.style.display = 'block';
-  document.getElementById('btn-fullscreen-map').style.display = 'block';
-  var iLat = lat || 20.5881, iLng = lng || -100.3889, zoom = lat ? 16 : 12;
-  _locMap = L.map('loc-map').setView([iLat, iLng], zoom);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap', maxZoom: 19
-  }).addTo(_locMap);
-  var icon = makeIcon();
-  _locMarker = L.marker([iLat, iLng], { draggable: true, icon: icon }).addTo(_locMap);
-  _locMarker.on('dragend', function() {
-    var p = _locMarker.getLatLng();
-    guardarCoords(p.lat, p.lng);
-    reverseGeocode(p.lat, p.lng);
-    syncFullMarker(p.lat, p.lng);
+// ── Capas disponibles ──────────────────────────────────────────
+var LAYERS = {
+  osm: function() {
+    return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19
+    });
+  },
+  satellite: function() {
+    return L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '© Esri — World Imagery', maxZoom: 19
+    });
+  },
+  topo: function() {
+    return L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenTopoMap', maxZoom: 17
+    });
+  }
+};
+
+var _activeLayerObj = null;
+
+function setMapLayer(type) {
+  _currentLayer = type;
+  ['osm','satellite','topo'].forEach(function(t) {
+    var btn = document.getElementById('btn-layer-' + (t === 'osm' ? 'osm' : t === 'satellite' ? 'sat' : 'topo'));
+    if (!btn) return;
+    var isActive = t === type;
+    btn.style.background = isActive ? '#6366f1' : '#fff';
+    btn.style.color = isActive ? '#fff' : '#374151';
+    btn.style.borderColor = isActive ? '#6366f1' : '#e5e7eb';
   });
-  _locMap.on('click', function(e) {
-    _locMarker.setLatLng(e.latlng);
-    guardarCoords(e.latlng.lat, e.latlng.lng);
-    reverseGeocode(e.latlng.lat, e.latlng.lng);
-    syncFullMarker(e.latlng.lat, e.latlng.lng);
-  });
-  if (lat) guardarCoords(lat, lng);
+  if (_locMap) {
+    if (_activeLayerObj) _locMap.removeLayer(_activeLayerObj);
+    _activeLayerObj = LAYERS[type]().addTo(_locMap);
+  }
+  if (_locMapFull && _activeLayerFull) {
+    _locMapFull.removeLayer(_activeLayerFull);
+    _activeLayerFull = LAYERS[type]().addTo(_locMapFull);
+  }
 }
+
+var _activeLayerFull = null;
 
 function makeIcon() {
   return L.divIcon({
@@ -723,35 +925,62 @@ function makeIcon() {
   });
 }
 
+function initLocMap(lat, lng) {
+  var el = document.getElementById('loc-map');
+  if (_locMap) { _locMap.remove(); _locMap = null; _activeLayerObj = null; }
+  el.style.display = 'block';
+  document.getElementById('btn-fullscreen-map').style.display = 'block';
+  document.getElementById('map-layer-btns').style.display = 'flex';
+  var iLat = lat || 20.5881, iLng = lng || -100.3889, zoom = lat ? 16 : 12;
+  _locMap = L.map('loc-map').setView([iLat, iLng], zoom);
+  _activeLayerObj = LAYERS[_currentLayer]().addTo(_locMap);
+  _locMarker = L.marker([iLat, iLng], { draggable: true, icon: makeIcon() }).addTo(_locMap);
+  _locMarker.on('dragend', function() {
+    var p = _locMarker.getLatLng();
+    guardarCoords(p.lat, p.lng);
+    reverseGeocode(p.lat, p.lng);
+    syncFullMarker(p.lat, p.lng);
+    actualizarStreetView(p.lat, p.lng);
+  });
+  _locMap.on('click', function(e) {
+    _locMarker.setLatLng(e.latlng);
+    guardarCoords(e.latlng.lat, e.latlng.lng);
+    reverseGeocode(e.latlng.lat, e.latlng.lng);
+    syncFullMarker(e.latlng.lat, e.latlng.lng);
+    actualizarStreetView(e.latlng.lat, e.latlng.lng);
+  });
+  if (lat) guardarCoords(lat, lng);
+}
+
 function toggleMapFullscreen() {
   var overlay = document.getElementById('map-fullscreen-overlay');
   overlay.style.display = 'flex';
   var lat = parseFloat(document.getElementById('ed-location-lat').value) || 20.5881;
   var lng = parseFloat(document.getElementById('ed-location-lng').value) || -100.3889;
-  if (_locMapFull) { _locMapFull.remove(); _locMapFull = null; }
+  if (_locMapFull) { _locMapFull.remove(); _locMapFull = null; _activeLayerFull = null; }
   _locMapFull = L.map('loc-map-full').setView([lat, lng], 16);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap', maxZoom: 19
-  }).addTo(_locMapFull);
+  _activeLayerFull = LAYERS[_currentLayer]().addTo(_locMapFull);
   _locMarkerFull = L.marker([lat, lng], { draggable: true, icon: makeIcon() }).addTo(_locMapFull);
   _locMarkerFull.on('dragend', function() {
     var p = _locMarkerFull.getLatLng();
     guardarCoords(p.lat, p.lng);
     reverseGeocode(p.lat, p.lng);
     if (_locMarker) { _locMarker.setLatLng([p.lat, p.lng]); _locMap.setView([p.lat, p.lng], 16); }
+    actualizarStreetView(p.lat, p.lng);
   });
   _locMapFull.on('click', function(e) {
     _locMarkerFull.setLatLng(e.latlng);
     guardarCoords(e.latlng.lat, e.latlng.lng);
     reverseGeocode(e.latlng.lat, e.latlng.lng);
     if (_locMarker) { _locMarker.setLatLng(e.latlng); _locMap.setView(e.latlng, 16); }
+    actualizarStreetView(e.latlng.lat, e.latlng.lng);
   });
   setTimeout(function(){ _locMapFull.invalidateSize(); }, 100);
 }
 
 function cerrarMapaFullscreen() {
   document.getElementById('map-fullscreen-overlay').style.display = 'none';
-  if (_locMapFull) { _locMapFull.remove(); _locMapFull = null; }
+  if (_locMapFull) { _locMapFull.remove(); _locMapFull = null; _activeLayerFull = null; }
 }
 
 function syncFullMarker(lat, lng) {
@@ -762,60 +991,74 @@ function guardarCoords(lat, lng) {
   document.getElementById('ed-location-lat').value = lat.toFixed(6);
   document.getElementById('ed-location-lng').value = lng.toFixed(6);
 }
+<!-- ── STREET VIEW ─────────────────────────────────────────────── -->
+function abrirStreetView() {
+  var lat = document.getElementById('ed-location-lat').value;
+  var lng = document.getElementById('ed-location-lng').value;
+  if (!lat || !lng) {
+    alert('Primero ubica un punto en el mapa');
+    return;
+  }
+  var panel = document.getElementById('streetview-panel');
+  panel.style.display = 'block';
+  actualizarStreetView(parseFloat(lat), parseFloat(lng));
+  setTimeout(function() {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+  var btn = document.getElementById('btn-streetview');
+  btn.style.background = '#6366f1';
+  btn.style.color = '#fff';
+  btn.style.borderColor = '#6366f1';
+}
 
-/* ── Detectar paste de Google Maps ── */
+function cerrarStreetView() {
+  document.getElementById('streetview-panel').style.display = 'none';
+  document.getElementById('streetview-iframe').src = '';
+  var btn = document.getElementById('btn-streetview');
+  btn.style.background = '#fff';
+  btn.style.color = '#374151';
+  btn.style.borderColor = '#e5e7eb';
+}
+
+function actualizarStreetView(lat, lng) {
+  var panel = document.getElementById('streetview-panel');
+  if (panel.style.display === 'none') return;
+  var iframe = document.getElementById('streetview-iframe');
+  iframe.src = 'https://www.google.com/maps/embed/v1/streetview?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
+    + '&location=' + lat + ',' + lng
+    + '&heading=0&pitch=0&fov=90';
+}
+
+// ── Detectar paste de Google Maps ──────────────────────────────
 function detectarPegado() {
   var val = document.getElementById('ed-location').value.trim();
-
-  // 1. Coordenadas directas: "20.12345, -100.12345" o "20.12345,-100.12345"
   var coordMatch = val.match(/(-?\d{1,3}\.\d{4,})[,\s]+(-?\d{1,3}\.\d{4,})/);
   if (coordMatch) {
     var lat = parseFloat(coordMatch[1]), lng = parseFloat(coordMatch[2]);
     if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-      initLocMap(lat, lng);
-      guardarCoords(lat, lng);
-      reverseGeocode(lat, lng);
-      return;
+      initLocMap(lat, lng); guardarCoords(lat, lng); reverseGeocode(lat, lng); return;
     }
   }
-
-  // 2. URL de Google Maps con @lat,lng
   var atMatch = val.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
   if (atMatch) {
     var lat = parseFloat(atMatch[1]), lng = parseFloat(atMatch[2]);
-    initLocMap(lat, lng);
-    guardarCoords(lat, lng);
-    reverseGeocode(lat, lng);
-    return;
+    initLocMap(lat, lng); guardarCoords(lat, lng); reverseGeocode(lat, lng); return;
   }
-
-  // 3. URL con ?q=lat,lng o /place/lat,lng
   var qMatch = val.match(/[?&/]q=(-?\d+\.\d+)[,+](-?\d+\.\d+)/);
   if (qMatch) {
     var lat = parseFloat(qMatch[1]), lng = parseFloat(qMatch[2]);
-    initLocMap(lat, lng);
-    guardarCoords(lat, lng);
-    reverseGeocode(lat, lng);
-    return;
+    initLocMap(lat, lng); guardarCoords(lat, lng); reverseGeocode(lat, lng); return;
   }
-
-  // 4. URL maps.google o goo.gl — buscar por texto si no hay coords
   if (val.includes('maps.google') || val.includes('goo.gl') || val.includes('maps.app')) {
     mostrarResult('🔍 Extrayendo ubicación del enlace...');
-    buscarDireccion();
-    return;
+    buscarDireccion(); return;
   }
-
-  // 5. Dirección larga (más de 15 chars) → buscar automáticamente
-  if (val.length > 15 && !val.startsWith('http')) {
-    buscarDireccion();
-  }
+  if (val.length > 15 && !val.startsWith('http')) buscarDireccion();
 }
 
 async function buscarDireccion() {
   var q = document.getElementById('ed-location').value.trim();
   if (!q) return;
-  // Limpiar si es URL de Google Maps con texto codificado
   if (q.includes('google.com/maps') || q.includes('maps.app')) {
     var placeMatch = q.match(/place\/([^/@]+)/);
     if (placeMatch) q = decodeURIComponent(placeMatch[1].replace(/\+/g,' '));
@@ -864,6 +1107,370 @@ function usarGPS() {
     reverseGeocode(lat, lng);
   }, function() { alert('No se pudo obtener tu ubicación'); }, { enableHighAccuracy: true, timeout: 8000 });
 }
+
+// ╔═══════════════════════════════════════════════════════════════╗
+//  VIDEO DEL DUEÑO - Subir / Eliminar / Preview
+// ╚═══════════════════════════════════════════════════════════════╝
+
+var _videoFile = null;        // Archivo seleccionado
+var _videoBase64 = '';        // Base64 del video
+var _videoMimeType = '';      // Tipo MIME
+var _videoFileName = '';      // Nombre del archivo
+var _currentVideoUrl = '';    // URL actual del video en Drive
+
+// ── Convertir archivo a base64 ────────────────────────────────
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = reader.result.split(',')[1];
+      if (!base64) {
+        reject(new Error('Error al leer archivo'));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = function() {
+      reject(new Error('Error al leer archivo'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Formatear bytes ───────────────────────────────────────────
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  var k = 1024;
+  var sizes = ['B', 'KB', 'MB', 'GB'];
+  var i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// ── Cargar preview del video seleccionado ─────────────────────
+function cargarVideoPreview(input) {
+  var file = input.files[0];
+  if (!file) return;
+
+  // Validar tamaño máximo (50MB)
+  if (file.size > 50 * 1024 * 1024) {
+    mostrarVideoStatus('❌ Video muy grande. Máximo 50MB', 'error');
+    input.value = '';
+    return;
+  }
+
+  // Validar formato
+  var allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo'];
+  if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|ogg|mov|avi)$/i)) {
+    mostrarVideoStatus('❌ Formato no soportado. Usa MP4, WebM o MOV', 'error');
+    input.value = '';
+    return;
+  }
+
+  _videoFile = file;
+  _videoMimeType = file.type || 'video/mp4';
+  _videoFileName = file.name || 'video_owner.mp4';
+
+  // Mostrar preview
+  var url = URL.createObjectURL(file);
+  var vid = document.getElementById('video-preview-el');
+  var placeholder = document.getElementById('video-placeholder');
+
+  vid.src = url;
+  vid.style.display = 'block';
+  if (placeholder) placeholder.style.display = 'none';
+  vid.load();
+
+  // Habilitar botón de subir
+  var btnSubir = document.getElementById('btn-subir-video');
+  if (btnSubir) {
+    btnSubir.disabled = false;
+    btnSubir.textContent = '⬆️ Subir video (' + formatBytes(file.size) + ')';
+  }
+
+  mostrarVideoStatus('📹 Listo para subir', '');
+  input.value = ''; // Limpiar input para permitir re-seleccionar el mismo archivo
+}
+
+// ── Subir video del dueño ─────────────────────────────────────
+async function subirVideoOwner() {
+  if (!_videoFile) {
+    mostrarVideoStatus('❌ No hay video seleccionado', 'error');
+    return;
+  }
+
+  var btnSubir    = document.getElementById('btn-subir-video');
+  var btnEliminar = document.getElementById('btn-eliminar-video');
+  var txtOriginal = btnSubir ? btnSubir.textContent : '⬆️ Subir video';
+
+  if (btnSubir) { btnSubir.disabled = true; btnSubir.textContent = '⏳ Leyendo archivo...'; }
+  mostrarVideoStatus('⏳ Preparando video...', 'loading');
+
+  try {
+    // ── Igual que index.html de testeo: FileReader → b64 ──
+    var base64 = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var b64 = e.target.result.split(',')[1];
+        if (!b64) { reject(new Error('No se pudo leer el archivo')); return; }
+        resolve(b64);
+      };
+      reader.onerror = function() { reject(new Error('Error leyendo archivo')); };
+      reader.readAsDataURL(_videoFile);
+    });
+
+    if (btnSubir) btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
+    mostrarVideoStatus('⏳ Subiendo al servidor...', 'loading');
+
+    // ── Fetch directo al backend de video (igual que index.html) ──
+    // Usa los mismos parámetros: b64, type, name
+    var response = await fetch(VIDEO_BACKEND_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        b64:  base64,
+        type: _videoMimeType,
+        name: _videoFileName
+      })
+    });
+
+    var rawText = await response.text();
+    console.log('[VIDEO] respuesta:', rawText.slice(0, 200));
+
+    var resp;
+    try { resp = JSON.parse(rawText); }
+    catch(e) { throw new Error('Respuesta inválida del servidor: ' + rawText.slice(0, 80)); }
+
+    if (!resp || !resp.url) {
+      throw new Error(resp && resp.error ? resp.error : 'Sin URL en la respuesta');
+    }
+
+    // ── ÉXITO: guardar URL en la config de la tienda ──
+    _currentVideoUrl = resp.url;
+    _videoFile = null;
+
+    // Guardar en backend easylink para que aparezca en la tienda
+    var saveResp = await postAPI('admin.store.update', {
+      storeId:     STORE_ID,
+      configExtra: {
+        videoOwnerUrl:    resp.url,
+        videoOwnerFileId: ''
+      }
+    });
+    console.log('[VIDEO] guardado en tienda:', saveResp);
+
+    // Actualizar preview con URL de Drive
+    var vid = document.getElementById('video-preview-el');
+    var placeholder = document.getElementById('video-placeholder');
+    vid.src = resp.url;
+    vid.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    vid.load();
+
+    if (btnSubir)    btnSubir.style.display    = 'none';
+    if (btnEliminar) { btnEliminar.style.display = ''; btnEliminar.disabled = false; }
+
+    mostrarVideoStatus('✅ Video subido y guardado correctamente', 'success');
+
+  } catch(e) {
+    mostrarVideoStatus('❌ ' + e.message, 'error');
+    if (btnSubir) { btnSubir.disabled = false; btnSubir.textContent = txtOriginal; }
+  }
+}
+
+  
+// ── Eliminar video ────────────────────────────────────────────
+async function eliminarVideoOwner() {
+  if (!confirm('¿Eliminar el video de bienvenida?')) return;
+
+  try {
+    mostrarVideoStatus('⏳ Eliminando...', 'loading');
+    
+    var resp = await postAPI('video.owner.delete', {
+      storeId: STORE_ID
+    });
+
+    if (!resp || resp.error) {
+      throw new Error(resp?.error || 'Error al eliminar');
+    }
+
+    _currentVideoUrl = '';
+    _videoFile = null;
+    _videoBase64 = '';
+
+    // Resetear preview
+    var vid = document.getElementById('video-preview-el');
+    var placeholder = document.getElementById('video-placeholder');
+    vid.style.display = 'none';
+    vid.src = '';
+    if (placeholder) placeholder.style.display = '';
+
+    // Resetear botones
+    var btnSubir = document.getElementById('btn-subir-video');
+    var btnEliminar = document.getElementById('btn-eliminar-video');
+    if (btnSubir) {
+      btnSubir.style.display = '';
+      btnSubir.disabled = true;
+      btnSubir.textContent = '⬆️ Subir video';
+    }
+    if (btnEliminar) btnEliminar.style.display = 'none';
+
+    // Limpiar en backend easylink
+    await postAPI('admin.store.update', {
+      storeId:     STORE_ID,
+      configExtra: { videoOwnerUrl: '', videoOwnerFileId: '' }
+    });
+
+    mostrarVideoStatus('✅ Video eliminado', 'success');
+    setTimeout(function() { cargarDatos(); }, 800);
+
+  } catch (e) {
+    mostrarVideoStatus('❌ Error: ' + e.message, 'error');
+  }
+}
+
+
+
+
+  
+// ── Mostrar estado del video ──────────────────────────────────
+function mostrarVideoStatus(msg, tipo) {
+  var el = document.getElementById('video-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'video-status ' + (tipo || '');
+  
+  if (tipo === 'success') {
+    setTimeout(function() {
+      if (el.textContent === msg) {
+        el.textContent = '';
+        el.className = 'video-status';
+      }
+    }, 4000);
+  }
+}
+
+
+
+
+  
+// ── Inicializar estado del video al cargar datos ──────────────
+function initVideoOwnerState(videoUrl) {
+  _currentVideoUrl = videoUrl || '';
+  
+  var vid = document.getElementById('video-preview-el');
+  var placeholder = document.getElementById('video-placeholder');
+  var btnSubir = document.getElementById('btn-subir-video');
+  var btnEliminar = document.getElementById('btn-eliminar-video');
+
+  if (videoUrl && videoUrl.length > 10) {
+    // Hay video guardado
+// La URL del backend independiente ya viene lista (export=download)
+    // Solo aplicar fixImgUrl si es URL de Drive con formato /d/ o ?id=
+    vid.src = (videoUrl.indexOf('drive.google.com/uc') !== -1)
+      ? videoUrl
+      : fixImgUrl(videoUrl, true);
+    vid.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    vid.load();
+    
+    if (btnSubir) btnSubir.style.display = 'none';
+    if (btnEliminar) btnEliminar.style.display = '';
+  } else {
+    // No hay video
+    vid.style.display = 'none';
+    vid.src = '';
+    if (placeholder) placeholder.style.display = '';
+    
+    if (btnSubir) {
+      btnSubir.style.display = '';
+      btnSubir.disabled = true;
+      btnSubir.textContent = '⬆️ Subir video';
+    }
+    if (btnEliminar) btnEliminar.style.display = 'none';
+  }
+}
+
+
+
+
+  
+// ── VIDEO DEL DUEÑO — visualización en tienda ──────────────
+var _videoOwnerDismissed = false;
+
+function initVideoOwnerTienda(videoUrl) {
+  if (!videoUrl || videoUrl.length < 10) return;
+
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
+
+  // Usar URL correcta para video de Drive
+  mini.src = fixImgUrl(videoUrl, true);
+  mini.style.display = 'block';
+
+  // Auto-ocultar después de 10 segundos si no se interactuó
+  var autoHideTimer = setTimeout(function() {
+    if (!_videoOwnerDismissed) dismissVideoOwner(mini);
+  }, 10000);
+
+  // Click: abrir pantalla completa
+  mini.addEventListener('click', function() {
+    clearTimeout(autoHideTimer);
+    abrirVideoOwnerFullscreen(videoUrl, mini);
+  });
+}
+
+
+
+
+  
+function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
+  // Crear overlay si no existe
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'video-fullscreen-overlay';
+    overlay.className = 'video-fullscreen-overlay';
+    overlay.innerHTML =
+      '<button class="video-fullscreen-close" id="vfs-close">✕</button>' +
+      '<video id="vfs-video" controls autoplay playsinline ' +
+      'style="max-width:96vw;max-height:96vh;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.7);cursor:pointer">' +
+      '</video>';
+    document.body.appendChild(overlay);
+  }
+
+  var vfsVideo = document.getElementById('vfs-video');
+  var vfsClose = document.getElementById('vfs-close');
+
+  vfsVideo.src = fixImgUrl(videoUrl, true);
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  vfsVideo.play().catch(function() {});
+
+  // Cerrar al terminar el video o hacer click
+  function cerrar() {
+    overlay.classList.remove('on');
+    document.body.style.overflow = '';
+    vfsVideo.pause();
+    vfsVideo.src = '';
+    // Ocultar mini permanentemente
+    dismissVideoOwner(miniEl);
+  }
+
+  vfsClose.onclick = cerrar;
+  vfsVideo.onclick = cerrar;
+  vfsVideo.onended = cerrar;
+  overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
+}
+
+function dismissVideoOwner(miniEl) {
+  if (_videoOwnerDismissed) return;
+  _videoOwnerDismissed = true;
+  if (!miniEl) return;
+  miniEl.classList.add('video-fading');
+  setTimeout(function() { miniEl.style.display = 'none'; }, 500);
+}
+
+
+  
 </script>
 </body>
 </html>
