@@ -747,6 +747,14 @@ async function guardar() {
       if (!r || !r.imageUrl) throw new Error('Error subiendo banner');
       bannerUrl = r.imageUrl; currentBanner = bannerUrl;
     }
+
+    // ═══════════════════════════════════════════════
+    // ✅ CONSERVAR videoOwnerUrl
+    // ═══════════════════════════════════════════════
+    var videoOwnerUrl = _currentVideoUrl || cfgActual.videoOwnerUrl || '';
+    var videoOwnerFileId = cfgActual.videoOwnerFileId || '';
+    // ═══════════════════════════════════════════════
+
     const name       = document.getElementById('ed-name').value.trim();
     const desc       = document.getElementById('ed-desc').value.trim();
     const color      = document.getElementById('ed-hex').value.trim();
@@ -767,18 +775,32 @@ async function guardar() {
     const instagram  = document.getElementById('ed-instagram').value.trim();
 
     const configFinal = Object.assign({}, cfgActual, {
-      logo: logoUrl, bannerUrl: bannerUrl,
-      primaryColor: color, textColor: textColor, ctaColor: ctaColor,
-      description: desc, phone: phone, whatsapp: whatsapp,
-      bannerMessage: bannerMsg, bannerLink: bannerLink,
-      storeLocation: location, locationLat: locationLat, locationLng: locationLng,
+      logo: logoUrl,
+      bannerUrl: bannerUrl,
+      videoOwnerUrl: videoOwnerUrl,       // ✅ AGREGADO
+      videoOwnerFileId: videoOwnerFileId, // ✅ AGREGADO
+      primaryColor: color,
+      textColor: textColor,
+      ctaColor: ctaColor,
+      description: desc,
+      phone: phone,
+      whatsapp: whatsapp,
+      bannerMessage: bannerMsg,
+      bannerLink: bannerLink,
+      storeLocation: location,
+      locationLat: locationLat,
+      locationLng: locationLng,
       directoryCity: directoryCity,
-      businessType: btype, currency: currency, fontFamily: fontFamily,
-      facebook: facebook, instagram: instagram
+      businessType: btype,
+      currency: currency,
+      fontFamily: fontFamily,
+      facebook: facebook,
+      instagram: instagram
     });
 
     const res = await postAPI('store.settings.save', { name, config: configFinal });
     if (!res || res.error) throw new Error(res?.error || 'Error al guardar');
+    
     IMG.logob64 = ''; IMG.bannerb64 = '';
     okEl.style.display = 'block';
     setTimeout(() => okEl.style.display = 'none', 3000);
@@ -789,7 +811,6 @@ async function guardar() {
     document.getElementById('save-btn').style.background = document.getElementById('ed-hex').value || '#6366f1';
   }
 }
-
 // ── TIPOGRAFÍA ────────────────────────────────────────────────
 function selectFont(font, silent) {
   var inp = document.getElementById('ed-font-val');
