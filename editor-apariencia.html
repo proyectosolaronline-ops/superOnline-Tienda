@@ -1162,20 +1162,28 @@ function cargarVideoPreview(input) {
   var vid = document.getElementById('video-preview-el');
   var placeholder = document.getElementById('video-placeholder');
 
-  vid.src = url;
-  vid.style.display = 'block';
-  if (placeholder) placeholder.style.display = 'none';
-  vid.load();
+  if (vid) {
+    vid.src = url;
+    vid.style.display = 'block';
+    vid.muted = true; // Recomendado para asegurar la carga del primer frame
+    vid.load(); // Fuerza al navegador a cargar el nuevo recurso
+  }
+  
+  if (placeholder) {
+    placeholder.style.display = 'none';
+  }
 
   // Habilitar botón de subir
   var btnSubir = document.getElementById('btn-subir-video');
   if (btnSubir) {
     btnSubir.disabled = false;
+    btnSubir.style.display = ''; // Asegurar que sea visible si estaba oculto
     btnSubir.textContent = '⬆️ Subir video (' + formatBytes(file.size) + ')';
   }
 
   mostrarVideoStatus('📹 Listo para subir', '');
-  input.value = ''; // Limpiar input para permitir re-seleccionar el mismo archivo
+  // No limpiamos el input aquí para que el archivo siga referenciado si es necesario, 
+  // o se limpia al final de la subida.
 }
 
 // ── Subir video del dueño ─────────────────────────────────────
@@ -1186,15 +1194,18 @@ async function subirVideoOwner() {
   }
 
   var btnSubir = document.getElementById('btn-subir-video');
-  var originalText = btnSubir.textContent;
-  btnSubir.disabled = true;
-  btnSubir.textContent = '⏳ Convirtiendo...';
+  var originalText = btnSubir ? btnSubir.textContent : 'Subir';
+  
+  if (btnSubir) {
+    btnSubir.disabled = true;
+    btnSubir.textContent = '⏳ Convirtiendo...';
+  }
   
   try {
     mostrarVideoStatus('⏳ Convirtiendo video...', 'loading');
     var base64 = await fileToBase64(_videoFile);
     
-    btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
+    if (btnSubir) btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
     mostrarVideoStatus('⏳ Subiendo video al servidor...', 'loading');
     
     var resp = await postAPI('video.owner.upload', {
@@ -1212,27 +1223,30 @@ async function subirVideoOwner() {
     
     // ✅ Limpiar archivo temporal
     _videoFile = null;
-    _videoBase64 = '';
 
-    // Actualizar preview
+    // Actualizar preview con la URL final
     var vid = document.getElementById('video-preview-el');
     var placeholder = document.getElementById('video-placeholder');
-    vid.src = _currentVideoUrl;
-    vid.style.display = 'block';
+    if (vid) {
+      vid.src = fixImgUrl(_currentVideoUrl);
+      vid.style.display = 'block';
+      vid.load();
+    }
     if (placeholder) placeholder.style.display = 'none';
-    vid.load();
 
     // Actualizar botones
     var btnEliminar = document.getElementById('btn-eliminar-video');
     if (btnEliminar) btnEliminar.style.display = '';
-    btnSubir.style.display = 'none';
+    if (btnSubir) btnSubir.style.display = 'none';
 
     mostrarVideoStatus('✅ Video subido correctamente', 'success');
     
   } catch (e) {
     mostrarVideoStatus('❌ Error: ' + e.message, 'error');
-    btnSubir.disabled = false;
-    btnSubir.textContent = originalText;
+    if (btnSubir) {
+      btnSubir.disabled = false;
+      btnSubir.textContent = originalText;
+    }
   }
 }
 
@@ -1253,14 +1267,15 @@ async function eliminarVideoOwner() {
 
     _currentVideoUrl = '';
     _videoFile = null;
-    _videoBase64 = '';
 
     // Resetear preview
     var vid = document.getElementById('video-preview-el');
     var placeholder = document.getElementById('video-placeholder');
-    vid.style.display = 'none';
-    vid.src = '';
-    if (placeholder) placeholder.style.display = '';
+    if (vid) {
+      vid.style.display = 'none';
+      vid.src = '';
+    }
+    if (placeholder) placeholder.style.display = 'flex';
 
     // Resetear botones
     var btnSubir = document.getElementById('btn-subir-video');
@@ -1274,7 +1289,7 @@ async function eliminarVideoOwner() {
 
     mostrarVideoStatus('✅ Video eliminado', 'success');
     
-    setTimeout(function() { cargarDatos(); }, 1000);
+    setTimeout(function() { if(typeof cargarDatos === 'function') cargarDatos(); }, 1000);
 
   } catch (e) {
     mostrarVideoStatus('❌ Error: ' + e.message, 'error');
@@ -1308,20 +1323,20 @@ function initVideoOwnerState(videoUrl) {
   var btnEliminar = document.getElementById('btn-eliminar-video');
 
   if (videoUrl && videoUrl.length > 10) {
-    // Hay video guardado
-    vid.src = fixImgUrl(videoUrl);
-    vid.style.display = 'block';
+    if (vid) {
+      vid.src = fixImgUrl(videoUrl);
+      vid.style.display = 'block';
+      vid.load();
+    }
     if (placeholder) placeholder.style.display = 'none';
-    vid.load();
-    
     if (btnSubir) btnSubir.style.display = 'none';
     if (btnEliminar) btnEliminar.style.display = '';
   } else {
-    // No hay video
-    vid.style.display = 'none';
-    vid.src = '';
-    if (placeholder) placeholder.style.display = '';
-    
+    if (vid) {
+      vid.style.display = 'none';
+      vid.src = '';
+    }
+    if (placeholder) placeholder.style.display = 'flex';
     if (btnSubir) {
       btnSubir.style.display = '';
       btnSubir.disabled = true;
@@ -1340,16 +1355,13 @@ function initVideoOwnerTienda(videoUrl) {
   var mini = document.getElementById('video-owner-mini');
   if (!mini) return;
 
-  // Usar URL correcta para video de Drive
   mini.src = fixImgUrl(videoUrl, true);
   mini.style.display = 'block';
 
-  // Auto-ocultar después de 10 segundos si no se interactuó
   var autoHideTimer = setTimeout(function() {
     if (!_videoOwnerDismissed) dismissVideoOwner(mini);
   }, 10000);
 
-  // Click: abrir pantalla completa
   mini.addEventListener('click', function() {
     clearTimeout(autoHideTimer);
     abrirVideoOwnerFullscreen(videoUrl, mini);
@@ -1357,7 +1369,6 @@ function initVideoOwnerTienda(videoUrl) {
 }
 
 function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
-  // Crear overlay si no existe
   var overlay = document.getElementById('video-fullscreen-overlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -1379,13 +1390,11 @@ function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
   document.body.style.overflow = 'hidden';
   vfsVideo.play().catch(function() {});
 
-  // Cerrar al terminar el video o hacer click
   function cerrar() {
     overlay.classList.remove('on');
     document.body.style.overflow = '';
     vfsVideo.pause();
     vfsVideo.src = '';
-    // Ocultar mini permanentemente
     dismissVideoOwner(miniEl);
   }
 
@@ -1402,23 +1411,6 @@ function dismissVideoOwner(miniEl) {
   miniEl.classList.add('video-fading');
   setTimeout(function() { miniEl.style.display = 'none'; }, 500);
 }
-
-// -------------------------- debug
-  // ── DEBUG VIDEO ────────────────────────────────────────────
-console.log('DEBUG VIDEO INICIADO');
-console.log('video-preview-el:', document.getElementById('video-preview-el'));
-console.log('btn-subir-video:', document.getElementById('btn-subir-video'));
-console.log('btn-eliminar-video:', document.getElementById('btn-eliminar-video'));
-console.log('video-status:', document.getElementById('video-status'));
-console.log('video-placeholder:', document.getElementById('video-placeholder'));
-console.log('video-owner-mini:', document.getElementById('video-owner-mini'));
-console.log('postAPI existe:', typeof postAPI);
-console.log('fixImgUrl existe:', typeof fixImgUrl);
-console.log('_videoFile inicial:', _videoFile);
-console.log('_currentVideoUrl inicial:', _currentVideoUrl);
-console.log('DEBUG VIDEO TERMINADO');
-
-  
 </script>
 </body>
 </html>
