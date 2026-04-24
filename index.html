@@ -2449,8 +2449,7 @@ document.addEventListener('tienda-lista', function() {
 //  VIDEO DEL DUEÑO
 // ╚═══════════════════════════════════════════════════════════════╝
 
-var _videoOwnerTimer = null;
-var _videoOwnerSeen  = false;
+
 
 function initVideoOwner() {
   var seen = sessionStorage.getItem('lk_video_owner_seen_' + STORE_ID);
@@ -2549,84 +2548,96 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Click en el mini video abre fullscreen
-var miniVid = document.getElementById('video-owner-mini');
-if (miniVid) {
-  miniVid.addEventListener('click', function(e) {
-    e.stopPropagation();
-    openVideoFullscreen();
-  });
-}
-  // ── VIDEO DEL DUEÑO — visualización en tienda ──────────────
+
+  // ╔═══════════════════════════════════════════════════════════════╗
+//  VIDEO DEL DUEÑO — visualización en tienda
+// ╚═══════════════════════════════════════════════════════════════╝
+
 var _videoOwnerDismissed = false;
+var _videoOwnerAutoTimer = null;
 
 function initVideoOwnerTienda(videoUrl) {
   if (!videoUrl || videoUrl.length < 10) return;
 
+  // ── No mostrar si ya se vio en esta sesión ──
+  if (sessionStorage.getItem('lk_video_seen_' + STORE_ID) === '1') return;
+
   var mini = document.getElementById('video-owner-mini');
   if (!mini) return;
 
-  // Usar URL correcta para video de Drive
-  mini.src = fixImgUrl(videoUrl, true);
+  // ── URL correcta para Drive (video necesita export=download) ──
+  var src = fixImgUrl(videoUrl, true);
+  mini.src = src;
   mini.style.display = 'block';
+  mini.load();
+  mini.play().catch(function() {});
 
-  // Auto-ocultar después de 10 segundos si no se interactuó
-  var autoHideTimer = setTimeout(function() {
+  // ── Auto-ocultar a los 10 segundos ──
+  _videoOwnerAutoTimer = setTimeout(function() {
     if (!_videoOwnerDismissed) dismissVideoOwner(mini);
   }, 10000);
 
-  // Click: abrir pantalla completa
-  mini.addEventListener('click', function() {
-    clearTimeout(autoHideTimer);
+  // ── Click: abrir pantalla completa ──
+  mini.addEventListener('click', function(e) {
+    e.stopPropagation();
+    clearTimeout(_videoOwnerAutoTimer);
     abrirVideoOwnerFullscreen(videoUrl, mini);
   });
 }
 
 function abrirVideoOwnerFullscreen(videoUrl, miniEl) {
-  // Crear overlay si no existe
-  var overlay = document.getElementById('video-fullscreen-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'video-fullscreen-overlay';
-    overlay.className = 'video-fullscreen-overlay';
-    overlay.innerHTML =
-      '<button class="video-fullscreen-close" id="vfs-close">✕</button>' +
-      '<video id="vfs-video" controls autoplay playsinline ' +
-      'style="max-width:96vw;max-height:96vh;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.7);cursor:pointer">' +
-      '</video>';
-    document.body.appendChild(overlay);
-  }
+  var overlay  = document.getElementById('video-fullscreen-overlay');
+  var vfsVideo = document.getElementById('video-fullscreen-el');
+  var vfsClose = document.querySelector('.video-fullscreen-close');
 
-  var vfsVideo = document.getElementById('vfs-video');
-  var vfsClose = document.getElementById('vfs-close');
+  if (!overlay || !vfsVideo) return;
 
+  // ── URL Drive correcta para video ──
   vfsVideo.src = fixImgUrl(videoUrl, true);
   overlay.classList.add('on');
   document.body.style.overflow = 'hidden';
+  vfsVideo.load();
   vfsVideo.play().catch(function() {});
 
-  // Cerrar al terminar el video o hacer click
   function cerrar() {
     overlay.classList.remove('on');
     document.body.style.overflow = '';
     vfsVideo.pause();
     vfsVideo.src = '';
-    // Ocultar mini permanentemente
     dismissVideoOwner(miniEl);
   }
 
-  vfsClose.onclick = cerrar;
-  vfsVideo.onclick = cerrar;
-  vfsVideo.onended = cerrar;
+  // ── Limpiar listeners anteriores clonando nodos ──
+  var newClose = vfsClose.cloneNode(true);
+  vfsClose.parentNode.replaceChild(newClose, vfsClose);
+  newClose.onclick = cerrar;
+
+  var newVid = vfsVideo.cloneNode(false);
+  newVid.src = vfsVideo.src;
+  newVid.id  = 'video-fullscreen-el';
+  newVid.setAttribute('controls', '');
+  newVid.setAttribute('playsinline', '');
+  newVid.style.cssText = 'max-width:96vw;max-height:96vh;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,.7);cursor:pointer';
+  vfsVideo.parentNode.replaceChild(newVid, vfsVideo);
+  newVid.src = fixImgUrl(videoUrl, true);
+  newVid.load();
+  newVid.play().catch(function() {});
+  newVid.onclick  = cerrar;
+  newVid.onended  = cerrar;
+
   overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
 }
 
 function dismissVideoOwner(miniEl) {
   if (_videoOwnerDismissed) return;
   _videoOwnerDismissed = true;
+  sessionStorage.setItem('lk_video_seen_' + STORE_ID, '1');
   if (!miniEl) return;
   miniEl.classList.add('video-fading');
-  setTimeout(function() { miniEl.style.display = 'none'; }, 500);
+  setTimeout(function() {
+    miniEl.style.display = 'none';
+    miniEl.classList.remove('video-fading');
+  }, 500);
 }
 </script>
 
