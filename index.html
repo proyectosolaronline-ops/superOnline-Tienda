@@ -2530,6 +2530,68 @@ function dismissVideoOwner(miniEl) {
   <video id="video-fullscreen-el" controls playsinline></video>
 </div>
 <script>
+  <script>
+var _videoOwnerUrl       = '';
+var _videoOwnerDismissed = false;
+var _videoAutoHide       = null;
+
+function initVideoOwnerTienda(videoUrl) {
+  if (!videoUrl || videoUrl.length < 10) return;
+  if (sessionStorage.getItem('lk_video_seen_' + STORE_ID) === '1') return;
+  _videoOwnerUrl = videoUrl;
+  var mini = document.getElementById('video-owner-mini');
+  var wrap = document.getElementById('video-owner-wrap');
+  if (!mini || !wrap) return;
+  mini.src = fixImgUrl(videoUrl, true);
+  mini.load();
+  mini.play().catch(function(){});
+  wrap.style.display = 'block';
+  _videoAutoHide = setTimeout(function() {
+    if (!_videoOwnerDismissed) dismissVideoOwner();
+  }, 10000);
+}
+
+function abrirVideoFullscreen(videoUrl) {
+  if (!videoUrl) return;
+  clearTimeout(_videoAutoHide);
+  var overlay  = document.getElementById('video-fullscreen-overlay');
+  var vfsVideo = document.getElementById('vfs-video');
+  var vfsClose = document.getElementById('vfs-close');
+  if (!overlay || !vfsVideo) return;
+  var mini = document.getElementById('video-owner-mini');
+  vfsVideo.src = fixImgUrl(videoUrl, true);
+  vfsVideo.currentTime = mini ? mini.currentTime : 0;
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  vfsVideo.load();
+  vfsVideo.play().catch(function(){});
+  if (mini) mini.pause();
+  function cerrar() {
+    overlay.classList.remove('on');
+    document.body.style.overflow = '';
+    vfsVideo.pause();
+    vfsVideo.src = '';
+    dismissVideoOwner();
+  }
+  vfsClose.onclick = cerrar;
+  vfsVideo.onended = cerrar;
+  overlay.onclick  = function(e) { if (e.target === overlay) cerrar(); };
+}
+
+function dismissVideoOwner() {
+  if (_videoOwnerDismissed) return;
+  _videoOwnerDismissed = true;
+  sessionStorage.setItem('lk_video_seen_' + STORE_ID, '1');
+  var wrap = document.getElementById('video-owner-wrap');
+  if (!wrap) return;
+  wrap.style.transition = 'opacity .5s, transform .5s';
+  wrap.style.opacity    = '0';
+  wrap.style.transform  = 'scale(0.6)';
+  setTimeout(function() { wrap.style.display = 'none'; }, 500);
+}
+</script>
+</body>
+</html>
   
 </body>
   <script>
