@@ -2581,4 +2581,70 @@ function dismissVideoOwner(miniEl) {
   <video id="video-fullscreen-el" controls playsinline></video>
 </div>
 </body>
+  <script>
+// ── VIDEO DEL DUEÑO EN TIENDA ─────────────────────────────────
+var _videoOwnerDismissed = false;
+
+function initVideoOwnerTienda(videoUrl) {
+  if (!videoUrl || videoUrl.length < 10) return;
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
+
+  mini.src = videoUrl;
+  mini.style.display = 'block';
+
+  // Auto-ocultar a los 10 segundos si no interactuó
+  var autoHide = setTimeout(function() {
+    if (!_videoOwnerDismissed) dismissVideoOwner();
+  }, 10000);
+
+  // Click → pantalla completa
+  mini.addEventListener('click', function() {
+    clearTimeout(autoHide);
+    abrirVideoFullscreen(videoUrl);
+  });
+}
+
+function abrirVideoFullscreen(videoUrl) {
+  var overlay = document.getElementById('video-fullscreen-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'video-fullscreen-overlay';
+    overlay.className = 'video-fullscreen-overlay';
+    overlay.innerHTML =
+      '<button class="video-fullscreen-close" id="vfs-close">✕</button>' +
+      '<video id="vfs-video" controls autoplay playsinline></video>';
+    document.body.appendChild(overlay);
+  }
+
+  var vfsVideo = document.getElementById('vfs-video');
+  var vfsClose = document.getElementById('vfs-close');
+
+  vfsVideo.src = videoUrl;
+  overlay.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  vfsVideo.play().catch(function(){});
+
+  function cerrar() {
+    overlay.classList.remove('on');
+    document.body.style.overflow = '';
+    vfsVideo.pause();
+    vfsVideo.src = '';
+    dismissVideoOwner();
+  }
+
+  vfsClose.onclick      = cerrar;
+  vfsVideo.onended      = cerrar;
+  overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
+}
+
+function dismissVideoOwner() {
+  if (_videoOwnerDismissed) return;
+  _videoOwnerDismissed = true;
+  var mini = document.getElementById('video-owner-mini');
+  if (!mini) return;
+  mini.classList.add('video-fading');
+  setTimeout(function() { mini.style.display = 'none'; }, 500);
+}
+</script>
 </html>
