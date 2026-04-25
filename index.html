@@ -2449,29 +2449,6 @@ document.addEventListener('tienda-lista', function() {
   setTimeout(startPolling, 3000); // esperar 3s después de carga inicial
 });
 
-// ╔═══════════════════════════════════════════════════════════════╗
-//  VIDEO DEL DUEÑO — visualización en tienda
-// ╚═══════════════════════════════════════════════════════════════╝
-
-  var newClose = vfsClose.cloneNode(true);
-  vfsClose.parentNode.replaceChild(newClose, vfsClose);
-  newClose.onclick = cerrar;
-  newVid.onclick  = cerrar;
-  newVid.onended  = cerrar;
-  overlay.onclick = function(e) { if (e.target === overlay) cerrar(); };
-}
-
-function dismissVideoOwner(miniEl) {
-  if (_videoOwnerDismissed) return;
-  _videoOwnerDismissed = true;
-  sessionStorage.setItem('lk_video_seen_' + STORE_ID, '1');
-  if (!miniEl) return;
-  miniEl.classList.add('video-fading');
-  setTimeout(function() {
-    miniEl.style.display = 'none';
-    miniEl.classList.remove('video-fading');
-  }, 500);
-}
 </script>
 
 <div class="bottom-bar" id="bottom-bar" style="display:none">
