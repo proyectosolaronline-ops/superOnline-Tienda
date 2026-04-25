@@ -2089,7 +2089,7 @@ function updateNav() {
       '<div class="nav-user" onclick="toggleUserMenu()" id="nu"><div class="nav-avatar">' + customer.name[0].toUpperCase() + '</div>' + customer.name.split(' ')[0] + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>' +
       '<div id="umenu" style="display:none;position:fixed;top:60px;right:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:6px;z-index:60;min-width:160px;box-shadow:var(--shadow-lg)"><div style="padding:9px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border-light);margin-bottom:4px">' + esc(customer.email) + '</div>' + (customer.isMayorista ? '<div style="padding:5px 12px 9px;font-size:11px;color:#d46b08;font-weight:600">★ Cuenta mayorista</div>' : '') + '<button onclick="logoutCustomer()" style="width:100%;padding:8px 12px;background:none;border:none;font-size:13px;cursor:pointer;text-align:left;border-radius:6px;color:var(--danger);font-family:var(--font-b)">Cerrar sesion</button></div>';
   } else {
-    navEl.innerHTML = waH + '<button class="nav-user" onclick="showAuth(\'login\')">Entrar</button>' + (isCartAllowed() ? '<button class="cart-pill" onclick="openCart()">🛒 <span class="n">' + cnt + '</span></button>' : '');
+    navEl.innerHTML = waH + '<button class="nav-user" onclick="showAuth(\'login\')">Pasale</button>' + (isCartAllowed() ? '<button class="cart-pill" onclick="openCart()">🛒 <span class="n">' + cnt + '</span></button>' : '');
   }
   actualizarVisibilidadWA();
 }
