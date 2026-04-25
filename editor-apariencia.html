@@ -1216,7 +1216,6 @@ async function subirVideoOwner() {
     if (btnSubir) btnSubir.textContent = '⏳ Subiendo ' + formatBytes(_videoFile.size) + '...';
     mostrarVideoStatus('⏳ Subiendo al servidor...', 'loading');
 
-    // Usa postAPI igual que imagen — va directo al MAESTRO.gs
     var resp = await postAPI('video.owner.upload', {
       videoBase64: base64,
       mimeType:    _videoMimeType,
@@ -1230,7 +1229,6 @@ async function subirVideoOwner() {
     _currentVideoUrl = resp.videoUrl;
     _videoFile = null;
 
-    // Actualizar preview
     var vid         = document.getElementById('video-preview-el');
     var placeholder = document.getElementById('video-placeholder');
     vid.src = resp.videoUrl;
@@ -1238,7 +1236,7 @@ async function subirVideoOwner() {
     if (placeholder) placeholder.style.display = 'none';
     vid.load();
 
-    if (btnSubir)    btnSubir.style.display    = 'none';
+    if (btnSubir)    btnSubir.style.display = 'none';
     if (btnEliminar) { btnEliminar.style.display = ''; btnEliminar.disabled = false; }
 
     mostrarVideoStatus('✅ Video subido correctamente', 'success');
@@ -1247,9 +1245,7 @@ async function subirVideoOwner() {
     mostrarVideoStatus('❌ ' + e.message, 'error');
     if (btnSubir) { btnSubir.disabled = false; btnSubir.textContent = txtOriginal; }
   }
-}
-
-  
+}  
 // ── Eliminar video ────────────────────────────────────────────
 async function eliminarVideoOwner() {
   if (!confirm('¿Eliminar el video de bienvenida?')) return;
