@@ -1350,7 +1350,7 @@ function initVideoOwnerState(videoUrl) {
     if (btnEliminar) btnEliminar.style.display = '';
   } else {
     // No hay video
-    vid.style.display = 'none';
+  vid.style.display = 'none';
     vid.src = '';
     if (placeholder) placeholder.style.display = '';
     
@@ -1360,9 +1360,8 @@ function initVideoOwnerState(videoUrl) {
       btnSubir.textContent = '⬆️ Subir video';
     }
     if (btnEliminar) btnEliminar.style.display = 'none';
-  }
-}
-
+    var btnVer = document.getElementById('btn-ver-video');
+    if (btnVer) btnVer.style.display = 'none';
 
 
 
