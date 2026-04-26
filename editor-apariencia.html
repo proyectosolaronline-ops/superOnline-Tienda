@@ -288,12 +288,17 @@ input.hex{flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;f
         <input type="file" accept="video/*" onchange="cargarVideoPreview(this)" style="display:none;">
       </label>
     </div>
-   <div class="video-upload-actions">
+ <div class="video-upload-actions">
       <button class="video-upload-btn primary" id="btn-subir-video" onclick="subirVideoOwner()" disabled>
         ⬆️ Subir video
       </button>
       <button class="video-upload-btn danger" id="btn-eliminar-video" onclick="eliminarVideoOwner()" style="display:none;">
         🗑️ Eliminar
+      </button>
+    </div>
+    <div class="video-upload-actions">
+      <button class="video-upload-btn" id="btn-ver-video" onclick="verVideoOwner()" style="display:none;">
+        ▶️ Ver video
       </button>
     </div>
     <div class="video-upload-actions">
