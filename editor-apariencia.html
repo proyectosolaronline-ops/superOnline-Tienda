@@ -1236,7 +1236,7 @@ async function subirVideoOwner() {
       throw new Error(resp && resp.error ? resp.error : 'Sin URL en la respuesta');
     }
 
-    _currentVideoUrl = resp.videoUrl;
+ _currentVideoUrl = resp.videoUrl.replace('export=download', 'export=view');
     _videoFile = null;
 
     var vid         = document.getElementById('video-preview-el');
@@ -1344,9 +1344,7 @@ function initVideoOwnerState(videoUrl) {
     // Hay video guardado
 // La URL del backend independiente ya viene lista (export=download)
     // Solo aplicar fixImgUrl si es URL de Drive con formato /d/ o ?id=
-    vid.src = (videoUrl.indexOf('drive.google.com/uc') !== -1)
-      ? videoUrl
-      : fixImgUrl(videoUrl, true);
+ vid.src = videoUrl.replace('export=download', 'export=view');
     vid.style.display = 'block';
     if (placeholder) placeholder.style.display = 'none';
     vid.load();
