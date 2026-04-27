@@ -914,10 +914,17 @@ footer a:hover{color:#fff}
 
 <script>
 var params       = new URLSearchParams(location.search);
-var BACKEND      = params.get('backend') || window.LK_BACKEND || 'https://script.google.com/macros/s/AKfycbwUhTHQkBhLIvF9KgP2bHpVeufIEaPCXZWo9-azz7mYrEEA79BPFCQxE68YQQxE5iw/exec';
+
+  var BACKEND      = params.get('backend') || window.LK_BACKEND || 'https://script.google.com/macros/s/AKfycbwUhTHQkBhLIvF9KgP2bHpVeufIEaPCXZWo9-azz7mYrEEA79BPFCQxE68YQQxE5iw/exec';
 var STORE_ID     = params.get('store')   || window.LK_STORE   || localStorage.getItem('ld_store') || '';
-var VIDEO_URL    = 'https://script.google.com/macros/s/AKfycbzE0OVc0qIpqi0H7WBpBfXmIB0tdCELlUeuqJOPMSmvo0esBKPLIlA6ws7Lq5ggtOU/exec';
-var OWNER_PANEL_URL = params.get('panel') || 'https://proyectosolaronline-ops.github.io/Owner-super-Online/';
+
+var VIDEO_URL    = params.get('video_backend')
+                || window.LK_VIDEO_BACKEND
+                || 'https://script.google.com/macros/s/AKfycbzE0OVc0qIpqi0H7WBpBfXmIB0tdCELlUeuqJOPMSmvo0esBKPLIlA6ws7Lq5ggtOU/exec';
+  
+  
+  
+  var OWNER_PANEL_URL = params.get('panel') || 'https://proyectosolaronline-ops.github.io/Owner-super-Online/';
 
 var products  = [];
 var cart      = JSON.parse(localStorage.getItem('c_' + STORE_ID) || '[]');
