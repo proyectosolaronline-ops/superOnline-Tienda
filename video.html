@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Config Planes — LandingKit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b10;--s1:#0d1117;--s2:#161b22;--s3:#21262d;
+  --border:#30363d;
+  --accent:#00d98b;--accent2:#00b374;--accent-dim:rgba(0,217,139,.1);--accent-glow:rgba(0,217,139,.25);
+  --warn:#f0a500;--danger:#f85149;--info:#58a6ff;
+  --text:#e6edf3;--muted:#8b949e;--muted2:#484f58;
+  --ff:'Plus Jakarta Sans',sans-serif;--mono:'IBM Plex Mono',monospace;--r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+button{font-family:var(--ff);cursor:pointer;border:none}
+input,select{font-family:var(--ff)}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,217,139,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,217,139,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+#login-wrap{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.login-box{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:420px;position:relative;box-shadow:0 0 60px rgba(0,217,139,.05);}
+.login-box::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.l-logo{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:22px;display:flex;align-items:center;gap:8px}
+.l-logo::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);display:inline-block;flex-shrink:0}
+.l-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.l-sub{font-size:13px;color:var(--muted);margin-bottom:26px}
+.lfield{margin-bottom:15px}
+.lfield label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.lfield input{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;transition:border-color .2s,box-shadow .2s}
+.lfield input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.code-input{font-family:var(--mono)!important;font-size:26px!important;font-weight:600!important;letter-spacing:10px!important;text-align:center!important;text-transform:uppercase!important}
+.lerr{font-size:12px;color:var(--danger);background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:7px;padding:9px 12px;margin-bottom:12px;display:none}
+.lbtn{width:100%;padding:13px;background:var(--accent);color:#000;border-radius:var(--r);font-size:14px;font-weight:700;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.lbtn:hover{background:var(--accent2)}
+.lbtn:disabled{opacity:.5;pointer-events:none}
+.back-link{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px;transition:color .15s}
+.back-link:hover{color:var(--text)}
+.resend-link{background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:10px;display:block;text-align:center}
+.step-hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+#app{display:none;min-height:100vh;position:relative;z-index:1}
+#app.on{display:block}
+.topbar{position:sticky;top:0;z-index:50;height:52px;background:rgba(8,11,16,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;}
+.tb-logo{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.1em;display:flex;align-items:center;gap:7px}
+.tb-logo::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-glow)}
+.tb-badge{background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:.05em}
+.tb-right{margin-left:auto;display:flex;gap:8px}
+.tb-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--s2);color:var(--muted);transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.tb-btn:hover{border-color:var(--accent);color:var(--text)}
+.tb-btn.save{background:var(--accent);color:#000;border-color:var(--accent)}
+.tb-btn.save:hover{background:var(--accent2)}
+.tb-btn.save:disabled{opacity:.5;pointer-events:none}
+.main{padding:24px 20px;max-width:1400px;margin:0 auto}
+.status-bar{display:none;padding:10px 16px;border-radius:var(--r);font-size:13px;font-weight:500;margin-bottom:16px;border:1px solid;align-items:center;gap:8px}
+.status-bar.on{display:flex}
+.status-bar.ok{background:rgba(0,217,139,.1);border-color:rgba(0,217,139,.3);color:var(--accent)}
+.status-bar.err{background:rgba(248,81,73,.1);border-color:rgba(248,81,73,.3);color:var(--danger)}
+.status-bar.load{background:rgba(240,165,0,.08);border-color:rgba(240,165,0,.3);color:var(--warn)}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:5px;border:1px solid}
+.leg.num{background:rgba(88,166,255,.08);border-color:rgba(88,166,255,.2);color:var(--info)}
+.leg.bool{background:rgba(0,217,139,.08);border-color:rgba(0,217,139,.2);color:var(--accent)}
+.leg.mod{background:rgba(240,165,0,.08);border-color:rgba(240,165,0,.2);color:var(--warn)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--s1)}
+table{width:100%;border-collapse:collapse;min-width:1300px;font-size:13px}
+thead th{padding:9px 6px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;border-bottom:1px solid var(--border);border-right:1px solid var(--border);color:var(--muted);background:var(--s2);}
+thead th:last-child{border-right:none}
+thead th.th-num{color:var(--info)}
+thead th.th-bool{color:var(--accent)}
+thead th.th-mod{color:var(--warn)}
+thead th.th-plan{color:var(--text);text-align:left;padding-left:16px}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.018)}
+tbody td{padding:8px 6px;border-right:1px solid var(--border);vertical-align:middle;text-align:center}
+tbody td:last-child{border-right:none}
+tbody td.td-plan{text-align:left;padding-left:16px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap}
+td input[type=number]{width:70px;padding:6px 5px;background:var(--s2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;text-align:center;font-family:var(--mono);transition:border-color .15s,box-shadow .15s}
+td input[type=text]{width:110px;padding:6px 8px;background:var(--s2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;text-align:left;transition:border-color .15s}
+td input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+td select{width:60px;padding:6px 2px;background:var(--s2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;text-align:center;cursor:pointer;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+td select:focus{outline:none;border-color:var(--accent)}
+td select.sy{border-color:rgba(0,217,139,.4);color:var(--accent);background:rgba(0,217,139,.07)}
+td select.sn{border-color:rgba(248,81,73,.3);color:var(--danger);background:rgba(248,81,73,.07)}
+.pdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-row td{padding:48px;text-align:center;color:var(--muted)}
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:500;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:320px}
+#toast.ok{border-color:rgba(0,217,139,.4);color:var(--accent)}
+#toast.err{border-color:rgba(248,81,73,.4);color:var(--danger)}
+#debug-panel{display:none;margin-top:16px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8;max-height:200px;overflow-y:auto}
+#debug-panel.on{display:block}
+@media(max-width:640px){.main{padding:16px 12px}.login-box{padding:28px 20px}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-wrap">
+  <div class="login-box">
+    <div class="l-logo">LandingKit · Admin</div>
+    <div class="l-title">Config Planes</div>
+    <div class="l-sub">Solo administradores autorizados</div>
+    <div id="step1">
+      <div class="lfield">
+        <label>Email de administrador</label>
+        <input type="email" id="l-email" placeholder="admin@correo.com" onkeydown="if(event.key==='Enter') enviarCodigo()"/>
+      </div>
+      <div class="lerr" id="l-err1"></div>
+      <button class="lbtn" id="btn-enviar" onclick="enviarCodigo()">Enviar código →</button>
+      <div id="debug-panel"></div>
+    </div>
+    <div id="step2" style="display:none">
+      <button class="back-link" onclick="volverStep1()">← Volver</button>
+      <div class="step-hint" id="step2-hint">Revisa tu correo. Válido 15 minutos.</div>
+      <div class="lfield">
+        <label>Código de acceso</label>
+        <input type="text" id="l-code" class="code-input" placeholder="XXXXXXXX" maxlength="8" onkeydown="if(event.key==='Enter') verificarCodigo()"/>
+      </div>
+      <div class="lerr" id="l-err2"></div>
+      <button class="lbtn" id="btn-verificar" onclick="verificarCodigo()">Ingresar</button>
+      <button class="resend-link" onclick="enviarCodigo()">Reenviar código</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="tb-logo">LandingKit</div>
+    <div class="tb-badge">Config Planes v3.4.1</div>
+    <div class="tb-right">
+      <button class="tb-btn" onclick="cargarPlanes()">🔄 Actualizar</button>
+      <button class="tb-btn save" id="btn-save" onclick="guardarTodo()">💾 Guardar cambios</button>
+      <button class="tb-btn" onclick="if(confirm('¿Cerrar sesión?')) location.reload()">↩ Salir</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="status-bar" id="status-bar"></div>
+    <div class="legend">
+      <div class="leg num">📊 Límites numéricos</div>
+      <div class="leg bool">✅ Permisos base</div>
+      <div class="leg mod">⚙️ Módulos adicionales</div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="th-plan">Plan</th>
+            <th>Label</th>
+            <th class="th-num">maxProducts</th>
+            <th class="th-num">maxOrders</th>
+            <th class="th-num">maxCustomers</th>
+            <th class="th-num">maxPromos</th>
+            <th class="th-num">maxComprasMes</th>
+            <th class="th-num">maxProveedores</th>
+            <th class="th-bool">allowOrders</th>
+            <th class="th-bool">allowCustomers</th>
+            <th class="th-bool">allowMayorista</th>
+            <th class="th-bool">allowPromos</th>
+            <th class="th-bool">allowcatalogo</th>
+            <th class="th-mod">allowCompras</th>
+            <th class="th-mod">allowInventario</th>
+            <th class="th-mod">allowProveedores</th>
+            <th class="th-mod">allowReportes</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="ld-row"><td colspan="17"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted2);line-height:1.7">
+      Los cambios se aplican a todas las tiendas al guardar.<br>
+      Hoja <code style="font-family:var(--mono);background:var(--s2);padding:2px 6px;border-radius:4px">config_planes</code> en el Google Sheet maestro.
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURACIÓN - GENERADO DESDE BACKEND MAESTRO.gs v3.4.1
+// Campos sincronizados 100% con la función adminConfigPlanesSave()
+// ═══════════════════════════════════════════════════════════════
+
+var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwUhTHQkBhLIvF9KgP2bHpVeufIEaPCXZWo9-azz7mYrEEA79BPFCQxE68YQQxE5iw/exec';
+var TOKEN       = '';
+var _adminEmail = '';
+var DOTS        = { free:'#6b7280', light:'#3b82f6', standard:'#8b5cf6', full:'#00d98b' };
+
+// Campos exactamente como los espera el backend
+var CAMPOS = [
+  'plan','label',
+  'maxProducts','maxOrders','maxCustomers','maxPromos','maxComprasMes','maxProveedores',
+  'allowOrders','allowCustomers','allowMayorista','allowPromos','allowcatalogo',
+  'allowCompras','allowInventario','allowProveedores','allowReportes'
+];
+
+async function apiGet(params) {
+  var qs = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+  var url = BACKEND_URL + '?' + qs;
+  dbg('GET → ' + url.slice(0, 120) + '…');
+  try {
+    var r = await fetch(url, { method: 'GET', redirect: 'follow' });
+    var txt = await r.text();
+    dbg('GET ← ' + txt.slice(0, 200));
+    return JSON.parse(txt);
+  } catch(e) {
+    dbg('GET error: ' + e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+async function apiPost(data) {
+  dbg('POST → action=' + data.action);
+  try {
+    var r = await fetch(BACKEND_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data)
+    });
+    var txt = await r.text();
+    dbg('POST ← ' + txt.slice(0, 200));
+    return JSON.parse(txt);
+  } catch(e) {
+    dbg('POST error: ' + e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+function dbg(msg) {
+  console.log('[LK]', msg);
+  var el = document.getElementById('debug-panel');
+  if (el) {
+    el.classList.add('on');
+    el.innerHTML += '<div>' + escHtml(String(msg)) + '</div>';
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function enviarCodigo() {
+  var email = document.getElementById('l-email').value.trim().toLowerCase();
+  var err = document.getElementById('l-err1');
+  var btn = document.getElementById('btn-enviar');
+  err.style.display = 'none';
+  if (!email) { err.textContent = 'Ingresa tu email'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Enviando…';
+  var r = await apiGet({ action: 'admin.request.code', email: email });
+  btn.disabled = false;
+  btn.innerHTML = 'Enviar código →';
+  if (r.ok) {
+    _adminEmail = email;
+    document.getElementById('step2-hint').textContent = 'Código enviado a ' + email;
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = '';
+    document.getElementById('l-code').value = '';
+    var dp = document.getElementById('debug-panel');
+    if (dp) { dp.classList.remove('on'); dp.innerHTML = ''; }
+    setTimeout(() => document.getElementById('l-code').focus(), 80);
+  } else {
+    err.textContent = r.error || 'Error al enviar código';
+    err.style.display = 'block';
+  }
+}
+
+function volverStep1() {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step1').style.display = '';
+  document.getElementById('l-err1').style.display = 'none';
+}
+
+async function verificarCodigo() {
+  var code = document.getElementById('l-code').value.trim().toUpperCase();
+  var err = document.getElementById('l-err2');
+  var btn = document.getElementById('btn-verificar');
+  err.style.display = 'none';
+  if (code.length < 8) { err.textContent = 'Código debe tener 8 caracteres'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Verificando…';
+  var r = await apiGet({ action: 'admin.verify.code', email: _adminEmail, code: code });
+  btn.disabled = false;
+  btn.innerHTML = 'Ingresar';
+  if (r.ok && r.token) {
+    TOKEN = r.token;
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('app').classList.add('on');
+    await apiGet({ action: 'admin.config.planes', token: TOKEN });
+    cargarPlanes();
+  } else {
+    err.textContent = r.error || 'Código incorrecto o expirado';
+    err.style.display = 'block';
+  }
+}
+
+async function cargarPlanes() {
+  document.getElementById('tbody').innerHTML = '<tr class="ld-row"><td colspan="17"><div class="spinner"></div></td></tr>';
+  setStatus('Cargando…', 'load');
+  var r = await apiGet({ action: 'admin.config_planes.get', token: TOKEN });
+  if (r.ok && r.planes && r.planes.length) {
+    renderTabla(r.planes);
+    setStatus('', '');
+  } else {
+    setStatus('Sin datos. Mostrando valores por defecto.', 'err');
+    renderTabla(defaultPlanes());
+  }
+}
+
+// Valores por defecto EXACTAMENTE como en backend initConfigPlanes()
+function defaultPlanes() {
+  return [
+    {plan:'free',     label:'Free (Trial)', maxProducts:10,   maxOrders:5,    maxCustomers:10,   maxPromos:1,   maxComprasMes:5,    maxProveedores:3,   allowOrders:true,  allowCustomers:true,  allowMayorista:false, allowPromos:true, allowcatalogo:false, allowCompras:true, allowInventario:true, allowProveedores:true, allowReportes:true},
+    {plan:'light',    label:'Light',        maxProducts:30,   maxOrders:30,   maxCustomers:50,   maxPromos:2,   maxComprasMes:20,   maxProveedores:10,  allowOrders:true,  allowCustomers:true,  allowMayorista:false, allowPromos:true, allowcatalogo:false, allowCompras:true, allowInventario:true, allowProveedores:true, allowReportes:true},
+    {plan:'standard', label:'Standard',     maxProducts:100,  maxOrders:200,  maxCustomers:300,  maxPromos:5,   maxComprasMes:100,  maxProveedores:50,  allowOrders:true,  allowCustomers:true,  allowMayorista:false, allowPromos:true, allowcatalogo:false, allowCompras:true, allowInventario:true, allowProveedores:true, allowReportes:true},
+    {plan:'full',     label:'Full',         maxProducts:9999, maxOrders:9999, maxCustomers:9999, maxPromos:999, maxComprasMes:9999, maxProveedores:999, allowOrders:true,  allowCustomers:true,  allowMayorista:true,  allowPromos:true, allowcatalogo:false, allowCompras:true, allowInventario:true, allowProveedores:true, allowReportes:true}
+  ];
+}
+
+function renderTabla(planes) {
+  var html = planes.map(p => {
+    var dot = DOTS[p.plan] || '#8b949e';
+    return '<tr data-plan="' + esc(p.plan) + '">' +
+      '<td class="td-plan"><span class="pdot" style="background:' + dot + '"></span>' + esc(p.plan) + '</td>' +
+      '<td><input type="text" value="' + esc(p.label||'') + '" data-f="label"></td>' +
+      num(p.maxProducts,    'maxProducts') +
+      num(p.maxOrders,      'maxOrders') +
+      num(p.maxCustomers,   'maxCustomers') +
+      num(p.maxPromos,      'maxPromos') +
+      num(p.maxComprasMes,  'maxComprasMes') +
+      num(p.maxProveedores, 'maxProveedores') +
+      bool(p.allowOrders,      'allowOrders') +
+      bool(p.allowCustomers,   'allowCustomers') +
+      bool(p.allowMayorista,   'allowMayorista') +
+      bool(p.allowPromos,      'allowPromos') +
+      bool(p.allowcatalogo,    'allowcatalogo') +
+      bool(p.allowCompras,     'allowCompras') +
+      bool(p.allowInventario,  'allowInventario') +
+      bool(p.allowProveedores, 'allowProveedores') +
+      bool(p.allowReportes,    'allowReportes') +
+    '</tr>';
+  }).join('');
+  document.getElementById('tbody').innerHTML = html;
+  document.querySelectorAll('#tbody select').forEach(pintarSelect);
+}
+
+function num(val, f) {
+  return '<td><input type="number" min="0" value="' + (Number(val) || 0) + '" data-f="' + f + '"></td>';
+}
+
+function bool(val, f) {
+  var ok = val === true || val === 'true' || val === 'TRUE';
+  return '<td><select data-f="' + f + '" onchange="pintarSelect(this)">' +
+    '<option value="true"'  + (ok ? ' selected' : '') + '>✓</option>' +
+    '<option value="false"' + (!ok ? ' selected' : '') + '>✗</option>' +
+  '</select></td>';
+}
+
+function pintarSelect(el) {
+  el.className = el.value === 'true' ? 'sy' : 'sn';
+}
+
+async function guardarTodo() {
+  var btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando…';
+  setStatus('Guardando en Google Sheet…', 'load');
+  
+  var planes = [];
+  document.querySelectorAll('#tbody tr[data-plan]').forEach(row => {
+    var obj = { plan: row.dataset.plan };
+    row.querySelectorAll('[data-f]').forEach(el => {
+      var f = el.dataset.f;
+      if (el.tagName === 'SELECT') {
+        obj[f] = el.value === 'true';
+      } else if (f.startsWith('max')) {
+        obj[f] = Number(el.value) || 0;
+      } else {
+        obj[f] = el.value;
+      }
+    });
+    planes.push(obj);
+  });
+  
+  var r = await apiPost({ action: 'admin.config_planes.save', token: TOKEN, planes: planes });
+  
+  btn.disabled = false;
+  btn.textContent = '💾 Guardar cambios';
+  
+  if (r.ok) {
+    setStatus('✅ ' + (r.message || 'Planes guardados'), 'ok');
+    toast('✅ Guardado correctamente', 'ok');
+  } else {
+    setStatus('❌ ' + (r.error || 'Error al guardar'), 'err');
+    toast('❌ ' + (r.error || 'Error'), 'err');
+  }
+}
+
+function setStatus(msg, type) {
+  var el = document.getElementById('status-bar');
+  if (!msg) { el.classList.remove('on'); return; }
+  el.className = 'status-bar on ' + type;
+  el.textContent = msg;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+var _tt;
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = type || 'ok';
+  el.style.display = 'block';
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.style.display = 'none', 4000);
+}
+</script>
+</body>
+</html>
