@@ -1701,6 +1701,8 @@ if (!list.length) {
     document.getElementById('load-more-btn').style.display = 'none';
     return;
   }
+
+
   var slice = list.slice(0, 9);
   var hasMore = list.length > 9;
   var html = slice.map(function(p) {
@@ -1753,7 +1755,444 @@ if (!list.length) {
       openLightbox(p.productId, curSlide);
     });
   });
+  if (typeof renderPromoSticker === 'function') renderPromoSticker();
 }
+  // ---- funcion sticker promo y popup 
+  // ── PROMO STICKER + CARRUSEL ───────────────────────────────────
+(function() {
+  var style = document.createElement('style');
+  style.textContent = `
+    .promo-sticker-wrap {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 4px;
+    }
+    .promo-sticker {
+      position: relative;
+      width: 110px;
+      height: 130px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .promo-stack-card {
+      position: absolute;
+      width: 80px;
+      height: 90px;
+      border-radius: 10px;
+      background: #dde1e7;
+      border: 1.5px solid #c8cdd6;
+      box-shadow: 0 2px 8px rgba(0,0,0,.10);
+    }
+    .promo-stack-card:nth-child(1) {
+      top: 18px; left: 22px;
+      transform: rotate(-8deg);
+      background: #cdd2db;
+    }
+    .promo-stack-card:nth-child(2) {
+      top: 10px; left: 12px;
+      transform: rotate(-4deg);
+      background: #d8dce4;
+    }
+    .promo-main-card {
+      position: absolute;
+      top: 0; left: 0;
+      width: 82px;
+      height: 92px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 2px solid var(--cta);
+      box-shadow: 0 4px 16px rgba(255,105,0,.25);
+      overflow: hidden;
+      transition: transform .2s;
+    }
+    .promo-sticker:hover .promo-main-card {
+      transform: scale(1.05) rotate(-1deg);
+    }
+    .promo-main-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .promo-main-card .promo-no-img {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: var(--surface2);
+    }
+    .promo-badge {
+      position: absolute;
+      bottom: 34px;
+      left: 0;
+      background: var(--cta);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 0 99px 99px 0;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      animation: promoBadgePulse 2s ease-in-out infinite;
+      box-shadow: 0 0 0 0 rgba(255,105,0,.5);
+    }
+    @keyframes promoBadgePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,105,0,.45); }
+      55%     { box-shadow: 0 0 0 7px rgba(255,105,0,0); }
+    }
+    .promo-count-badge {
+      position: absolute;
+      bottom: 20px;
+      left: 2px;
+      background: var(--surface);
+      color: var(--cta);
+      font-size: 9px;
+      font-weight: 700;
+      border: 1.5px solid var(--cta);
+      border-radius: 99px;
+      padding: 2px 7px;
+    }
+    .promo-label {
+      position: absolute;
+      bottom: 4px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--cta);
+      font-family: var(--font-d);
+      letter-spacing: .03em;
+    }
+
+    /* ── POPUP CARRUSEL ── */
+    .promo-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 800;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      padding: 16px;
+    }
+    .promo-overlay.on { display: flex; }
+    .promo-popup {
+      background: var(--surface);
+      border-radius: var(--r-xl);
+      width: 100%;
+      max-width: 360px;
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      animation: promoPopIn .28s cubic-bezier(.34,1.2,.64,1) both;
+    }
+    @keyframes promoPopIn {
+      from { opacity:0; transform:scale(.88) translateY(20px); }
+      to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .promo-popup-hdr {
+      background: var(--cta);
+      color: #fff;
+      padding: 14px 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .promo-popup-hdr-title {
+      font-family: var(--font-d);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .promo-popup-hdr-sub {
+      font-size: 11px;
+      opacity: .8;
+      margin-top: 1px;
+    }
+    .promo-popup-close {
+      background: rgba(255,255,255,.2);
+      border: none;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .promo-popup-close:hover { background: rgba(255,255,255,.35); }
+
+    .promo-carousel-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .promo-carousel-track {
+      display: flex;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+    }
+    .promo-carousel-slide {
+      min-width: 100%;
+      padding: 16px;
+      cursor: pointer;
+    }
+    .promo-carousel-slide:hover { background: var(--surface2); }
+    .promo-slide-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: var(--r);
+      overflow: hidden;
+      background: var(--surface2);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+    .promo-slide-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .promo-slide-cat {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--cta);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .promo-slide-name {
+      font-family: var(--font-d);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .promo-slide-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .promo-slide-price {
+      font-family: var(--font-d);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .promo-slide-btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--cta);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-b);
+      transition: background .15s;
+    }
+    .promo-slide-btn:hover { background: var(--cta-dark); }
+
+    .promo-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 16px 16px;
+      border-top: 1px solid var(--border-light);
+    }
+    .promo-nav-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      color: var(--text-mid);
+    }
+    .promo-nav-btn:hover { background: var(--cta); color: #fff; border-color: var(--cta); }
+    .promo-nav-btn:disabled { opacity: .3; cursor: default; }
+    .promo-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex: 1;
+      justify-content: center;
+    }
+    .promo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .promo-dot.on {
+      background: var(--cta);
+      width: 16px;
+      border-radius: 99px;
+    }
+  `;
+  document.head.appendChild(style);
+
+  var _promoList = [];
+  var _promoIdx  = 0;
+
+  // ── Insertar sticker en el grid ──────────────────────────────
+  window.renderPromoSticker = function() {
+    var old = document.getElementById('promo-sticker-wrap');
+    if (old) old.remove();
+
+    var modalPattern = /^modal\s*[1-4]$/i;
+    _promoList = products.filter(function(p) {
+      if (!p.category) return false;
+      var cat = p.category.trim().toLowerCase();
+      return (cat === 'promo' || cat.startsWith('promo-'))
+             && !modalPattern.test(p.category.trim())
+             && (p.active === true || p.active === 'TRUE');
+    });
+    if (!_promoList.length) return;
+
+    var grid = document.getElementById('grid-el');
+    if (!grid) return;
+
+    // imagen principal — primer producto con imagen
+    var mainP = _promoList.find(function(p) { return p.imageUrl; }) || _promoList[0];
+    var imgHTML = mainP.imageUrl
+      ? '<img src="' + fixImgUrl(mainP.imageUrl) + '" alt="' + esc(mainP.name)
+        + '" onerror="this.parentNode.innerHTML=\'🛍\'">'
+      : '<div class="promo-no-img">🛍</div>';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'promo-sticker-wrap';
+    wrap.id = 'promo-sticker-wrap';
+    wrap.innerHTML =
+      '<div class="promo-sticker" onclick="abrirPromoCarrusel()" title="Ver promociones">'
+      + '<div class="promo-stack-card"></div>'
+      + '<div class="promo-stack-card"></div>'
+      + '<div class="promo-main-card">' + imgHTML + '</div>'
+      + '<div class="promo-badge">✦ Promo</div>'
+      + '<div class="promo-count-badge">' + _promoList.length + ' ofertas</div>'
+      + '<div class="promo-label">Ver todo</div>'
+      + '</div>';
+
+    grid.insertBefore(wrap, grid.firstChild);
+  };
+
+  // ── Popup carrusel ───────────────────────────────────────────
+  window.abrirPromoCarrusel = function() {
+    _promoIdx = 0;
+    var overlay = document.getElementById('promo-overlay');
+    if (!overlay) _crearOverlay();
+    _renderCarrusel();
+    document.getElementById('promo-overlay').classList.add('on');
+    document.body.style.overflow = 'hidden';
+  };
+
+  function _crearOverlay() {
+    var el = document.createElement('div');
+    el.id = 'promo-overlay';
+    el.className = 'promo-overlay';
+    el.innerHTML =
+      '<div class="promo-popup">'
+      + '<div class="promo-popup-hdr">'
+      + '<div><div class="promo-popup-hdr-title">✦ Promociones</div>'
+      + '<div class="promo-popup-hdr-sub" id="promo-hdr-sub"></div></div>'
+      + '<button class="promo-popup-close" onclick="cerrarPromoCarrusel()">✕</button>'
+      + '</div>'
+      + '<div class="promo-carousel-wrap">'
+      + '<div class="promo-carousel-track" id="promo-track"></div>'
+      + '</div>'
+      + '<div class="promo-nav">'
+      + '<button class="promo-nav-btn" id="promo-prev" onclick="moverPromo(-1)">‹</button>'
+      + '<div class="promo-dots" id="promo-dots"></div>'
+      + '<button class="promo-nav-btn" id="promo-next" onclick="moverPromo(1)">›</button>'
+      + '</div>'
+      + '</div>';
+    el.addEventListener('click', function(e) {
+      if (e.target === el) cerrarPromoCarrusel();
+    });
+    document.body.appendChild(el);
+  }
+
+  function _renderCarrusel() {
+    var track = document.getElementById('promo-track');
+    var dots  = document.getElementById('promo-dots');
+    var sub   = document.getElementById('promo-hdr-sub');
+    if (!track) return;
+
+    track.innerHTML = _promoList.map(function(p) {
+      var img = p.imageUrl
+        ? '<img src="' + fixImgUrl(p.imageUrl) + '" alt="' + esc(p.name)
+          + '" onerror="this.parentNode.innerHTML=\'🛍\'">'
+        : '🛍';
+      var cat = (p.category||'').replace(/^promo-?/i,'').trim() || 'Promo';
+      return '<div class="promo-carousel-slide" onclick="abrirDesdeCarrusel(\'' + p.productId + '\')">'
+        + '<div class="promo-slide-img">' + img + '</div>'
+        + '<div class="promo-slide-cat">' + esc(cat) + '</div>'
+        + '<div class="promo-slide-name">' + esc(p.name) + '</div>'
+        + '<div class="promo-slide-desc">' + esc((p.description||'').slice(0,80)) + '</div>'
+        + '<div class="promo-slide-price">' + fmt(p.price) + '</div>'
+        + '<button class="promo-slide-btn" onclick="event.stopPropagation();addToCart(\'' + p.productId + '\');cerrarPromoCarrusel()">Agregar a solicitudes</button>'
+        + '</div>';
+    }).join('');
+
+    dots.innerHTML = _promoList.map(function(_, i) {
+      return '<div class="promo-dot' + (i === 0 ? ' on' : '') + '" onclick="irAPromo(' + i + ')"></div>';
+    }).join('');
+
+    if (sub) sub.textContent = _promoList.length + ' producto' + (_promoList.length !== 1 ? 's' : '') + ' en oferta';
+    _actualizarNav();
+  }
+
+  function _actualizarNav() {
+    var track = document.getElementById('promo-track');
+    if (track) track.style.transform = 'translateX(' + (_promoIdx * -100) + '%)';
+    document.querySelectorAll('.promo-dot').forEach(function(d, i) {
+      d.classList.toggle('on', i === _promoIdx);
+    });
+    var prev = document.getElementById('promo-prev');
+    var next = document.getElementById('promo-next');
+    if (prev) prev.disabled = _promoIdx === 0;
+    if (next) next.disabled = _promoIdx === _promoList.length - 1;
+  }
+
+  window.moverPromo = function(dir) {
+    _promoIdx = Math.max(0, Math.min(_promoList.length - 1, _promoIdx + dir));
+    _actualizarNav();
+  };
+
+  window.irAPromo = function(i) {
+    _promoIdx = i;
+    _actualizarNav();
+  };
+
+  window.abrirDesdeCarrusel = function(pid) {
+    cerrarPromoCarrusel();
+    setTimeout(function() { openPM(pid); }, 180);
+  };
+
+  window.cerrarPromoCarrusel = function() {
+    var el = document.getElementById('promo-overlay');
+    if (el) el.classList.remove('on');
+    document.body.style.overflow = '';
+  };
+})();
 
 function setSlide(pid, track, slide) {
   track.style.transform = 'translateX(' + (slide * -100) + '%)';
