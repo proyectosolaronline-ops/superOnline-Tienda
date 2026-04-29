@@ -1229,6 +1229,12 @@ window.addEventListener('load', async function() {
     showV('catalog');
   }
 });
+async function loadExistingVideo() {
+  try {
+    const res = await gasGet(VIDEO_URL, { action:'video.get', storeId:STATE.storeId });
+    if (res.ok && res.hasVideo && res.activeUrl) showPlayer(res.activeUrl, res.activeSource);
+  } catch(e) {}
+}
 
 function showSuspended(nombre, motivo, bannerRaw) {
   if (nombre) { document.getElementById('suspended-store-name').textContent = nombre + ' — no disponible'; document.title = nombre; }
