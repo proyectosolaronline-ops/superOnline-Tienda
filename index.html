@@ -2583,6 +2583,91 @@ function dismissVideoOwner() {
   wrap.style.transform  = 'scale(0.6)';
   setTimeout(function() { wrap.style.display = 'none'; }, 500);
 }
+
+// ── Player ────────────────────────────────────────────────────────
+function getDriveFileId(url) { const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/); return m ? m[1] : null; }
+
+function showPlayer(url, source) {
+  const wrap = document.getElementById('player-wrap');
+  const container = document.getElementById('iframe-player');
+  const badge = document.getElementById('source-badge');
+  let embedUrl = url;
+  if (source === 'drive') {
+    const fid = getDriveFileId(url);
+    if (fid) embedUrl = 'https://drive.google.com/file/d/' + fid + '/preview';
+    badge.innerHTML = '<span class="source-badge drive">📁 Google Drive</span>';
+  } else if (source === 'youtube') {
+    // VIDEO.gs ya guarda embed — usar directo si ya es /embed/
+    if (url.indexOf('/embed/') !== -1) {
+      embedUrl = url;
+    } else {
+      const ytId = extractYtId(url);
+      if (ytId) embedUrl = 'https://www.youtube.com/embed/' + ytId + '?autoplay=1&rel=0';
+    }
+    badge.innerHTML = '<span class="source-badge youtube">▶ YouTube</span>';
+  }
+  container.innerHTML = '<iframe src="' + embedUrl + '" allow="autoplay" allowfullscreen></iframe>';
+  wrap.classList.add('show');
+  wrap.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function extractYtId(url) {
+  const patterns = [/youtube\.com\/watch\?v=([\w-]{11})/,/youtu\.be\/([\w-]{11})/,/youtube\.com\/shorts\/([\w-]{11})/,/youtube\.com\/embed\/([\w-]{11})/,/youtube\.com\/v\/([\w-]{11})/,/youtube\.com\/live\/([\w-]{11})/];
+  for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
+  return null;
+}
+
+// ── Progress ──────────────────────────────────────────────────────
+function showProgress(pct, label) {
+  document.getElementById('progress-wrap').classList.add('show');
+  document.getElementById('progress-bar').style.width = pct + '%';
+  if (label) { const lbl = document.getElementById('progress-label'); lbl.textContent = label; lbl.classList.add('show'); }
+}
+function hideProgress() {
+  document.getElementById('progress-wrap').classList.remove('show');
+  document.getElementById('progress-label').classList.remove('show');
+  document.getElementById('progress-bar').style.width = '0%';
+}
+
+// ── Logout ────────────────────────────────────────────────────────
+function logout() {
+  STATE = { storeId:'', token:'', storeName:'', plan:'', fileBlob:null, fileName:'', fileMime:'' };
+  document.getElementById('inp-store').value = '';
+  document.getElementById('inp-email').value = '';
+  document.getElementById('inp-youtube').value = '';
+  document.getElementById('otp-section').style.display = 'none';
+  document.getElementById('player-wrap').classList.remove('show');
+  document.getElementById('iframe-player').innerHTML = '';
+  document.getElementById('btn-upload').disabled = true;
+  document.getElementById('file-label').innerHTML = 'Selecciona o arrastra tu video<br><small style="color:var(--muted);font-family:var(--mono);font-size:11px">máx recomendado: 50 MB</small>';
+  hideMsg('msg-drive'); hideMsg('msg-yt'); hideProgress();
+  showStep('step-store');
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────
+async function gasPost(url, body) {
+  const res = await fetch(url, { method:'POST', redirect:'follow', body:JSON.stringify(body) });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch(e) { throw new Error('Respuesta inesperada del servidor'); }
+}
+async function gasGet(url, params) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(url + '?' + qs, { redirect:'follow' });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch(e) { throw new Error('Respuesta inesperada del servidor'); }
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function formatBytes(bytes) {
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
 </script>
 
 <div class="bottom-bar" id="bottom-bar" style="display:none">
