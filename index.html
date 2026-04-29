@@ -1564,14 +1564,20 @@ function resolveCategory(raw) {
 function renderCatalog() {
   var modalPattern = /^modal\s*[1-4]$/i;
   var cats = [...new Set(products.map(function(p) {
-    if (p.category && modalPattern.test(p.category.trim())) return null; // modal → excluir chip
-    // ANTES también excluía promo puro vía resolveCategory → null
-    // AHORA resolveCategory('promo') devuelve 'Promo' → chip aparece
+    if (p.category && modalPattern.test(p.category.trim())) return null;
     return resolveCategory(p.category);
   }).filter(Boolean))];
-  // resto igual...
-var _searchQuery = '';
+  document.getElementById('filters-el').innerHTML = cats.length
+    ? ('<div class="chip on" onclick="setCat(\'\')">Todos</div>'
+       + cats.map(function(c) {
+           return '<div class="chip" onclick="setCat(\'' + esc(c) + '\')">' + esc(c) + '</div>';
+         }).join(''))
+    : '';
+  renderGrid();
+  detectSearchIntent();
+}
 
+var _searchQuery = '';
 function handleSearch(val) {
   _searchQuery = (val || '').trim().toLowerCase();
   var clearBtn = document.getElementById('search-clear');
