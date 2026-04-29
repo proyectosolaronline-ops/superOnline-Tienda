@@ -590,13 +590,17 @@ async function saveYoutube() {
   if (!url) { showMsg('msg-yt','Ingresa la URL de YouTube','err'); return; }
   hideMsg('msg-yt');
   try {
-    const res = await gasPost(VIDEO_URL, { action:'video.youtube', token:STATE.token, storeId:STATE.storeId, youtubeUrl:url });
+    const res = await gasPost(VIDEO_URL, {
+      action:     'video.youtube',
+      token:      STATE.token,
+      storeId:    STATE.storeId,
+      youtubeUrl: url,
+    });
     if (!res.ok) { showMsg('msg-yt', res.error||'Error al guardar','err'); return; }
     showMsg('msg-yt', 'YouTube guardado correctamente.', 'ok');
     showPlayer(res.embedUrl, 'youtube');
   } catch(e) { showMsg('msg-yt','Error: '+e.message,'err'); }
 }
-
 // ── Eliminar ──────────────────────────────────────────────────────
 async function deleteVideo() {
   if (!confirm('¿Eliminar el video? No se puede deshacer.')) return;
