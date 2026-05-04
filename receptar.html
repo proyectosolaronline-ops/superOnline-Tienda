@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<meta name="format-detection" content="telephone=no">
+<title>EasyLink · Receptor</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  /* ── Contenedor principal OCUPA TODO ── */
+  .app-container {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh; /* dynamic viewport height */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #000;
+  }
+
+  /* ── Área de video OCUPA TODO ── */
+  .video-area {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0; /* importante para flex */
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    display: block;
+  }
+
+  /* ── Overlay superior mínimo ── */
+  .status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 12px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+  }
+
+  .status-pill {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,0.15);
+    pointer-events: auto;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    flex-shrink: 0;
+  }
+
+  .dot.off { background: #ef4444; }
+  .dot.wait { background: #fbbf24; animation: blink 1s infinite; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .status-label {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Barra inferior de controles ── */
+  .control-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+  }
+
+  .ctrl-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(20,20,20,0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .ctrl-btn:active {
+    transform: scale(0.9);
+    background: rgba(255,255,255,0.2);
+  }
+
+  .ctrl-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── Pantalla de carga OCUPA TODO ── */
+  .loading-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    z-index: 50;
+    gap: 16px;
+  }
+
+  .loading-screen.hidden {
+    display: none;
+  }
+
+  .loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-msg {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .loading-id {
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    font-family: monospace;
+  }
+
+  /* ── Overlay tienda OCUPA TODO ── */
+  .store-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+  }
+
+  .store-overlay.open {
+    display: flex;
+  }
+
+  .store-header {
+    background: #0d0d0d;
+    padding: 10px 16px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+
+  .store-title {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .store-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .store-close:active {
+    background: rgba(255,0,0,0.3);
+  }
+
+  .store-overlay iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+  }
+
+  /* ── Toast de error ── */
+  .toast {
+    position: absolute;
+    bottom: 120px;
+    left: 20px;
+    right: 20px;
+    background: rgba(239,68,68,0.95);
+    color: #fff;
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 60;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s ease;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- Área de video (siempre ocupa todo) -->
+  <div class="video-area" id="videoArea">
+    <video id="remoteVideo" autoplay playsinline muted webkit-playsinline></video>
+    
+    <!-- Barra de estado superior -->
+    <div class="status-bar" id="statusBar" style="display:none">
+      <div class="status-pill">
+        <span class="dot wait" id="dot"></span>
+        <span class="status-label" id="statusLabel">Conectando</span>
+      </div>
+    </div>
+
+    <!-- Barra de controles inferior -->
+    <div class="control-bar" id="controlBar" style="display:none">
+      <button class="ctrl-btn" id="btnFull" title="Pantalla completa">
+        <svg viewBox="0 0 24 24">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+      </button>
+      
+      <button class="ctrl-btn" id="btnStore" title="Tienda">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+      </button>
+
+      <button class="ctrl-btn" id="btnReconnect" title="Reconectar">
+        <svg viewBox="0 0 24 24">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Toast de error -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <!-- Pantalla de carga (cubre todo) -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loader"></div>
+    <div class="loading-msg" id="loadingMsg">📡 Buscando transmisor...</div>
+    <div class="loading-id" id="loadingId"></div>
+  </div>
+
+  <!-- Overlay tienda (cubre todo) -->
+  <div class="store-overlay" id="storeOverlay">
+    <div class="store-header">
+      <span class="store-title">🏪 Tienda EasyLink</span>
+      <button class="store-close" id="btnCloseStore">✕</button>
+    </div>
+    <iframe id="storeFrame" src="tienda.html" allowfullscreen></iframe>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const hostId = urlParams.get('host');
+
+  // DOM elements
+  const video = document.getElementById('remoteVideo');
+  const statusBar = document.getElementById('statusBar');
+  const controlBar = document.getElementById('controlBar');
+  const dot = document.getElementById('dot');
+  const statusLabel = document.getElementById('statusLabel');
+  const loadingScreen = document.getElementById('loadingScreen');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const loadingId = document.getElementById('loadingId');
+  const toast = document.getElementById('toast');
+  const storeOverlay = document.getElementById('storeOverlay');
+
+  let peer = null;
+  let currentCall = null;
+  let toastTimer = null;
+
+  // ── Helpers ─────────────────────
+  function showToast(msg, duration = 4000) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+  }
+
+  function setStatus(state, label) {
+    dot.className = 'dot';
+    if (state === 'live') { dot.classList.add(''); statusLabel.textContent = label || 'EN VIVO'; }
+    else if (state === 'wait') { dot.classList.add('wait'); statusLabel.textContent = label || 'Conectando'; }
+    else if (state === 'off') { dot.classList.add('off'); statusLabel.textContent = label || 'Desconectado'; }
+  }
+
+  function setLoading(msg, id) {
+    loadingMsg.textContent = msg;
+    loadingId.textContent = id || '';
+    loadingScreen.classList.remove('hidden');
+  }
+
+  function hideLoading() {
+    loadingScreen.classList.add('hidden');
+  }
+
+  function showUI() {
+    statusBar.style.display = 'flex';
+    controlBar.style.display = 'flex';
+  }
+
+  function hideUI() {
+    statusBar.style.display = 'none';
+    controlBar.style.display = 'none';
+  }
+
+  // ── Fullscreen ─────────────────
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {
+        video.requestFullscreen().catch(() => {});
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // ── Tienda ─────────────────────
+  function openStore() {
+    storeOverlay.classList.add('open');
+    history.pushState({ store: true }, '');
+  }
+
+  function closeStore() {
+    storeOverlay.classList.remove('open');
+    if (history.state?.store) history.back();
+  }
+
+  window.addEventListener('popstate', () => {
+    if (storeOverlay.classList.contains('open')) {
+      storeOverlay.classList.remove('open');
+    }
+  });
+
+  // ── Reconectar ─────────────────
+  function reconnect() {
+    if (currentCall) { currentCall.close(); currentCall = null; }
+    if (peer) { peer.destroy(); peer = null; }
+    video.srcObject = null;
+    hideUI();
+    setLoading('🔄 Reconectando...', hostId?.slice(0,16) + '...');
+    setStatus('wait', 'Reconectando');
+    setTimeout(initConnection, 800);
+  }
+
+  // ── Conexión PeerJS ────────────
+  function initConnection() {
+    if (!hostId) {
+      setLoading('❌ Sin ID de transmisor', 'Agrega ?host=ID en la URL');
+      showToast('Falta el ID del transmisor');
+      return;
+    }
+
+    showUI();
+    setStatus('wait', 'Conectando');
+    setLoading('📡 Buscando transmisor...', hostId.slice(0,16) + '...');
+
+    peer = new Peer({
+      debug: 0,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          {
+            urls: ['turn:a.relay.metered.ca:80','turn:a.relay.metered.ca:443','turn:a.relay.metered.ca:443?transport=tcp'],
+            username: 'open',
+            credential: 'open'
+          }
+        ],
+        iceCandidatePoolSize: 10
+      }
+    });
+
+    peer.on('open', (myId) => {
+      console.log('Peer open:', myId);
+      setLoading('📞 Llamando...', hostId.slice(0,16) + '...');
+      
+      const dc = peer.connect(hostId, { reliable: true });
+      dc.on('open', () => {
+        setLoading('📡 Esperando video...', '');
+        dc.send({ type: 'viewer-hello', name: 'Receptor', device: 'mobile' });
+      });
+      dc.on('error', (e) => {
+        console.warn('Data error:', e);
+        showToast('No se puede contactar al transmisor');
+        setStatus('off', 'Host offline');
+        setLoading('⚠️ Transmisor no disponible', '¿Iniciaste la demo?');
+      });
+    });
+
+    peer.on('call', (call) => {
+      console.log('📹 Llamada entrante');
+      currentCall = call;
+      call.answer();
+      setLoading('🎬 Cargando video...', '');
+
+      call.on('stream', (stream) => {
+        console.log('✅ Stream recibido');
+        hideLoading();
+        showUI();
+        setStatus('live', 'EN VIVO');
+        video.srcObject = stream;
+        video.play().catch(() => {
+          showToast('Toca la pantalla para reproducir');
+        });
+      });
+
+      call.on('error', (e) => {
+        console.error('Call error:', e);
+        showToast('Error en el video');
+        hideLoading();
+        setStatus('off', 'Error');
+      });
+
+      call.on('close', () => {
+        setStatus('off', 'Finalizado');
+        video.srcObject = null;
+        setLoading('⏹ Demo terminada', 'El host cerró la transmisión');
+        showUI();
+      });
+    });
+
+    peer.on('error', (err) => {
+      console.error('Peer error:', err);
+      hideLoading();
+      setStatus('off', 'Error');
+      if (err.type === 'peer-unavailable') {
+        showToast('Transmisor no encontrado');
+        setLoading('❌ Host no disponible', hostId.slice(0,16));
+      } else {
+        showToast('Error: ' + err.message);
+      }
+    });
+
+    peer.on('disconnected', () => {
+      setStatus('off', 'Desconectado');
+      showToast('Conexión perdida');
+      setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
+    });
+  }
+
+  // ── Eventos ────────────────────
+  document.getElementById('btnFull').addEventListener('click', toggleFullscreen);
+  document.getElementById('btnStore').addEventListener('click', openStore);
+  document.getElementById('btnCloseStore').addEventListener('click', closeStore);
+  document.getElementById('btnReconnect').addEventListener('click', reconnect);
+
+  // Doble tap en video = fullscreen
+  let tapTimer = 0;
+  video.addEventListener('click', (e) => {
+    const now = Date.now();
+    if (now - tapTimer < 300) {
+      toggleFullscreen();
+    }
+    tapTimer = now;
+  });
+
+  // Limpiar
+  window.addEventListener('beforeunload', () => {
+    if (currentCall) currentCall.close();
+    if (peer) peer.destroy();
+  });
+
+  // Iniciar
+  initConnection();
+
+})();
+</script>
+</body>
+</html>
