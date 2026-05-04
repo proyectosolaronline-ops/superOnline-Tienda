@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Demo en vivo — Easylink</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;font-family:'Inter',system-ui,sans-serif;color:#fff;overflow:hidden}
+
+/* ════════════════════════════════
+   PANTALLAS
+════════════════════════════════ */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;gap:20px;text-align:center;overflow-y:auto}
+.screen.active{display:flex}
+
+/* ════════════════════════════════
+   PANTALLA INICIO
+════════════════════════════════ */
+#s-inicio{background:#0a0a0a;gap:16px}
+
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.brand-icon{width:52px;height:52px;background:rgba(163,230,53,.12);border:1.5px solid rgba(163,230,53,.3);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.brand-name{font-size:20px;font-weight:800;color:#a3e635;letter-spacing:.04em}
+
+.inicio-title{font-size:26px;font-weight:800;line-height:1.2;color:#fff}
+.inicio-sub{font-size:14px;color:rgba(255,255,255,.45);line-height:1.6;max-width:290px}
+
+.btn{
+  width:100%;max-width:340px;
+  padding:16px 20px;border-radius:16px;border:none;
+  font-size:15px;font-weight:700;font-family:inherit;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:transform .15s,opacity .15s;
+}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn-green{background:#a3e635;color:#1a2e00}
+.btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.12)}
+
+.divider{font-size:12px;color:rgba(255,255,255,.25);display:flex;align-items:center;gap:10px;width:100%;max-width:340px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
+
+/* ════════════════════════════════
+   PANTALLA TRANSMISOR
+════════════════════════════════ */
+#s-tx{background:#0a0a0a;justify-content:flex-start;padding-top:0;overflow-y:auto}
+
+.tx-header{
+  width:100%;padding:16px 20px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  flex-shrink:0;
+}
+.back{
+  width:36px;height:36px;background:rgba(255,255,255,.07);border:none;
+  border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:18px;flex-shrink:0;
+}
+.tx-header-title{font-size:16px;font-weight:700}
+
+.tx-body{width:100%;max-width:400px;display:flex;flex-direction:column;gap:16px;padding:20px 0 32px}
+
+/* PREVIEW VIDEO TX */
+.preview-wrap{
+  width:100%;aspect-ratio:16/9;
+  background:#111;border-radius:16px;
+  overflow:hidden;border:1px solid rgba(255,255,255,.08);
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+#tx-preview{width:100%;height:100%;object-fit:contain}
+.preview-placeholder{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:rgba(255,255,255,.3);font-size:13px;
+}
+.preview-placeholder svg{opacity:.4}
+
+/* CARD INFO */
+.card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:18px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.card-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase}
+.card-value{font-size:15px;font-weight:600;color:#fff}
+
+/* STATUS BADGE */
+.status{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 16px;border-radius:99px;font-size:13px;font-weight:600;
+  align-self:center;
+}
+.status-wait{background:rgba(163,230,53,.08);border:1px solid rgba(163,230,53,.2);color:#a3e635}
+.status-live{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+.status-off{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.dot.blink{animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* BTN WHATSAPP */
+.btn-wa{
+  width:100%;padding:16px;border-radius:16px;border:none;
+  background:#25d366;color:#fff;
+  font-size:15px;font-weight:700;font-family:inherit;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:transform .15s,opacity .15s;
+}
+.btn-wa:active{transform:scale(.97);opacity:.85}
+.btn-wa:disabled{opacity:.35;pointer-events:none}
+
+/* BTN ROJO PARAR */
+.btn-stop{
+  width:100%;padding:14px;border-radius:16px;border:none;
+  background:rgba(239,68,68,.12);color:#ef4444;
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
+  border:1px solid rgba(239,68,68,.2);
+  transition:transform .15s;display:none;
+}
+.btn-stop.on{display:block}
+.btn-stop:active{transform:scale(.97)}
+
+/* VIEWERS COUNT */
+.viewers{font-size:13px;color:rgba(255,255,255,.4);text-align:center}
+.viewers span{color:#a3e635;font-weight:700}
+
+/* ════════════════════════════════
+   PANTALLA RECEPTOR (FULLSCREEN VIDEO)
+════════════════════════════════ */
+#s-rx{background:#000;padding:0;justify-content:center}
+
+#live-video{
+  position:fixed;inset:0;width:100%;height:100%;
+  object-fit:contain;background:#000;z-index:1;
+}
+
+/* WAITING OVERLAY dentro del receptor */
+#rx-waiting{
+  position:fixed;inset:0;z-index:5;
+  background:#000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;padding:32px;text-align:center;
+}
+#rx-waiting.hidden{display:none}
+
+.spinner{
+  width:44px;height:44px;
+  border:3px solid rgba(163,230,53,.15);
+  border-top-color:#a3e635;
+  border-radius:50%;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.rx-wait-title{font-size:20px;font-weight:800}
+.rx-wait-sub{font-size:13px;color:rgba(255,255,255,.4);line-height:1.6;max-width:270px}
+.rx-status-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase}
+
+#rx-error{
+  display:none;flex-direction:column;align-items:center;gap:12px;
+  padding:20px;background:rgba(239,68,68,.08);
+  border:1px solid rgba(239,68,68,.2);border-radius:16px;max-width:300px;
+}
+#rx-error.on{display:flex}
+#rx-error p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6}
+.btn-retry{
+  padding:10px 28px;background:#ef4444;color:#fff;
+  border:none;border-radius:10px;font-size:13px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+
+/* TOP BAR RECEPTOR */
+#rx-top{
+  position:fixed;top:0;left:0;right:0;z-index:10;
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,.75) 0%,transparent 100%);
+  opacity:0;transition:opacity .3s;pointer-events:none;
+}
+#rx-top.on{opacity:1;pointer-events:all}
+.rx-brand{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:#a3e635;letter-spacing:.04em}
+.live-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);
+  padding:4px 10px;border-radius:99px;
+  font-size:11px;font-weight:700;color:#ef4444;
+}
+.live-pill-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 5px rgba(239,68,68,0)}}
+
+/* BOTTOM BAR RECEPTOR */
+#rx-bottom{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  padding:12px 16px 20px;
+  background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:space-between;
+  opacity:0;transition:opacity .3s;
+}
+#rx-bottom.on{opacity:1}
+.rx-quality{font-size:11px;color:rgba(255,255,255,.4);font-weight:600}
+.btn-store{
+  display:flex;align-items:center;gap:6px;
+  padding:9px 14px;background:#25d366;color:#fff;
+  border:none;border-radius:10px;font-size:12px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+
+/* TOAST GLOBAL */
+#toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:#a3e635;color:#14532d;
+  font-size:12px;font-weight:700;
+  padding:8px 20px;border-radius:99px;
+  z-index:999;display:none;white-space:nowrap;
+}
+
+/* INPUT SALA */
+.sala-input{
+  width:100%;max-width:340px;
+  padding:14px 16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;color:#fff;
+  font-size:22px;font-weight:700;font-family:monospace;
+  text-align:center;letter-spacing:6px;text-transform:uppercase;
+  outline:none;
+}
+.sala-input::placeholder{font-size:14px;letter-spacing:1px;font-family:inherit;color:rgba(255,255,255,.2);font-weight:400}
+.sala-input:focus{border-color:rgba(163,230,53,.4)}
+
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════
+     TOAST GLOBAL
+════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ════════════════════════
+     PANTALLA INICIO
+════════════════════════ -->
+<div id="s-inicio" class="screen active">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <span class="brand-name">EASYLINK</span>
+  </div>
+
+  <div class="inicio-title">Demo en vivo</div>
+  <div class="inicio-sub">Comparte tu pantalla en tiempo real o únete como espectador</div>
+
+  <button class="btn btn-green" onclick="irATransmisor()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+    Transmitir mi pantalla
+  </button>
+
+  <div class="divider">o</div>
+
+  <!-- INPUT PARA UNIRSE -->
+  <input id="input-sala" class="sala-input" type="text" maxlength="6" placeholder="Código de sala" autocomplete="off" spellcheck="false">
+  <button class="btn btn-ghost" onclick="irAReceptorManual()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+    Ver transmisión
+  </button>
+</div>
+
+<!-- ════════════════════════
+     PANTALLA TRANSMISOR
+════════════════════════ -->
+<div id="s-tx" class="screen">
+  <div class="tx-header">
+    <button class="back" onclick="volver()">←</button>
+    <span class="tx-header-title">Transmitir pantalla</span>
+  </div>
+
+  <div class="tx-body">
+
+    <!-- PREVIEW -->
+    <div class="preview-wrap">
+      <video id="tx-preview" autoplay muted playsinline></video>
+      <div class="preview-placeholder" id="tx-placeholder">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        <span>Sin pantalla compartida</span>
+      </div>
+    </div>
+
+    <!-- CÓDIGO DE SALA -->
+    <div class="card">
+      <div class="card-label">Código de sala</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div id="tx-code" class="card-value" style="font-size:28px;font-family:monospace;letter-spacing:6px;color:#a3e635">------</div>
+        <button onclick="copiarCodigo()" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Copiar</button>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div id="tx-status" class="status status-off">
+      <div class="dot"></div>
+      <span id="tx-status-txt">Iniciando...</span>
+    </div>
+
+    <div id="tx-viewers" class="viewers" style="display:none">
+      <span id="tx-viewers-n">0</span> espectador(es) conectado(s)
+    </div>
+
+    <!-- BOTÓN COMPARTIR PANTALLA -->
+    <button class="btn btn-green" id="btn-share" onclick="compartirPantalla()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+      Compartir pestaña de Chrome
+    </button>
+
+    <!-- BOTÓN WHATSAPP (aparece cuando hay stream activo) -->
+    <button class="btn-wa" id="btn-wa" disabled onclick="compartirWhatsApp()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Compartir por WhatsApp
+    </button>
+
+    <!-- BOTÓN DETENER -->
+    <button class="btn-stop" id="btn-stop" onclick="detenerTransmision()">Detener transmisión</button>
+
+  </div>
+</div>
+
+<!-- ════════════════════════
+     PANTALLA RECEPTOR (FULLSCREEN)
+════════════════════════ -->
+<div id="s-rx" class="screen">
+
+  <video id="live-video" autoplay playsinline></video>
+
+  <!-- TOP BAR -->
+  <div id="rx-top">
+    <div class="rx-brand">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      EASYLINK DEMO
+    </div>
+    <div class="live-pill">
+      <div class="live-pill-dot"></div>
+      EN VIVO
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="rx-bottom">
+    <span class="rx-quality">HD · En vivo</span>
+    <button class="btn-store" id="btn-store" onclick="abrirTienda()" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Ir a la tienda
+    </button>
+  </div>
+
+  <!-- WAITING OVERLAY -->
+  <div id="rx-waiting">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      </div>
+    </div>
+    <div class="rx-wait-title">Demo en vivo</div>
+    <div class="rx-wait-sub" id="rx-wait-msg">Conectando con el transmisor...</div>
+    <div class="spinner" id="rx-spinner"></div>
+    <div class="rx-status-label" id="rx-status-label">Estableciendo conexión segura</div>
+    <div id="rx-error">
+      <p id="rx-error-msg">No se pudo conectar. Verifica que el transmisor esté activo.</p>
+      <button class="btn-retry" onclick="location.reload()">Reintentar</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+/* ── UTILIDADES ── */
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(function(){t.style.display='none'},2800);
+}
+function mostrar(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById(id).classList.add('active');
+}
+function gen6(){return Math.random().toString(36).substr(2,6).toUpperCase()}
+
+/* ── DETECTAR MODO POR URL ── */
+var params   = new URLSearchParams(location.search);
+var hostId   = params.get('host') || '';
+var storeURL = params.get('url')  || '';
+
+/* ─────────────────────────────
+   MODO RECEPTOR (si viene con ?host=)
+───────────────────────────── */
+if(hostId){
+  mostrar('s-rx');
+  initReceptor(hostId);
+}
+
+/* ─────────────────────────────
+   NAVEGACIÓN INICIO
+───────────────────────────── */
+function irATransmisor(){
+  mostrar('s-tx');
+  initTransmisor();
+}
+
+function irAReceptorManual(){
+  var codigo = document.getElementById('input-sala').value.trim().toUpperCase();
+  if(codigo.length < 4){ toast('Ingresa el código de sala'); return; }
+  mostrar('s-rx');
+  initReceptor(codigo);
+}
+
+function volver(){
+  if(txStream){ txStream.getTracks().forEach(function(t){t.stop()}); }
+  if(txPeer){ txPeer.destroy(); }
+  txPeer=null; txStream=null; txConns=[];
+  mostrar('s-inicio');
+}
+
+/* ═══════════════════════════════════
+   TRANSMISOR
+═══════════════════════════════════ */
+var txPeer   = null;
+var txStream = null;
+var txConns  = [];
+var txCode   = '';
+
+var ICE = {
+  iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:'turn:a.relay.metered.ca:80',    username:'open',credential:'open'},
+    {urls:'turn:a.relay.metered.ca:443',   username:'open',credential:'open'},
+    {urls:'turn:a.relay.metered.ca:443?transport=tcp',username:'open',credential:'open'}
+  ],
+  iceCandidatePoolSize:10
+};
+
+function txSetStatus(cls, txt){
+  var el=document.getElementById('tx-status');
+  el.className='status '+cls;
+  var dot=el.querySelector('.dot');
+  if(cls==='status-live') dot.classList.add('blink'); else dot.classList.remove('blink');
+  document.getElementById('tx-status-txt').textContent=txt;
+}
+
+function initTransmisor(){
+  txCode = gen6();
+  document.getElementById('tx-code').textContent = txCode;
+  txSetStatus('status-off','Generando sala...');
+
+  txPeer = new Peer(txCode, {
+    debug:0,
+    config: ICE
+  });
+
+  txPeer.on('open', function(id){
+    txCode = id;
+    document.getElementById('tx-code').textContent = id;
+    txSetStatus('status-wait','Esperando espectadores...');
+  });
+
+  txPeer.on('connection', function(conn){
+    txConns.push(conn);
+    actualizarViewers();
+
+    conn.on('data', function(d){
+      if(d && d.type==='viewer-hello'){
+        // Si ya hay stream activo, llamar al nuevo espectador
+        if(txStream){
+          var call = txPeer.call(conn.peer, txStream);
+          call.on('error', function(e){ console.warn(e); });
+        }
+        if(storeURL){
+          conn.send({type:'store-url', url: storeURL});
+        }
+      }
+    });
+
+    conn.on('close', function(){
+      txConns = txConns.filter(function(c){ return c.peer !== conn.peer; });
+      actualizarViewers();
+    });
+
+    conn.on('error', function(e){ console.warn(e); });
+  });
+
+  txPeer.on('error', function(e){
+    console.warn('TX error', e);
+    if(e.type==='unavailable-id'){
+      // regenerar código
+      txPeer.destroy();
+      txCode = gen6();
+      setTimeout(initTransmisor, 500);
+    } else {
+      txSetStatus('status-off','Error: '+e.type);
+    }
+  });
+}
+
+function actualizarViewers(){
+  var n = txConns.length;
+  var el = document.getElementById('tx-viewers');
+  el.style.display = n > 0 ? 'block':'none';
+  document.getElementById('tx-viewers-n').textContent = n;
+}
+
+function compartirPantalla(){
+  navigator.mediaDevices.getDisplayMedia({
+    video:{frameRate:{ideal:30,max:60}, width:{ideal:1280}, height:{ideal:720}},
+    audio: false
+  }).then(function(stream){
+    txStream = stream;
+
+    // mostrar preview
+    var vid = document.getElementById('tx-preview');
+    vid.srcObject = stream;
+    document.getElementById('tx-placeholder').style.display='none';
+
+    // llamar a todos los conectados
+    txConns.forEach(function(conn){
+      var call = txPeer.call(conn.peer, stream);
+      call.on('error', function(e){ console.warn(e); });
+    });
+
+    txSetStatus('status-live','Transmitiendo en vivo');
+    document.getElementById('btn-wa').disabled = false;
+    document.getElementById('btn-stop').classList.add('on');
+
+    stream.getVideoTracks()[0].onended = function(){
+      detenerTransmision();
+    };
+
+  }).catch(function(err){
+    console.warn(err);
+    if(err.name==='NotAllowedError'){
+      toast('Permiso denegado. Permite compartir la pestaña.');
+    } else {
+      toast('No se pudo capturar la pantalla: '+err.message);
+    }
+  });
+}
+
+function detenerTransmision(){
+  if(txStream){
+    txStream.getTracks().forEach(function(t){t.stop()});
+    txStream = null;
+  }
+  var vid = document.getElementById('tx-preview');
+  vid.srcObject = null;
+  document.getElementById('tx-placeholder').style.display='flex';
+  txSetStatus('status-wait','Transmisión detenida');
+  document.getElementById('btn-wa').disabled = true;
+  document.getElementById('btn-stop').classList.remove('on');
+}
+
+function copiarCodigo(){
+  var code = document.getElementById('tx-code').textContent;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(code).then(function(){ toast('Código copiado'); });
+  } else {
+    toast('Código: '+code);
+  }
+}
+
+function compartirWhatsApp(){
+  var code = document.getElementById('tx-code').textContent;
+  var url  = location.href.split('?')[0] + '?host=' + encodeURIComponent(code);
+  if(storeURL) url += '&url=' + encodeURIComponent(storeURL);
+  var msg  = '👀 Te comparto la demo en vivo de Easylink.\n\nÁbre este link desde tu celular:\n' + url;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+/* ═══════════════════════════════════
+   RECEPTOR
+═══════════════════════════════════ */
+var rxPeer = null;
+var rxConn = null;
+var rxCall = null;
+var rxConnected = false;
+var rxUIVisible = false;
+var rxUITimer   = null;
+
+function rxSetWaiting(msg, isError){
+  document.getElementById('rx-wait-msg').textContent = msg;
+  document.getElementById('rx-spinner').style.display    = isError ? 'none':'block';
+  document.getElementById('rx-status-label').style.display = isError ? 'none':'block';
+  document.getElementById('rx-error').classList.toggle('on', !!isError);
+  if(isError) document.getElementById('rx-error-msg').textContent = msg;
+}
+
+function initReceptor(peerId){
+  rxSetWaiting('Conectando con el transmisor...');
+
+  rxPeer = new Peer({debug:0, config: ICE});
+
+  rxPeer.on('open', function(){
+    rxSetWaiting('Saludando al transmisor...');
+    rxConn = rxPeer.connect(peerId, {reliable:true});
+
+    rxConn.on('open', function(){
+      rxConn.send({type:'viewer-hello'});
+      rxSetWaiting('Esperando video en vivo...');
+    });
+
+    rxConn.on('data', function(d){
+      if(d && d.type==='store-url' && d.url){ storeURL = d.url; }
+    });
+
+    rxConn.on('close', function(){
+      if(rxConnected){ toast('El transmisor cerró la sesión'); }
+    });
+
+    rxConn.on('error', function(e){ console.warn(e); });
+  });
+
+  rxPeer.on('call', function(call){
+    rxCall = call;
+    call.answer();
+    call.on('stream', function(stream){
+      var vid = document.getElementById('live-video');
+      vid.srcObject = stream;
+      vid.muted = false;
+      vid.play().catch(function(){});
+      rxConnected = true;
+      document.getElementById('rx-waiting').classList.add('hidden');
+      rxShowUI(true);
+      toast('Demo en vivo conectada');
+      if(storeURL){ document.getElementById('btn-store').style.display='flex'; }
+    });
+    call.on('close', function(){
+      rxConnected = false;
+      document.getElementById('rx-waiting').classList.remove('hidden');
+      rxSetWaiting('El transmisor pausó la transmisión.');
+    });
+    call.on('error', function(e){ console.warn(e); });
+  });
+
+  rxPeer.on('error', function(e){
+    console.warn('RX error', e.type, e);
+    var msgs = {
+      'peer-unavailable':'El transmisor no está disponible. Pide que reenvíe el link.',
+      'network':'Error de red. Verifica tu conexión.',
+      'server-error':'Error de servidor. Reintentando...'
+    };
+    if(e.type==='peer-unavailable'){
+      rxSetWaiting(msgs['peer-unavailable'], true);
+    } else {
+      rxSetWaiting(msgs[e.type] || 'Error de conexión. Reintentando...', false);
+      setTimeout(function(){ location.reload(); }, 4000);
+    }
+  });
+}
+
+/* UI OVERLAY RECEPTOR */
+function rxShowUI(force){
+  rxUIVisible = true;
+  document.getElementById('rx-top').classList.add('on');
+  document.getElementById('rx-bottom').classList.add('on');
+  clearTimeout(rxUITimer);
+  if(!force) rxUITimer = setTimeout(rxHideUI, 3500);
+}
+function rxHideUI(){
+  rxUIVisible = false;
+  document.getElementById('rx-top').classList.remove('on');
+  document.getElementById('rx-bottom').classList.remove('on');
+}
+
+var vid = document.getElementById('live-video');
+vid.addEventListener('click',  function(){ rxUIVisible ? rxHideUI() : rxShowUI(); });
+vid.addEventListener('touchstart', function(){ rxUIVisible ? rxHideUI() : rxShowUI(); },{passive:true});
+
+function abrirTienda(){
+  if(storeURL){ window.open(storeURL,'_blank'); }
+  else { toast('URL de tienda no disponible'); }
+}
+</script>
+</body>
+</html>
