@@ -2,129 +2,270 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>EasyLink · Transmisor</title>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Transmisor — Easylink Demo</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Inter',system-ui,sans-serif}
 
-/* Tienda ocupa toda la pantalla (solo como referencia visual para el vendedor) */
-#store-frame{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
+/* ── IFRAME FULLSCREEN ── */
+#tienda-frame{
+  position:fixed;inset:0;
+  width:100%;height:100%;
   border:none;
   z-index:1;
+  background:#000;
 }
 
-/* Botones flotantes */
-#fab{
-  position:fixed;
-  bottom:24px;
-  right:16px;
+/* ── HUD FLOTANTE ── */
+#hud{
+  position:fixed;bottom:0;left:0;right:0;
   z-index:100;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:10px;
+  padding:10px 12px 16px;
+  background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(0,0,0,.7) 70%,transparent 100%);
+  display:flex;flex-direction:column;gap:8px;
 }
-.fab-btn{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:12px 18px;
-  border-radius:99px;
-  border:none;
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  font-family:system-ui,sans-serif;
-  box-shadow:0 4px 20px rgba(0,0,0,0.4);
-  white-space:nowrap;
-}
-#btnTransmit{background:#2563eb;color:#fff;}
-#btnTransmit.live{background:#ef4444;}
-#btnWA{background:#16a34a;color:#fff;}
-#btnWA:disabled{opacity:0.4;cursor:default;}
 
-/* Badge en vivo */
-#liveBadge{
-  position:fixed;
-  top:12px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#ef4444;
-  color:#fff;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.08em;
-  padding:4px 14px;
-  border-radius:99px;
-  z-index:100;
+/* STATUS BAR */
+#status-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;
+  backdrop-filter:blur(8px);
+}
+#status-dot{width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;transition:background .3s}
+#status-dot.live{background:#22c55e;animation:pulse 1.5s infinite}
+#status-dot.off{background:#ef4444}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+#status-text{font-size:12px;font-weight:600;color:#fff;flex:1;margin-left:7px;letter-spacing:.02em}
+#viewers-badge{
+  font-size:10px;font-weight:700;
+  background:#a3e635;color:#14532d;
+  padding:2px 8px;border-radius:99px;
   display:none;
-  align-items:center;
-  gap:6px;
 }
-#liveBadge.on{display:flex;}
-#liveBadge::before{
-  content:'';width:7px;height:7px;border-radius:50%;
-  background:#fff;animation:blink .8s infinite;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+#viewers-badge.on{display:block}
 
-/* Status */
-#status{
-  position:fixed;
-  bottom:12px;
-  left:12px;
-  background:rgba(0,0,0,0.6);
-  color:#fff;
-  padding:5px 12px;
-  border-radius:99px;
-  font-size:11px;
-  font-family:monospace;
-  z-index:100;
+/* BOTONES PRINCIPALES */
+#btn-row{display:flex;gap:8px}
+
+#btn-transmitir{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:13px;
+  border-radius:12px;
+  border:none;cursor:pointer;
+  font-size:14px;font-weight:700;
+  font-family:inherit;
+  transition:all .2s;
+  background:#a3e635;color:#14532d;
+}
+#btn-transmitir.live{background:#ef4444;color:#fff}
+#btn-transmitir:disabled{opacity:.5;cursor:not-allowed}
+
+#btn-wa{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:13px 16px;
+  border-radius:12px;
+  border:none;cursor:pointer;
+  font-size:13px;font-weight:700;
+  font-family:inherit;
+  background:#25d366;color:#fff;
+  transition:all .2s;
+  opacity:.4;pointer-events:none;
+}
+#btn-wa.ready{opacity:1;pointer-events:all}
+
+/* LINK BOX */
+#link-box{
+  display:none;
+  align-items:center;gap:8px;
+  padding:8px 10px;
+  background:rgba(163,230,53,.08);
+  border:1px solid rgba(163,230,53,.3);
+  border-radius:10px;
+}
+#link-box.on{display:flex}
+#link-text{
+  flex:1;font-size:10px;color:#a3e635;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:monospace;letter-spacing:.01em;
+}
+#btn-copy{
+  background:rgba(163,230,53,.15);border:1px solid rgba(163,230,53,.4);
+  color:#a3e635;font-size:11px;font-weight:700;
+  padding:4px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;
+  font-family:inherit;
+}
+
+/* TOAST */
+#toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  background:#a3e635;color:#14532d;
+  font-size:12px;font-weight:700;
+  padding:8px 18px;border-radius:99px;
+  z-index:200;display:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(163,230,53,.4);
+}
+
+/* LOGO TOP */
+#top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:99;
+  padding:10px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,.85) 0%,transparent 100%);
   pointer-events:none;
+}
+#logo-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:800;color:#a3e635;letter-spacing:.04em;
+}
+#live-pill{
+  display:none;align-items:center;gap:5px;
+  background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.5);
+  padding:4px 10px;border-radius:99px;
+  font-size:11px;font-weight:700;color:#ef4444;
+}
+#live-pill.on{display:flex;pointer-events:all}
+#live-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite}
+
+/* MODAL PERMISO */
+#modal-overlay{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.85);
+  display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(6px);
+}
+#modal-overlay.hidden{display:none}
+#modal-box{
+  background:#111;border:1px solid rgba(255,255,255,.1);
+  border-radius:24px 24px 0 0;
+  padding:28px 24px 36px;
+  width:100%;max-width:480px;
+  text-align:center;
+}
+#modal-box h2{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
+#modal-box p{font-size:13px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:24px}
+#modal-url-input{
+  width:100%;padding:11px 14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(163,230,53,.3);
+  border-radius:10px;color:#a3e635;
+  font-size:13px;font-family:monospace;
+  outline:none;margin-bottom:12px;text-align:center;
+}
+#modal-url-input::placeholder{color:rgba(255,255,255,.25)}
+#btn-modal-ok{
+  width:100%;padding:14px;
+  background:#a3e635;color:#14532d;
+  border:none;border-radius:12px;
+  font-size:15px;font-weight:800;
+  font-family:inherit;cursor:pointer;
 }
 </style>
 </head>
 <body>
 
-<iframe id="store-frame"
-  src="https://proyectosolaronline-ops.github.io/superOnline-Tienda/index.html?backend=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbwQ_ESx2c-3DL83b_-ujjmvevSBGtwjPZ0e1wEHv3cnLbJOplTJDYUb_UiRVyTYXik%2Fexec&store=store_f2fcc889b992"
-  allowfullscreen
-></iframe>
+<!-- IFRAME TIENDA FULLSCREEN -->
+<iframe id="tienda-frame" src="about:blank" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-<div id="liveBadge">EN VIVO</div>
-
-<div id="fab">
-  <button class="fab-btn" id="btnTransmit" onclick="toggleTransmit()">▶ Iniciar Demo</button>
-  <button class="fab-btn" id="btnWA" onclick="enviarWA()" disabled>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-    Enviar link
-  </button>
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div id="logo-label">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    EASYLINK DEMO
+  </div>
+  <div id="live-pill">
+    <div id="live-dot"></div>
+    EN VIVO
+  </div>
 </div>
 
-<div id="status">🟡 Iniciando...</div>
+<!-- HUD INFERIOR -->
+<div id="hud">
+  <div id="status-bar">
+    <div id="status-dot"></div>
+    <span id="status-text">Iniciando conexión...</span>
+    <span id="viewers-badge">👁 <span id="viewers-count">0</span></span>
+  </div>
+
+  <div id="link-box">
+    <span id="link-text"></span>
+    <button id="btn-copy" onclick="copyLink()">Copiar</button>
+  </div>
+
+  <div id="btn-row">
+    <button id="btn-transmitir" onclick="toggleStream()" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/><path d="M2 12a10 10 0 0120 0M6 12a6 6 0 0112 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      Transmitir
+    </button>
+    <button id="btn-wa" onclick="sendWhatsApp()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar link
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL URL TIENDA -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h2>🛍 Demo en vivo</h2>
+    <p>Pega la URL de tu tienda Easylink.<br>Se verá en pantalla completa y podrás transmitirla en vivo.</p>
+    <input id="modal-url-input" type="url" placeholder="https://tu-tienda.github.io/?store=ID" autocomplete="off" spellcheck="false"/>
+    <button id="btn-modal-ok" onclick="cargarTienda()">Cargar tienda</button>
+  </div>
+</div>
 
 <script>
-var RECEPTOR_BASE = window.location.origin + window.location.pathname.replace('transmisor.html','') + 'receptor.html';
-var WA_NUM = '524424003376';
+var RECEPTOR_BASE = (function(){
+  var base = location.href.replace(/transmisor\.html.*$/,'');
+  return base + 'receptor.html';
+})();
 
-var peer        = null;
-var myPeerID    = '';
-var connections = {};
-var isLive      = false;
-var displayStream = null;  // Stream de pantalla compartida
-var clientLink  = '';
+var peer, myPeerID, clientLink='';
+var connections={};
+var displayStream=null, isLive=false;
+var tiendaURL='';
+var viewerCount=0;
 
-function setStatus(msg){ document.getElementById('status').textContent = msg; }
+/* ── URL tienda ── */
+(function(){
+  var p = new URLSearchParams(location.search);
+  var u = p.get('url') || p.get('store') || localStorage.getItem('ld_demo_url') || '';
+  if(u){ tiendaURL=u; cargarIframe(u); document.getElementById('modal-overlay').classList.add('hidden'); }
+})();
 
-// ── PeerJS init ───────────────────────────────────────────
+function cargarTienda(){
+  var v = document.getElementById('modal-url-input').value.trim();
+  if(!v){ showToast('Pega la URL de tu tienda'); return; }
+  if(!/^https?:\/\//.test(v)){ showToast('URL debe empezar con https://'); return; }
+  tiendaURL = v;
+  localStorage.setItem('ld_demo_url', v);
+  cargarIframe(v);
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+function cargarIframe(url){
+  document.getElementById('tienda-frame').src = url;
+}
+
+/* ── PeerJS ── */
+function setStatus(txt, state){
+  document.getElementById('status-text').textContent = txt;
+  var dot = document.getElementById('status-dot');
+  dot.className = '';
+  if(state==='live') dot.classList.add('live');
+  else if(state==='off') dot.classList.add('off');
+}
+
 function initPeer(){
-  setStatus('🟡 Conectando...');
+  setStatus('Conectando...','');
   peer = new Peer({
     debug:0,
     config:{
@@ -139,106 +280,144 @@ function initPeer(){
     }
   });
 
-  peer.on('open', function(id){
+  peer.on('open',function(id){
     myPeerID = id;
     clientLink = RECEPTOR_BASE + '?host=' + encodeURIComponent(id);
-    setStatus('🟢 Listo');
+    if(tiendaURL) clientLink += '&url=' + encodeURIComponent(tiendaURL);
+    setStatus('Listo para transmitir','');
+    document.getElementById('btn-transmitir').disabled = false;
+    document.getElementById('link-text').textContent = clientLink;
+    document.getElementById('link-box').classList.add('on');
+    document.getElementById('btn-wa').classList.add('ready');
   });
 
-  peer.on('connection', function(conn){
-    conn.on('data', function(d){
-      if(d.type === 'viewer-hello'){
-        connections[conn.peer] = conn;
-        setStatus('👀 ' + Object.keys(connections).length + ' viewer(s)');
+  peer.on('connection',function(conn){
+    conn.on('open',function(){
+      connections[conn.peer] = conn;
+      viewerCount = Object.keys(connections).length;
+      updateViewers();
+      if(isLive && displayStream) callViewer(conn.peer);
+      conn.send({type:'store-url', url: tiendaURL});
+    });
+    conn.on('data',function(d){
+      if(d && d.type==='viewer-hello'){
         if(isLive && displayStream) callViewer(conn.peer);
       }
     });
-    conn.on('close', function(){
+    conn.on('close',function(){
       delete connections[conn.peer];
-      setStatus('👀 ' + Object.keys(connections).length + ' viewer(s)');
+      viewerCount = Object.keys(connections).length;
+      updateViewers();
     });
   });
 
-  peer.on('error', function(e){
-    console.warn(e);
+  peer.on('error',function(e){
+    console.warn('PeerJS error:',e);
+    setStatus('Reconectando...','off');
     setTimeout(initPeer, 3000);
   });
 }
 
-// ── Obtener stream de pantalla (pestaña/ventana) ──────────
-async function getDisplayStream() {
-  try {
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: false
+function updateViewers(){
+  var badge = document.getElementById('viewers-badge');
+  var cnt = document.getElementById('viewers-count');
+  cnt.textContent = viewerCount;
+  badge.classList.toggle('on', viewerCount > 0);
+  if(isLive){
+    setStatus(viewerCount > 0 ? viewerCount+' viendo en vivo':'En vivo — esperando viewers','live');
+  }
+}
+
+function callViewer(peerId){
+  if(!displayStream) return;
+  try{
+    var call = peer.call(peerId, displayStream);
+    call.on('error',function(e){ console.warn('call error:',e); });
+  }catch(e){ console.warn(e); }
+}
+
+/* ── STREAM ── */
+function toggleStream(){
+  if(isLive){ stopStream(); }
+  else{ startStream(); }
+}
+
+async function startStream(){
+  if(!tiendaURL){ showToast('Primero carga la URL de la tienda'); return; }
+  try{
+    displayStream = await navigator.mediaDevices.getDisplayMedia({
+      video:{ frameRate:30, cursor:'always' },
+      audio:false
     });
-    return stream;
-  } catch (e) {
-    console.error('Permiso denegado o error:', e);
-    throw e;
-  }
-}
-
-// ── Toggle transmisión ────────────────────────────────────
-function toggleTransmit(){
-  if(!isLive){
-    iniciarDemo();
-  } else {
-    detenerDemo();
-  }
-}
-
-async function iniciarDemo(){
-  if(!myPeerID){ setStatus('⚠️ Espera conexión al servidor'); return; }
-
-  try {
-    setStatus('🖥️ Selecciona la pestaña o ventana de la tienda…');
-    displayStream = await getDisplayStream();
     isLive = true;
-    document.getElementById('btnTransmit').textContent = '⏹ Detener Demo';
-    document.getElementById('btnTransmit').classList.add('live');
-    document.getElementById('btnWA').disabled = false;
-    document.getElementById('liveBadge').classList.add('on');
-    setStatus('🔴 En vivo');
 
-    // Llamar a los viewers ya conectados
-    Object.keys(connections).forEach(callViewer);
+    displayStream.getVideoTracks()[0].addEventListener('ended', stopStream);
 
-    // Si el usuario detiene la compartición manualmente (ej. botón "Dejar de compartir")
-    displayStream.getVideoTracks()[0].addEventListener('ended', () => {
-      detenerDemo();
-    });
-  } catch (e) {
-    setStatus('❌ Permiso de pantalla denegado');
+    var btn = document.getElementById('btn-transmitir');
+    btn.textContent=''; 
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Detener';
+    btn.classList.add('live');
+
+    document.getElementById('live-pill').classList.add('on');
+    setStatus(viewerCount>0 ? viewerCount+' viendo en vivo':'En vivo — link listo','live');
+
+    Object.keys(connections).forEach(function(pid){ callViewer(pid); });
+    showToast('Transmisión iniciada');
+  }catch(e){
+    console.warn(e);
+    showToast('Permite compartir pantalla para transmitir');
+    isLive=false; displayStream=null;
   }
 }
 
-function detenerDemo(){
-  isLive = false;
-  if(displayStream) {
-    displayStream.getTracks().forEach(t => t.stop());
-    displayStream = null;
+function stopStream(){
+  if(displayStream){
+    displayStream.getTracks().forEach(function(t){ t.stop(); });
+    displayStream=null;
   }
-  document.getElementById('btnTransmit').textContent = '▶ Iniciar Demo';
-  document.getElementById('btnTransmit').classList.remove('live');
-  document.getElementById('liveBadge').classList.remove('on');
-  setStatus('⏹ Demo detenida');
+  isLive=false;
+  var btn = document.getElementById('btn-transmitir');
+  btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/><path d="M2 12a10 10 0 0120 0M6 12a6 6 0 0112 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg> Transmitir';
+  btn.classList.remove('live');
+  document.getElementById('live-pill').classList.remove('on');
+  setStatus('Transmisión detenida','off');
+  showToast('Transmisión detenida');
 }
 
-function callViewer(viewerId){
-  if(!displayStream || !peer) return;
-  var call = peer.call(viewerId, displayStream);
-  call.on('error', function(e){ console.warn('call error',e); });
+/* ── WHATSAPP ── */
+function sendWhatsApp(){
+  if(!clientLink){ showToast('Espera a que se genere el link'); return; }
+  var msg = '👀 *Ve mi tienda en vivo*\n\nAbre este link para ver la demostración:\n' + clientLink;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
-// ── WhatsApp ──────────────────────────────────────────────
-function enviarWA(){
-  if(!clientLink){ return; }
-  var msg = '🛍️ ¡Mira mi tienda en vivo!\n\nAbre este link:\n' + clientLink;
-  window.open('https://wa.me/' + WA_NUM + '?text=' + encodeURIComponent(msg), '_blank');
+/* ── COPY ── */
+function copyLink(){
+  if(!clientLink) return;
+  navigator.clipboard.writeText(clientLink).then(function(){
+    showToast('Link copiado');
+  }).catch(function(){
+    var ta = document.createElement('textarea');
+    ta.value = clientLink; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('Link copiado');
+  });
 }
 
-// ── Boot ──────────────────────────────────────────────────
+/* ── TOAST ── */
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.style.display='none'; },2500);
+}
+
+/* ── ENTER KEY EN INPUT ── */
+document.getElementById('modal-url-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter') cargarTienda();
+});
+
+/* ── INIT ── */
 initPeer();
 </script>
 </body>
