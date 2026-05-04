@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>EasyLink · Transmisor</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;position:fixed;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.app{width:100%;height:100%;display:flex;flex-direction:column;background:#0a0a0a}
+
+/* TOP */
+.top-bar{background:#111;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));display:flex;align-items:center;gap:8px;flex-shrink:0}
+.dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;animation:pulse 1.2s infinite}
+.dot.live{background:#4ade80;animation:none}
+.dot.off{background:#ef4444;animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}
+.tlabel{color:#fff;font-size:11px;font-weight:600;flex:1}
+.tid{color:#4ade80;font-family:monospace;font-size:11px;background:#1a1a1a;padding:4px 10px;border-radius:8px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* CONTENT */
+.content{flex:1;display:flex;flex-direction:column;min-height:0}
+.preview-box{background:#000;display:none;position:relative;border-bottom:2px solid #4ade80}
+.preview-box.on{display:flex;height:35%}
+.preview-box video{width:100%;height:100%;object-fit:contain}
+.preview-tag{position:absolute;top:6px;left:8px;background:rgba(0,0,0,.8);color:#4ade80;font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;z-index:5}
+.store-box{flex:1;background:#fff;min-height:0}
+.store-box.small{flex:none;height:65%}
+.store-box iframe{width:100%;height:100%;border:none}
+
+/* BOTTOM */
+.bottom-bar{background:#111;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:8px;flex-shrink:0}
+.btn{flex:1;padding:14px;border-radius:12px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.35;pointer-events:none}
+.btn-go{background:#4ade80;color:#000}
+.btn-go.stop{background:#ef4444;color:#fff}
+.btn-sh{background:#1a1a1a;color:#fff;border:1px solid rgba(255,255,255,.1)}
+
+/* SHARE OVERLAY */
+.shol{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:200;align-items:center;justify-content:center;padding:20px}
+.shol.open{display:flex}
+.sbox{background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;text-align:center;width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px}
+.sbox h3{color:#fff;font-size:16px}
+.scode{font-family:monospace;font-size:24px;font-weight:800;color:#4ade80;letter-spacing:2px;background:#0a0a0a;padding:10px;border-radius:8px;word-break:break-all}
+.slink{font-size:10px;color:rgba(255,255,255,.4);background:#0a0a0a;padding:8px;border-radius:6px;font-family:monospace;word-break:break-all}
+.btn-cp{width:100%;padding:12px;background:#4ade80;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-cl{width:100%;padding:10px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:13px;cursor:pointer}
+
+/* TOAST */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(0,0,0,.92);color:#fff;padding:12px 20px;border-radius:14px;font-size:12px;font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .2s;text-align:center;border:1px solid rgba(255,255,255,.1);white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top-bar">
+    <span class="dot" id="dot"></span>
+    <span class="tlabel" id="tlabel">Iniciando...</span>
+    <span class="tid" id="tid">---</span>
+  </div>
+
+  <div class="content">
+    <div class="preview-box" id="prevBox">
+      <div class="preview-tag">📡 Receptor ve esto</div>
+      <video id="prevVideo" autoplay playsinline muted></video>
+    </div>
+    <div class="store-box" id="storeBox">
+      <iframe id="storeFrame" src="tienda.html" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="btn btn-go" id="btnGo" disabled>📺 Iniciar transmisión</button>
+    <button class="btn btn-sh" id="btnSh" disabled>🔗 Compartir</button>
+  </div>
+
+  <div class="shol" id="shol">
+    <div class="sbox">
+      <h3>📡 Compartir transmisión</h3>
+      <div style="color:rgba(255,255,255,.5);font-size:11px">ID para receptor:</div>
+      <div class="scode" id="scode">---</div>
+      <div class="slink" id="slink"></div>
+      <button class="btn-cp" id="btnCpLink">📋 Copiar enlace</button>
+      <button class="btn-cp" id="btnCpId" style="background:#1a1a1a;color:#4ade80;border:1px solid #4ade80">📋 Copiar solo ID</button>
+      <button class="btn-cl" id="btnCl">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+  const dot=document.getElementById('dot'),tlabel=document.getElementById('tlabel'),tid=document.getElementById('tid');
+  const btnGo=document.getElementById('btnGo'),btnSh=document.getElementById('btnSh');
+  const prevBox=document.getElementById('prevBox'),prevVideo=document.getElementById('prevVideo');
+  const storeBox=document.getElementById('storeBox');
+  const shol=document.getElementById('shol'),scode=document.getElementById('scode'),slink=document.getElementById('slink'),toast=document.getElementById('toast');
+  let peer=null,peerId=null,stream=null,active=false,tt;
+
+  function showT(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('show'),1800)}
+  function st(s,l){dot.className='dot '+s;tlabel.textContent=l}
+
+  // PEER
+  peer=new Peer({debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:a.relay.metered.ca:80','turn:a.relay.metered.ca:443','turn:a.relay.metered.ca:443?transport=tcp'],username:'open',credential:'open'}],iceCandidatePoolSize:8}});
+  peer.on('open',id=>{peerId=id;tid.textContent=id;st('off','Listo');btnGo.disabled=false;btnSh.disabled=false});
+  peer.on('error',e=>{console.error(e);st('off','Error');showT('Error conexión')});
+  peer.on('call',call=>{if(stream)call.answer(stream);else call.close()});
+
+  // INICIAR/DETENER
+  btnGo.onclick=async()=>{
+    if(active){
+      if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+      active=false;prevVideo.srcObject=null;prevBox.classList.remove('on');storeBox.classList.remove('small');st('off','Listo');btnGo.textContent='📺 Iniciar transmisión';btnGo.classList.remove('stop');showT('Detenido');return;
+    }
+    try{
+      stream=await navigator.mediaDevices.getDisplayMedia({video:{mediaSource:'screen'},audio:true});
+      active=true;prevVideo.srcObject=stream;prevBox.classList.add('on');storeBox.classList.add('small');st('live','Transmitiendo');btnGo.textContent='⏹ Detener';btnGo.classList.add('stop');showT('✅ Transmitiendo');
+      stream.getVideoTracks()[0].addEventListener('ended',()=>btnGo.click());
+    }catch(e){console.error(e);showT('Permiso denegado')}
+  };
+
+  // COMPARTIR
+  btnSh.onclick=()=>{
+    if(!peerId)return;
+    let url=window.location.href.replace('transmisor.html','receptor.html');
+    if(!url.includes('receptor.html'))url=window.location.origin+'/receptor.html?host='+peerId;
+    else url=url.split('?')[0]+'?host='+peerId;
+    scode.textContent=peerId;slink.textContent=url;shol.classList.add('open');
+  };
+  document.getElementById('btnCl').onclick=()=>shol.classList.remove('open');
+  document.getElementById('btnCpLink').onclick=()=>{navigator.clipboard.writeText(slink.textContent).then(()=>{showT('✅ Enlace copiado');shol.classList.remove('open')})};
+  document.getElementById('btnCpId').onclick=()=>{navigator.clipboard.writeText(peerId).then(()=>{showT('✅ ID copiado');shol.classList.remove('open')})};
+
+  window.addEventListener('beforeunload',()=>{if(stream)stream.getTracks().forEach(t=>t.stop());if(peer)peer.destroy()});
+})();
+</script>
+</body>
+</html>
