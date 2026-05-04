@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>EasyLink · Receptor</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;}
+
+/* Video a pantalla completa */
+#remoteVideo{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  background:#000;
+  z-index:1;
+  display:none;
+}
+#remoteVideo.visible{display:block;}
+
+/* Pantalla de espera */
+#waiting{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  background:#060910;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+}
+#waiting.hidden{display:none;}
+.spinner{
+  width:44px;height:44px;border-radius:50%;
+  border:3px solid rgba(255,255,255,0.1);
+  border-top-color:#2563eb;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#wait-text{
+  color:#64748b;
+  font-size:14px;
+  text-align:center;
+  padding:0 40px;
+  line-height:1.7;
+}
+
+/* Status */
+#status{
+  position:fixed;
+  bottom:12px;
+  left:12px;
+  background:rgba(0,0,0,0.6);
+  color:#fff;
+  padding:5px 12px;
+  border-radius:99px;
+  font-size:11px;
+  font-family:monospace;
+  z-index:30;
+  pointer-events:none;
+}
+
+/* Error */
+#errorMsg{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(239,68,68,0.9);
+  color:#fff;
+  padding:10px 20px;
+  border-radius:10px;
+  font-size:13px;
+  z-index:40;
+  display:none;
+  text-align:center;
+  max-width:90%;
+}
+</style>
+</head>
+<body>
+
+<video id="remoteVideo" autoplay playsinline muted></video>
+
+<div id="waiting">
+  <div class="spinner"></div>
+  <div id="wait-text">Conectando con el transmisor...</div>
+</div>
+
+<div id="status">🔌 Iniciando...</div>
+<div id="errorMsg"></div>
+
+<script>
+(function(){
+  var urlParams = new URLSearchParams(window.location.search);
+  var hostId    = urlParams.get('host');
+  var video     = document.getElementById('remoteVideo');
+  var waiting   = document.getElementById('waiting');
+  var waitText  = document.getElementById('wait-text');
+  var statusDiv = document.getElementById('status');
+  var errorDiv  = document.getElementById('errorMsg');
+  var peer      = null;
+
+  function setStatus(msg){ statusDiv.textContent = msg; }
+  function showError(msg){
+    errorDiv.textContent = '⚠️ ' + msg;
+    errorDiv.style.display = 'block';
+    setTimeout(function(){ errorDiv.style.display='none'; }, 6000);
+  }
+
+  if(!hostId){
+    waitText.textContent = 'Link inválido.\nPide al vendedor que te envíe el link correcto.';
+    setStatus('❌ Sin host ID');
+    return;
+  }
+
+  setStatus('🟡 Conectando...');
+
+  peer = new Peer({
+    debug:0,
+    config:{
+      iceServers:[
+        {urls:'stun:stun.l.google.com:19302'},
+        {urls:'stun:stun1.l.google.com:19302'},
+        {urls:'turn:a.relay.metered.ca:80',username:'open',credential:'open'},
+        {urls:'turn:a.relay.metered.ca:443',username:'open',credential:'open'},
+        {urls:'turn:a.relay.metered.ca:443?transport=tcp',username:'open',credential:'open'}
+      ],
+      iceCandidatePoolSize:10
+    }
+  });
+
+  peer.on('open', function(myId){
+    setStatus('🟢 Conectado');
+    waitText.textContent = 'Esperando stream del vendedor...';
+
+    var dataConn = peer.connect(hostId);
+
+    dataConn.on('open', function(){
+      dataConn.send({type:'viewer-hello', name:'Cliente'});
+    });
+
+    dataConn.on('error', function(err){
+      console.warn('DataConn error', err);
+      showError('No se pudo contactar al transmisor.');
+    });
+
+    peer.on('call', function(incomingCall){
+      incomingCall.answer();
+      incomingCall.on('stream', function(remoteStream){
+        video.srcObject = remoteStream;
+        video.play().catch(function(){});
+        video.classList.add('visible');
+        waiting.classList.add('hidden');
+        setStatus('🟢 En vivo');
+      });
+      incomingCall.on('close', function(){
+        video.classList.remove('visible');
+        video.srcObject = null;
+        waiting.classList.remove('hidden');
+        waitText.textContent = 'La demo terminó.';
+        setStatus('⏹ Fin');
+      });
+      incomingCall.on('error', function(e){
+        console.warn(e);
+        showError('Error en el stream.');
+      });
+    });
+  });
+
+  peer.on('error', function(err){
+    if(err.type==='peer-unavailable'){
+      waitText.textContent = 'El vendedor aún no inició la demo.\nIntenta de nuevo en un momento.';
+      showError('Transmisor no disponible.');
+    } else {
+      showError('Error: ' + (err.message||err.type));
+    }
+  });
+
+  window.addEventListener('beforeunload', function(){
+    if(peer) peer.destroy();
+  });
+})();
+</script>
+</body>
+</html>
