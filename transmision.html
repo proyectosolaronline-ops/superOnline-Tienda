@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>EasyLink · Transmisor</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
+  /* ═══ CONTENEDOR PRINCIPAL ═══ */
+  .app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #0a0a0a;
+  }
+
+  /* ═══ BARRA SUPERIOR ═══ */
+  .top-bar {
+    background: #111;
+    padding: 8px 12px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+  }
+  .top-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fbbf24;
+    flex-shrink: 0;
+  }
+  .top-dot.live { background: #4ade80; }
+  .top-dot.off { background: #ef4444; }
+  .top-label {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .top-id {
+    color: #4ade80;
+    font-family: monospace;
+    font-size: 11px;
+    background: #1a1a1a;
+    padding: 4px 10px;
+    border-radius: 8px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ═══ IFRAME DE LA TIENDA ═══ */
+  .main-frame {
+    flex: 1;
+    width: 100%;
+    background: #fff;
+    position: relative;
+    min-height: 0;
+  }
+  .main-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* ═══ PREVIEW MINI (lo que se transmite) ═══ */
+  .preview-mini {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 100px;
+    height: 66px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: #000;
+    display: none;
+    z-index: 5;
+  }
+  .preview-mini.on { display: block; }
+  .preview-mini video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ═══ BARRA INFERIOR ═══ */
+  .bottom-bar {
+    background: #111;
+    padding: 10px 12px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px 10px;
+    border-radius: 12px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn:disabled { opacity: 0.35; pointer-events: none; }
+  .btn-start {
+    background: #4ade80;
+    color: #000;
+  }
+  .btn-start.stop {
+    background: #ef4444;
+    color: #fff;
+  }
+  .btn-share {
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* ═══ OVERLAY COMPARTIR ═══ */
+  .share-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .share-overlay.open { display: flex; }
+  .share-box {
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    width: 100%;
+    max-width: 320px;
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .share-box h3 {
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .share-code {
+    font-family: monospace;
+    font-size: 26px;
+    font-weight: 800;
+    color: #4ade80;
+    letter-spacing: 2px;
+    word-break: break-all;
+    background: #0a0a0a;
+    padding: 10px;
+    border-radius: 8px;
+  }
+  .share-link {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    word-break: break-all;
+    background: #0a0a0a;
+    padding: 8px;
+    border-radius: 6px;
+    font-family: monospace;
+  }
+  .btn-copy {
+    padding: 12px;
+    background: #4ade80;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .btn-close {
+    padding: 10px;
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ═══ TOAST ═══ */
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: rgba(0,0,0,0.92);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══ TOP BAR ═══ -->
+  <div class="top-bar">
+    <span class="top-dot" id="topDot"></span>
+    <span class="top-label" id="topLabel">Iniciando...</span>
+    <span class="top-id" id="topId">---</span>
+  </div>
+
+  <!-- ═══ IFRAME TIENDA ═══ -->
+  <div class="main-frame" id="mainFrame">
+    <iframe id="storeFrame" src="tienda.html" allowfullscreen></iframe>
+    <div class="preview-mini" id="previewMini">
+      <video id="previewVideo" autoplay playsinline muted></video>
+    </div>
+  </div>
+
+  <!-- ═══ BOTONES ═══ -->
+  <div class="bottom-bar">
+    <button class="btn btn-start" id="btnStart" disabled>
+      📺 Iniciar transmisión
+    </button>
+    <button class="btn btn-share" id="btnShare" disabled>
+      🔗 Compartir
+    </button>
+  </div>
+
+  <!-- ═══ OVERLAY COMPARTIR ═══ -->
+  <div class="share-overlay" id="shareOverlay">
+    <div class="share-box">
+      <h3>📡 Compartir transmisión</h3>
+      <div style="color:rgba(255,255,255,0.5);font-size:11px;">ID para el receptor:</div>
+      <div class="share-code" id="shareCode">---</div>
+      <div class="share-link" id="shareLink"></div>
+      <button class="btn-copy" id="btnCopyLink">📋 Copiar enlace</button>
+      <button class="btn-copy" id="btnCopyId" style="background:#1a1a1a;color:#4ade80;border:1px solid #4ade80;">📋 Copiar ID</button>
+      <button class="btn-close" id="btnCloseShare">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ═══ TOAST ═══ -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ═══ DOM ═══
+  const topDot = document.getElementById('topDot');
+  const topLabel = document.getElementById('topLabel');
+  const topId = document.getElementById('topId');
+  const btnStart = document.getElementById('btnStart');
+  const btnShare = document.getElementById('btnShare');
+  const previewMini = document.getElementById('previewMini');
+  const previewVideo = document.getElementById('previewVideo');
+  const shareOverlay = document.getElementById('shareOverlay');
+  const shareCode = document.getElementById('shareCode');
+  const shareLink = document.getElementById('shareLink');
+  const toast = document.getElementById('toast');
+
+  let peer = null;
+  let peerId = null;
+  let screenStream = null;
+  let streaming = false;
+
+  // ═══ TOAST ═══
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  // ═══ STATUS ═══
+  function setStatus(state, label) {
+    topDot.className = 'top-dot ' + state;
+    topLabel.textContent = label;
+  }
+
+  // ═══ INICIAR PEER ═══
+  function init() {
+    setStatus('', 'Conectando...');
+    topId.textContent = '...';
+
+    peer = new Peer({
+      debug: 0,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          {
+            urls: ['turn:a.relay.metered.ca:80','turn:a.relay.metered.ca:443','turn:a.relay.metered.ca:443?transport=tcp'],
+            username: 'open',
+            credential: 'open'
+          }
+        ],
+        iceCandidatePoolSize: 8
+      }
+    });
+
+    peer.on('open', (id) => {
+      peerId = id;
+      topId.textContent = id;
+      setStatus('off', 'Listo');
+      btnStart.disabled = false;
+      btnShare.disabled = false;
+    });
+
+    peer.on('error', (err) => {
+      console.error(err);
+      setStatus('off', 'Error');
+      showToast('Error de conexión');
+    });
+
+    peer.on('call', (call) => {
+      if (screenStream) {
+        call.answer(screenStream);
+      } else {
+        call.close();
+      }
+    });
+  }
+
+  // ═══ INICIAR TRANSMISIÓN ═══
+  async function startStream() {
+    if (streaming) {
+      // DETENER
+      if (screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null;
+      }
+      streaming = false;
+      previewVideo.srcObject = null;
+      previewMini.classList.remove('on');
+      setStatus('off', 'Listo');
+      btnStart.textContent = '📺 Iniciar transmisión';
+      btnStart.classList.remove('stop');
+      showToast('Transmisión detenida');
+      return;
+    }
+
+    try {
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { mediaSource: 'screen' },
+        audio: true
+      });
+
+      streaming = true;
+      previewVideo.srcObject = screenStream;
+      previewMini.classList.add('on');
+      setStatus('live', 'Transmitiendo');
+      btnStart.textContent = '⏹ Detener';
+      btnStart.classList.add('stop');
+      showToast('✅ Transmisión activa');
+
+      screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+        startStream(); // detener
+      });
+
+    } catch (err) {
+      console.error(err);
+      showToast('Permiso denegado');
+    }
+  }
+
+  // ═══ COMPARTIR ═══
+  function openShare() {
+    if (!peerId) return;
+
+    const receptorURL = window.location.href.replace('transmisor.html', 'receptor.html').replace('index.html', 'receptor.html');
+    const finalURL = receptorURL.includes('receptor.html') ? receptorURL :
+      window.location.origin + '/receptor.html?host=' + peerId;
+
+    shareCode.textContent = peerId;
+    shareLink.textContent = finalURL + '?host=' + peerId;
+    shareOverlay.classList.add('open');
+  }
+
+  function closeShare() {
+    shareOverlay.classList.remove('open');
+  }
+
+  // ═══ COPIAR ═══
+  document.getElementById('btnCopyLink').addEventListener('click', () => {
+    navigator.clipboard.writeText(shareLink.textContent).then(() => {
+      showToast('✅ Enlace copiado');
+      closeShare();
+    });
+  });
+
+  document.getElementById('btnCopyId').addEventListener('click', () => {
+    navigator.clipboard.writeText(peerId).then(() => {
+      showToast('✅ ID copiado');
+      closeShare();
+    });
+  });
+
+  // ═══ EVENTOS ═══
+  btnStart.addEventListener('click', startStream);
+  btnShare.addEventListener('click', openShare);
+  document.getElementById('btnCloseShare').addEventListener('click', closeShare);
+
+  window.addEventListener('beforeunload', () => {
+    if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+    if (peer) peer.destroy();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
