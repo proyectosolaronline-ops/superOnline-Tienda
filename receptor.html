@@ -2,125 +2,210 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>EasyLink · Receptor</title>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Demo en vivo — Easylink</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Inter',system-ui,sans-serif}
 
-/* Video a pantalla completa */
-#remoteVideo{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:fill;
+/* ── VIDEO FULLSCREEN ── */
+#live-video{
+  position:fixed;inset:0;
+  width:100%;height:100%;
+  object-fit:contain;
   background:#000;
   z-index:1;
-  display:none;
 }
-#remoteVideo.visible{display:block;}
 
-/* Pantalla de espera */
+/* ── WAITING SCREEN ── */
 #waiting{
-  position:fixed;
-  inset:0;
-  z-index:20;
-  background:#060910;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:16px;
+  position:fixed;inset:0;z-index:2;
+  background:#000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;padding:32px;text-align:center;
 }
-#waiting.hidden{display:none;}
-.spinner{
-  width:44px;height:44px;border-radius:50%;
-  border:3px solid rgba(255,255,255,0.1);
-  border-top-color:#2563eb;
-  animation:spin .7s linear infinite;
+#waiting.hidden{display:none}
+
+.logo-mark{
+  width:64px;height:64px;border-radius:16px;
+  background:rgba(163,230,53,.1);border:2px solid rgba(163,230,53,.3);
+  display:flex;align-items:center;justify-content:center;margin-bottom:8px;
+}
+.logo-mark svg{width:32px;height:32px}
+
+#waiting h1{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.02em}
+#waiting p{font-size:13px;color:rgba(255,255,255,.45);line-height:1.7;max-width:280px}
+
+/* SPINNER */
+.spinner-ring{
+  width:48px;height:48px;
+  border:3px solid rgba(163,230,53,.15);
+  border-top-color:#a3e635;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-#wait-text{
-  color:#64748b;
-  font-size:14px;
-  text-align:center;
-  padding:0 40px;
-  line-height:1.7;
+
+#connect-status{
+  font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.4);
+  letter-spacing:.06em;text-transform:uppercase;
 }
 
-/* Status */
-#status{
-  position:fixed;
-  bottom:12px;
-  left:12px;
-  background:rgba(0,0,0,0.6);
-  color:#fff;
-  padding:5px 12px;
-  border-radius:99px;
-  font-size:11px;
-  font-family:monospace;
-  z-index:30;
+/* ERROR STATE */
+#error-box{
+  display:none;flex-direction:column;align-items:center;gap:12px;
+  padding:20px;background:rgba(239,68,68,.08);
+  border:1px solid rgba(239,68,68,.25);border-radius:16px;
+  max-width:300px;
+}
+#error-box.on{display:flex}
+#error-box p{font-size:13px;color:rgba(255,255,255,.55);text-align:center;line-height:1.6}
+#btn-retry{
+  padding:10px 24px;background:#ef4444;color:#fff;
+  border:none;border-radius:10px;font-size:13px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+
+/* ── TOP BAR (sobre el video) ── */
+#top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:10;
+  padding:10px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,.7) 0%,transparent 100%);
   pointer-events:none;
+  opacity:0;transition:opacity .3s;
+}
+#top-bar.on{opacity:1;pointer-events:all}
+
+#logo-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:800;color:#a3e635;letter-spacing:.04em;
+}
+#live-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.5);
+  padding:4px 10px;border-radius:99px;
+  font-size:11px;font-weight:700;color:#ef4444;
+}
+#live-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 5px rgba(239,68,68,0)}}
+
+/* ── BOTTOM BAR (sobre el video) ── */
+#bottom-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  padding:10px 14px 18px;
+  background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:space-between;
+  opacity:0;transition:opacity .3s;
+}
+#bottom-bar.on{opacity:1}
+
+#quality-info{font-size:11px;color:rgba(255,255,255,.4);font-weight:500}
+#btn-wa-receptor{
+  display:flex;align-items:center;gap:6px;
+  padding:9px 14px;
+  background:#25d366;color:#fff;
+  border:none;border-radius:10px;
+  font-size:12px;font-weight:700;font-family:inherit;
+  cursor:pointer;
 }
 
-/* Error */
-#errorMsg{
-  position:fixed;
-  top:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(239,68,68,0.9);
-  color:#fff;
-  padding:10px 20px;
-  border-radius:10px;
-  font-size:13px;
-  z-index:40;
-  display:none;
-  text-align:center;
-  max-width:90%;
+/* TOAST */
+#toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  background:#a3e635;color:#14532d;
+  font-size:12px;font-weight:700;
+  padding:8px 18px;border-radius:99px;
+  z-index:200;display:none;white-space:nowrap;
 }
+
+/* TAP HINT */
+#tap-hint{
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:rgba(255,255,255,.3);
+  z-index:9;white-space:nowrap;
+  opacity:1;transition:opacity 1s;pointer-events:none;
+}
+#tap-hint.gone{opacity:0}
 </style>
 </head>
 <body>
 
-<video id="remoteVideo" autoplay playsinline muted></video>
+<!-- VIDEO RECEPTOR FULLSCREEN -->
+<video id="live-video" autoplay playsinline muted></video>
 
-<div id="waiting">
-  <div class="spinner"></div>
-  <div id="wait-text">Conectando con el transmisor...</div>
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div id="logo-label">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    EASYLINK DEMO
+  </div>
+  <div id="live-pill">
+    <div id="live-dot"></div>
+    EN VIVO
+  </div>
 </div>
 
-<div id="status">🔌 Iniciando...</div>
-<div id="errorMsg"></div>
+<!-- BOTTOM BAR -->
+<div id="bottom-bar">
+  <span id="quality-info">HD • En vivo</span>
+  <button id="btn-wa-receptor" onclick="abrirTienda()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Ir a la tienda
+  </button>
+</div>
+
+<!-- WAITING / CONNECTING SCREEN -->
+<div id="waiting">
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+  </div>
+  <h1>Demo en vivo</h1>
+  <p id="waiting-msg">Conectando con el transmisor...</p>
+  <div class="spinner-ring" id="spinner"></div>
+  <div id="connect-status">Estableciendo conexión segura</div>
+  <div id="error-box">
+    <p id="error-msg">No se pudo conectar. Verifica que el transmisor esté activo.</p>
+    <button id="btn-retry" onclick="location.reload()">Reintentar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- TAP HINT -->
+<div id="tap-hint">Toca la pantalla para mostrar controles</div>
 
 <script>
-(function(){
-  var urlParams = new URLSearchParams(window.location.search);
-  var hostId    = urlParams.get('host');
-  var video     = document.getElementById('remoteVideo');
-  var waiting   = document.getElementById('waiting');
-  var waitText  = document.getElementById('wait-text');
-  var statusDiv = document.getElementById('status');
-  var errorDiv  = document.getElementById('errorMsg');
-  var peer      = null;
+var params    = new URLSearchParams(location.search);
+var hostId    = params.get('host') || '';
+var tiendaURL = params.get('url')  || '';
 
-  function setStatus(msg){ statusDiv.textContent = msg; }
-  function showError(msg){
-    errorDiv.textContent = '⚠️ ' + msg;
-    errorDiv.style.display = 'block';
-    setTimeout(function(){ errorDiv.style.display='none'; }, 6000);
-  }
+var peer, myConn, myCall;
+var uiVisible = false, uiTimer = null;
+var connected = false;
 
-  if(!hostId){
-    waitText.textContent = 'Link inválido.\nPide al vendedor que te envíe el link correcto.';
-    setStatus('❌ Sin host ID');
-    return;
-  }
+/* ── WAITING UI ── */
+function setWaiting(msg, isError){
+  document.getElementById('waiting-msg').textContent = msg;
+  document.getElementById('connect-status').style.display = isError ? 'none':'';
+  document.getElementById('spinner').style.display       = isError ? 'none':'block';
+  document.getElementById('error-box').classList.toggle('on', !!isError);
+  if(isError) document.getElementById('error-msg').textContent = msg;
+}
 
-  setStatus('🟡 Conectando...');
+/* ── VALIDACIÓN ── */
+if(!hostId){
+  setWaiting('Link inválido. Pide al vendedor que reenvíe el link.', true);
+  throw new Error('no hostId');
+}
 
+/* ── PEER ── */
+function initPeer(){
+  setWaiting('Conectando con el transmisor...');
   peer = new Peer({
     debug:0,
     config:{
@@ -135,57 +220,102 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:sys
     }
   });
 
-  peer.on('open', function(myId){
-    setStatus('🟢 Conectado');
-    waitText.textContent = 'Esperando stream del vendedor...';
+  peer.on('open', function(){
+    setWaiting('Saludando al transmisor...');
+    myConn = peer.connect(hostId, {reliable:true});
 
-    var dataConn = peer.connect(hostId);
-
-    dataConn.on('open', function(){
-      dataConn.send({type:'viewer-hello', name:'Cliente'});
+    myConn.on('open', function(){
+      myConn.send({type:'viewer-hello'});
+      setWaiting('Esperando video en vivo...');
     });
 
-    dataConn.on('error', function(err){
-      console.warn('DataConn error', err);
-      showError('No se pudo contactar al transmisor.');
+    myConn.on('data', function(d){
+      if(d && d.type==='store-url' && d.url && !tiendaURL){
+        tiendaURL = d.url;
+      }
     });
 
-    peer.on('call', function(incomingCall){
-      incomingCall.answer();
-      incomingCall.on('stream', function(remoteStream){
-        video.srcObject = remoteStream;
-        video.play().catch(function(){});
-        video.classList.add('visible');
-        waiting.classList.add('hidden');
-        setStatus('🟢 En vivo');
-      });
-      incomingCall.on('close', function(){
-        video.classList.remove('visible');
-        video.srcObject = null;
-        waiting.classList.remove('hidden');
-        waitText.textContent = 'La demo terminó.';
-        setStatus('⏹ Fin');
-      });
-      incomingCall.on('error', function(e){
-        console.warn(e);
-        showError('Error en el stream.');
-      });
+    myConn.on('close', function(){
+      if(connected) showToast('El transmisor cerró la sesión');
     });
+
+    myConn.on('error', function(e){ console.warn(e); });
   });
 
-  peer.on('error', function(err){
-    if(err.type==='peer-unavailable'){
-      waitText.textContent = 'El vendedor aún no inició la demo.\nIntenta de nuevo en un momento.';
-      showError('Transmisor no disponible.');
+  peer.on('call', function(call){
+    myCall = call;
+    call.answer();
+    call.on('stream', function(stream){
+      var vid = document.getElementById('live-video');
+      vid.srcObject = stream;
+      vid.play().catch(function(){});
+      connected = true;
+      document.getElementById('waiting').classList.add('hidden');
+      showUI(true);
+      showToast('Demo en vivo conectada');
+    });
+    call.on('close', function(){
+      connected = false;
+      document.getElementById('waiting').classList.remove('hidden');
+      setWaiting('El transmisor pausó la transmisión.');
+    });
+    call.on('error', function(e){ console.warn(e); });
+  });
+
+  peer.on('error', function(e){
+    console.warn('PeerJS error:', e.type, e);
+    var msgs = {
+      'peer-unavailable':'El transmisor no está disponible. Pide que reenvíe el link.',
+      'network':'Error de red. Verifica tu conexión.',
+      'server-error':'Error de servidor PeerJS. Reintentando...'
+    };
+    if(e.type==='peer-unavailable'){
+      setWaiting(msgs['peer-unavailable'], true);
     } else {
-      showError('Error: ' + (err.message||err.type));
+      setWaiting(msgs[e.type] || 'Error de conexión. Reintentando...', false);
+      setTimeout(function(){ location.reload(); }, 4000);
     }
   });
+}
 
-  window.addEventListener('beforeunload', function(){
-    if(peer) peer.destroy();
-  });
-})();
+/* ── UI OVERLAY (tap to show/hide) ── */
+function showUI(force){
+  uiVisible = true;
+  document.getElementById('top-bar').classList.add('on');
+  document.getElementById('bottom-bar').classList.add('on');
+  document.getElementById('tap-hint').classList.add('gone');
+  clearTimeout(uiTimer);
+  if(!force) uiTimer = setTimeout(hideUI, 3500);
+}
+function hideUI(){
+  uiVisible = false;
+  document.getElementById('top-bar').classList.remove('on');
+  document.getElementById('bottom-bar').classList.remove('on');
+}
+
+document.getElementById('live-video').addEventListener('click', function(){
+  uiVisible ? hideUI() : showUI();
+});
+document.getElementById('live-video').addEventListener('touchstart', function(){
+  uiVisible ? hideUI() : showUI();
+},{passive:true});
+
+/* ── IR A LA TIENDA ── */
+function abrirTienda(){
+  if(tiendaURL){ window.open(tiendaURL,'_blank'); }
+  else{ showToast('URL de tienda no disponible'); }
+}
+
+/* ── TOAST ── */
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(function(){ t.style.display='none'; },2800);
+}
+
+/* ── INIT ── */
+initPeer();
 </script>
 </body>
 </html>
