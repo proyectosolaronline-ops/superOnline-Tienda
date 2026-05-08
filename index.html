@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1170,6 +1171,7 @@ window.addEventListener('load', async function() {
   }
   if (!iR) { renderCatalog(); initMap(); showV('catalog'); return; }
   if (iR.error === 'STORE_SUSPENDED') { showSuspended(iR.storeName || '', iR.suspendReason || '', iR.suspendBanner || ''); return; }
+  if (iR.error === 'LICENSE_EXPIRED') { showSuspended(iR.storeName || storeName || 'Esta tienda', 'Licencia vencida. El acceso ha sido suspendido temporalmente.', ''); return; }
   try {
     var s = iR.store, rawCfg = s.config || {};
     var cfg = (typeof rawCfg === 'string') ? JSON.parse(rawCfg) : rawCfg;
@@ -1208,6 +1210,8 @@ window.addEventListener('load', async function() {
     }
     var token = customer ? customer.token || '' : '';
     var cR = await getWithToken('store.catalog', token).catch(function() { return null; });
+    if (cR && cR.ok === false && cR.error === 'LICENSE_EXPIRED') { showSuspended(storeName || 'Esta tienda', 'Licencia vencida. El acceso ha sido suspendido temporalmente.', ''); return; }
+    if (cR && cR.ok === false && cR.error === 'STORE_SUSPENDED') { showSuspended(cR.storeName || storeName || '', cR.suspendReason || '', ''); return; }
     var isMayorista = false;
     if (cR !== null) {
       isMayorista = cR.isMayorista || false;
