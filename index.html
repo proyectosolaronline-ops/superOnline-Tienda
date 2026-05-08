@@ -30,6 +30,7 @@
   --shadow:0 4px 12px rgba(0,0,0,.08);
   --shadow-lg:0 8px 28px rgba(0,0,0,.12);
   --shadow-xl:0 20px 60px rgba(0,0,0,.16);
+  --text-white:#ffffff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -497,6 +498,21 @@ footer a:hover{color:#fff}
 </head>
 <body>
 
+//*geminis help*//
+
+  <div id="status-banner" style="display:none; padding:10px; text-align:center; font-size:13px; z-index:1000; position:relative;">
+    <span id="banner-text"></span>
+</div>
+
+<div id="suspended-screen" class="suspended" style="display:none;">
+    <div class="suspended-content">
+        <div class="suspended-text">
+            <div class="suspended-badge">TIENDA FUERA DE SERVICIO</div>
+            <h1 style="color:#fff; font-family:var(--font-d); margin-bottom:10px;">Acceso Restringido</h1>
+            <p id="suspend-reason" style="color:#ccc;"></p>
+        </div>
+    </div>
+</div>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 .barra-led-container{position:fixed;bottom:20px;right:20px;z-index:9999}
@@ -516,6 +532,40 @@ footer a:hover{color:#fff}
   <span class="texto-led">👽 Directorio tiendas amigables  ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos visita !!! 👾 </span>
 </a>
 <script>
+  //*help geminis*//
+  function verificarEstatusTienda(data) {
+    const banner = document.getElementById('status-banner');
+    const bannerText = document.getElementById('banner-text');
+    const screen = document.getElementById('suspended-screen');
+    const dias = parseInt(data.daysLeft);
+
+    // 1. Lógica de Bloqueo Crítico
+    if (data.status === 'suspended' || dias < 0) {
+        document.body.style.overflow = 'hidden';
+        screen.style.display = 'flex';
+        document.getElementById('suspend-reason').innerText = 
+            (dias < 0) ? "La suscripción ha expirado. Contacte al administrador." 
+                       : "Tienda inactiva por administración.";
+        return true; 
+    }
+
+    // 2. Alerta Naranja (2-3 días)
+    if (dias > 1 && dias <= 3) {
+        banner.style.display = 'block';
+        banner.style.background = 'var(--warn)';
+        banner.style.color = '#fff';
+        bannerText.innerText = `⚠️ Aviso: Quedan ${dias} días de servicio.`;
+    } 
+    // 3. Alerta Roja (1 día)
+    else if (dias === 1) {
+        banner.style.display = 'block';
+        banner.style.background = 'var(--danger)';
+        banner.style.color = '#fff';
+        bannerText.innerText = `🚨 Urgente: La licencia vence hoy.`;
+        document.documentElement.style.setProperty('--primary', 'var(--danger)');
+    }
+    return false;
+}
 (function(){
   const barra=document.getElementById('barraLed');
   let intervaloAparicion,timeoutOcultar;
@@ -539,7 +589,20 @@ footer a:hover{color:#fff}
   iniciarCiclo();
   window.addEventListener('beforeunload',function(){clearInterval(intervaloAparicion);clearTimeout(timeoutOcultar);});
 })();
+  
+  
 </script>
+//*help geminis*//
+  <div id="status-banner" style="display:none; padding:10px; text-align:center; font-size:13px; font-weight:700; z-index:9999; position:relative; font-family:var(--font-b);">
+    <span id="banner-text"></span>
+</div>
+
+<div id="suspended-screen" style="display:none; position:fixed; inset:0; z-index:10000; background:#000; color:#fff; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:var(--font-d); padding:40px;">
+    <div style="background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); border-radius:99px; padding:5px 14px; font-size:11px; font-weight:700; color:#f87171; margin-bottom:20px; letter-spacing:.1em;">SISTEMA BLOQUEADO</div>
+    <h1 style="font-size:32px; margin-bottom:10px;">Tienda Fuera de Servicio</h1>
+    <p id="suspend-reason" style="color:rgba(255,255,255,.6); max-width:400px; line-height:1.6;"></p>
+    <a href="#" id="soporte-link" style="margin-top:30px; color:#6ee7b7; text-decoration:none; font-weight:600; font-family:var(--font-b);">Contactar Soporte Técnico</a>
+</div>
 <nav class="navbar" id="navbar" style="display:flex;align-items:center;gap:8px;">
   <div class="brand-icon" style="display:flex;flex-direction:column;align-items:center;">
     <a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
