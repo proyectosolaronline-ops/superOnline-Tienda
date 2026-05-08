@@ -586,6 +586,47 @@ footer a:hover{color:#fff}
   iniciarCiclo();
   window.addEventListener('beforeunload',function(){clearInterval(intervaloAparicion);clearTimeout(timeoutOcultar);});
 })();
+function actualizarAlertaLicencia(res) {
+    const widget = document.getElementById('lk-license-widget');
+    const dot = document.getElementById('lk-dot-color');
+    const ping = document.getElementById('lk-ping-color');
+    const text = document.getElementById('lk-license-text');
+    if (!widget || !res) return;
+
+    // Solo lo ve el dueño
+    const esOwner = localStorage.getItem('lk_role') === 'owner';
+    if (!esOwner) { widget.style.display = 'none'; return; }
+
+    widget.style.display = 'flex';
+    const dias = res.days || 0;
+    const estado = res.status; 
+    window.lk_dias_vence = dias;
+
+    // Lógica de Alerta Real
+    if (estado !== 'active') {
+        dot.className = 'lk-dot lk-danger';
+        ping.className = 'lk-ping lk-danger';
+        text.innerText = "SISTEMA INACTIVO"; // <--- Aquí cambia el texto falso
+    } else if (dias <= 3) {
+        dot.className = 'lk-dot lk-danger';
+        ping.className = 'lk-ping lk-danger';
+        text.innerText = "¡RENOVAR YA!";
+    } else if (dias <= 7) {
+        dot.className = 'lk-dot lk-warning';
+        ping.className = 'lk-ping lk-warning';
+        text.innerText = "Vence en " + dias + "d";
+    } else {
+        dot.className = 'lk-dot lk-safe';
+        ping.className = 'lk-ping lk-safe';
+        text.innerText = "Licencia Activa";
+    }
+}
+
+function mostrarAlertaLicencia() {
+    const d = window.lk_dias_vence || 0;
+    alert("!!! Sistema Requiere Atencion de Licencia (" + d + " Dias) !!!");
+}
+  
 </script>
   <div id="lk-license-widget" onclick="mostrarAlertaLicencia()" style="display:none;">
   <div class="lk-dot" id="lk-dot-color">
