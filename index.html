@@ -493,10 +493,84 @@ footer a:hover{color:#fff}
 .video-fullscreen-close:hover {
   background: rgba(255,255,255,.3);
 }
+  /* MODAL ALERTA VENCIMIENTO - LOGÍSTICA MAESTRO */
+.license-alert-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: none; /* Se activa por JS */
+  justify-content: center;
+  align-items: center;
+  z-index: 10001;
+  padding: 20px;
+}
+
+.license-alert-card {
+  background: var(--bg);
+  width: 100%;
+  max-width: 350px;
+  border-radius: var(--r);
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  border-top: 6px solid var(--cta);
+  animation: modalIn .3s ease-out;
+}
+
+.license-alert-icon { font-size: 40px; margin-bottom: 15px; }
+
+.license-alert-title {
+  font-family: var(--font-t);
+  font-weight: 800;
+  color: var(--text);
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.license-alert-msg {
+  font-family: var(--font-b);
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.license-alert-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--cta);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-t);
+}
+
+@keyframes modalIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 </style>
 </head>
 <body>
-
+<div id="license-alert-modal" class="license-alert-bg">
+  <div class="license-alert-card" id="license-card-container">
+    <div class="license-alert-icon" id="license-icon">⚠️</div>
+    <div class="license-alert-title" id="license-title">Atención: Licencia por vencer</div>
+    <div class="license-alert-msg" id="license-msg">
+      Tu plan está próximo a expirar. Renueva pronto para evitar la suspensión de tu catálogo y pedidos.
+    </div>
+    <button class="license-alert-btn" id="license-btn-action">RENOVAR AHORA</button>
+    <div style="margin-top: 15px;">
+        <a href="javascript:void(0)" onclick="document.getElementById('license-alert-modal').style.display='none'" 
+           style="font-size: 12px; color: var(--muted); text-decoration: none; font-family: var(--font-b);">
+           Cerrar por ahora
+        </a>
+    </div>
+  </div>
+</div>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 .barra-led-container{position:fixed;bottom:20px;right:20px;z-index:9999}
@@ -2725,5 +2799,57 @@ function formatBytes(bytes) {
   <button class="video-fullscreen-close">✕</button>
   <div id="vfs-player-wrap" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:20px;"></div>
 </div>
+  <script>
+/**
+ * LOGÍSTICA DE ALERTAS - LANDINGKIT MAESTRO
+ * Conecta la info del Guardian con la UI de alerta
+ */
+function checkLicenseStatus() {
+    // Intentamos obtener la info de la tienda desde el localStorage o el Guardian
+    const storeData = JSON.parse(localStorage.getItem('lk_config') || '{}');
+    
+    if (!storeData.licenseExpiry) return;
+
+    const hoy = new Date();
+    const vence = new Date(storeData.licenseExpiry);
+    const diferenciaMs = vence.getTime() - hoy.getTime();
+    const diasRestantes = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+
+    const modal = document.getElementById('license-alert-modal');
+    const card = document.getElementById('license-card-container');
+    const title = document.getElementById('license-title');
+    const msg = document.getElementById('license-msg');
+    const icon = document.getElementById('license-icon');
+
+    // LÓGICA DE URGENCIA
+    if (diasRestantes <= 3) {
+        modal.style.display = 'flex';
+        
+        if (diasRestantes <= 1) {
+            // Estado Crítico (Rojo)
+            card.style.borderTopColor = '#d32f2f';
+            icon.innerText = '🚨';
+            title.innerText = '¡ACCIÓN REQUERIDA!';
+            msg.innerHTML = `Tu licencia <b>vence en ${diasRestantes <= 0 ? 'pocas horas' : '1 día'}</b>. La tienda se suspenderá automáticamente.`;
+        } else {
+            // Estado Preventivo (Naranja)
+            msg.innerHTML = `Tu plan vence en <b>${diasRestantes} días</b>. Renueva ahora para mantener tu catálogo activo.`;
+        }
+    }
+}
+
+// Ejecutar cuando la página esté lista y el Guardian haya cargado los datos
+window.addEventListener('load', () => {
+    // Pequeño delay para asegurar que los datos del backend estén en memoria
+    setTimeout(checkLicenseStatus, 2000);
+});
+
+// Configurar el botón de renovación con el WhatsApp de soporte (ajusta el número si es necesario)
+document.getElementById('license-btn-action').onclick = function() {
+    const num = "573000000000"; // Tu número de admin
+    const text = encodeURIComponent("Hola, quiero renovar la licencia de mi tienda Easylink.");
+    window.open(`https://wa.me/${num}?text=${text}`, '_blank');
+};
+</script>
 </body>
 </html>
