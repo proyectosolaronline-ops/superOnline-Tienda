@@ -3351,7 +3351,31 @@ document.addEventListener('tienda-lista', function () {
 });
 </script>
 
+<div id="lic-popup" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;color:#fff;border-radius:14px;padding:14px 20px;font-family:var(--font-b);font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,.35);align-items:center;gap:12px;white-space:nowrap">
+  <span id="lic-ico">⚠️</span>
+  <span id="lic-msg">Licencia vencida</span>
+  <button onclick="this.parentNode.style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px">✕</button>
+</div>
 
+<script>
+document.addEventListener('tienda-lista', function () {
+  var cfg = window._storeCfgRaw || {};
+  var pf  = cfg.planFeatures || {};
+
+  // La tienda está bloqueada si licenseRestricted es true
+  if (!PLAN_FEATURES.licenseRestricted) return;
+
+  var popup = document.getElementById('lic-popup');
+  var fecha = pf.expiryDate || pf.licenseExpiry || pf.expiry
+           || cfg.expiryDate || cfg.licenseExpiry
+           || cfg.plan || 'vencida';
+
+  popup.style.background = '#7f1d1d';
+  document.getElementById('lic-ico').textContent = '🔴';
+  document.getElementById('lic-msg').textContent = 'Licencia: ' + fecha;
+  popup.style.display = 'flex';
+});
+</script>
   
 </body>
 </html>
