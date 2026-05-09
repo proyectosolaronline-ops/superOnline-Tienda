@@ -3344,7 +3344,142 @@ function mostrarFechaLicencia() {
   toast(estado + ' · ' + fecha + ' · ' + resto);
 }
 
+<div id="lic-owner-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9995;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div id="lic-popup-box" style="background:#fff;border-radius:16px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:licPopIn .3s cubic-bezier(.34,1.2,.64,1) both">
+    <div id="lic-popup-hdr" style="padding:20px 20px 16px;text-align:center">
+      <div id="lic-popup-ico" style="font-size:40px;margin-bottom:10px"></div>
+      <div id="lic-popup-title" style="font-family:var(--font-d);font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:4px"></div>
+      <div id="lic-popup-sub" style="font-size:12px;color:#717185;line-height:1.6"></div>
+    </div>
+    <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:9px">
+      <button id="lic-popup-send" onclick="licSendRenewalEmail()" style="width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-b);color:#fff;transition:all .15s">
+        ✉️ Contactar para renovar
+      </button>
+      <button onclick="licPopupDismiss()" style="width:100%;padding:11px;background:transparent;border:1.5px solid #dde1e7;border-radius:10px;font-size:13px;font-weight:600;color:#717185;cursor:pointer;font-family:var(--font-b)">
+        Ahora no
+      </button>
+    </div>
+  </div>
+</div>
 
+<style>
+@keyframes licPopIn {
+  from { opacity:0; transform:scale(.88) translateY(20px); }
+  to   { opacity:1; transform:scale(1)   translateY(0);    }
+}
+</style>
+
+<script>
+(function(){
+
+  var _licPopupShown = false;
+
+  document.addEventListener('tienda-lista', function(){
+    var cfg  = window._storeCfgRaw || {};
+    var raw  = window._licenseExpiry || cfg.licenseExpiry || '';
+    if (!raw) return;
+    var exp  = new Date(raw);
+    if (isNaN(exp.getTime())) return;
+    var dias = Math.ceil((exp.getTime() - Date.now()) / 86400000);
+    if (dias > 7) return; // solo mostrar si faltan 7 días o menos
+
+    // esperar 4s para no interrumpir la carga
+    setTimeout(function(){ mostrarLicOwnerPopup(dias); }, 4000);
+  });
+
+  window.mostrarLicOwnerPopup = function(dias) {
+    if (_licPopupShown) return;
+    if (sessionStorage.getItem('lic_popup_dismissed')) return;
+    _licPopupShown = true;
+
+    var hdr  = document.getElementById('lic-popup-hdr');
+    var ico  = document.getElementById('lic-popup-ico');
+    var title= document.getElementById('lic-popup-title');
+    var sub  = document.getElementById('lic-popup-sub');
+    var btn  = document.getElementById('lic-popup-send');
+    var box  = document.getElementById('lic-popup-box');
+
+    var cfg, color, emoji, bgHdr;
+    if (dias <= 0) {
+      emoji='🔴'; color='#dc2626'; bgHdr='#fef2f2';
+      cfg = { t:'Licencia VENCIDA', s:'Tu licencia ha vencido hoy. Tu tienda puede desactivarse en cualquier momento.' };
+    } else if (dias === 1) {
+      emoji='🚨'; color='#ea580c'; bgHdr='#fff7ed';
+      cfg = { t:'Vence MAÑANA', s:'Tu licencia vence mañana. Renueva hoy para no perder acceso.' };
+    } else if (dias <= 3) {
+      emoji='⚠️'; color='#f59e0b'; bgHdr='#fffbeb';
+      cfg = { t:'Vence en ' + dias + ' días', s:'Quedan pocos días. Renueva pronto para evitar interrupciones.' };
+    } else {
+      emoji='🕐'; color='#1a73e8'; bgHdr='#eff6ff';
+      cfg = { t:'Vence en ' + dias + ' días', s:'Tu licencia está por vencer. Te avisamos con anticipación.' };
+    }
+
+    hdr.style.background   = bgHdr;
+    ico.textContent        = emoji;
+    title.textContent      = cfg.t;
+    sub.innerHTML          = '📣 <strong>EasyLink</strong> te informa:<br><br>'
+      + 'Tienes <strong>' + (dias > 0 ? dias + ' día' + (dias !== 1 ? 's' : '') : 'licencia vencida')
+      + '</strong> para renovar tu licencia.<br><br>'
+      + 'Haz clic en el botón para que te contactemos y renovar. ¡Gracias!';
+    btn.style.background   = color;
+    box.style.borderTop    = '4px solid ' + color;
+
+    // guardar días para el email
+    window._licDiasRestantes = dias;
+
+    document.getElementById('lic-owner-popup').style.display = 'flex';
+  };
+
+  window.licPopupDismiss = function() {
+    document.getElementById('lic-owner-popup').style.display = 'none';
+    sessionStorage.setItem('lic_popup_dismissed', '1');
+  };
+
+  window.licSendRenewalEmail = function() {
+    var btn = document.getElementById('lic-popup-send');
+    btn.disabled    = true;
+    btn.textContent = 'Enviando...';
+
+    var cfg      = window._storeCfgRaw || {};
+    var nombre   = typeof storeName !== 'undefined' ? storeName : (cfg.name || 'Sin nombre');
+    var dias     = window._licDiasRestantes !== undefined ? window._licDiasRestantes : '?';
+    var expiry   = window._licenseExpiry || cfg.licenseExpiry || 'No disponible';
+    var ownerEmail = typeof storeEmail !== 'undefined' ? storeEmail : (cfg.ownerEmail || cfg.contactEmail || '');
+    var storeId  = typeof STORE_ID !== 'undefined' ? STORE_ID : '';
+
+    var asunto = encodeURIComponent('🔔 Renovación de licencia — ' + nombre);
+    var cuerpo = encodeURIComponent(
+      'Hola equipo EasyLink,\n\n'
+      + 'El dueño de la tienda solicita renovación de licencia.\n\n'
+      + '📌 Tienda: ' + nombre + '\n'
+      + '🆔 ID: ' + storeId + '\n'
+      + '📧 Email dueño: ' + ownerEmail + '\n'
+      + '📅 Vencimiento: ' + expiry + '\n'
+      + '⏳ Días restantes: ' + (dias <= 0 ? 'VENCIDA' : dias + ' días') + '\n\n'
+      + 'Por favor contactar al dueño para renovar.\n\n'
+      + 'Gracias,\nSistema EasyLink'
+    );
+
+    // Obtener el email del admin desde el backend
+    fetch(BACKEND + '?action=ping')
+      .then(function(r){ return r.json(); })
+      .catch(function(){ return {}; });
+
+    // Abrir cliente de correo con mailto
+    var adminEmail = 'proyectosolaronline@gmail.com'; // tu email registrado en master
+    window.open('mailto:' + adminEmail + '?subject=' + asunto + '&body=' + cuerpo, '_blank');
+
+    btn.disabled    = false;
+    btn.textContent = '✅ Correo abierto';
+    btn.style.background = '#00a650';
+
+    setTimeout(function(){
+      licPopupDismiss();
+    }, 2500);
+  };
+
+})();
+</script>
 </script>
 </body>
 </html>
