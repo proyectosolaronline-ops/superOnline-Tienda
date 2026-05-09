@@ -3330,6 +3330,12 @@ function mostrarFechaLicencia() {
   var resto = dias > 0 ? dias + ' días restantes' : Math.abs(dias) + ' días vencida';
   toast(estado + ' · ' + fecha + ' · ' + resto);
 }
+
+<button onclick="showSuspended('Tienda Test','Licencia vencida para prueba','')" 
+  style="position:fixed;top:70px;right:10px;z-index:9999;padding:8px;background:red;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:11px">
+  Test Matrix
+</button>
+  
 </script>
 </body>
 </html>
