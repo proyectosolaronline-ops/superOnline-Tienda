@@ -1163,16 +1163,16 @@ window.addEventListener('load', async function() {
     { products = cached0.products; }
     renderCatalog(); initMap(); showV('catalog'); return;
   }
-  var iR = null;
+var iR = null;
   for (var _try = 0; _try < 3; _try++) {
     iR = await get('store.info');
     if (iR) break;
     if (_try < 2) await new Promise(function(res) { setTimeout(res, 2000); });
   }
   if (!iR) { renderCatalog(); initMap(); showV('catalog'); return; }
-  if (iR.error === 'STORE_SUSPENDED') { showSuspended(iR.storeName || '', iR.suspendReason || '', iR.suspendBanner || ''); return; }
-  if (iR.error === 'LICENSE_EXPIRED') { showSuspended(iR.storeName || storeName || 'Esta tienda', 'Licencia vencida. El acceso ha sido suspendido temporalmente.', ''); return; }
-
+  if (iR.ok === false && iR.error === 'STORE_SUSPENDED') { showSuspended(iR.storeName || '', iR.suspendReason || '', ''); return; }
+  if (iR.ok === false && iR.error === 'LICENSE_EXPIRED')  { showSuspended(iR.storeName || 'Esta tienda', 'Licencia vencida. El acceso ha sido suspendido temporalmente.', ''); return; }
+  if (!iR.store) { renderCatalog(); initMap(); showV('catalog'); return; }
 // ✅ NUEVO — suspensión automática por licencia vencida desde los datos de la tienda
 try {
   var expRaw = iR.store && iR.store.licenseExpiry ? iR.store.licenseExpiry : '';
@@ -1571,14 +1571,12 @@ function calcDistKm(lat1, lng1, lat2, lng2) {
   var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
 async function get(a) {
   try {
     var r = await fetch(BACKEND + '?action=' + a + '&storeId=' + STORE_ID);
     var text = await r.text();
     if (text.trim().startsWith('<')) return null;
-    var d = JSON.parse(text);
-    return d.ok ? d : null;
+    return JSON.parse(text); // ✅ devuelve aunque ok:false
   } catch(e) { return null; }
 }
 async function getWithToken(a, token) {
