@@ -1176,6 +1176,8 @@ window.addEventListener('load', async function() {
     var s = iR.store, rawCfg = s.config || {};
     var cfg = (typeof rawCfg === 'string') ? JSON.parse(rawCfg) : rawCfg;
     window._storeCfgRaw = cfg;
+    window._licenseExpiry = s.licenseExpiry || cfg.licenseExpiry || ''; // ← AGREGA ESTA
+
     currency  = cfg.currency     || 'MXN';
     storeWA   = cfg.whatsapp     || '';
     storeEmail = s.email || s.ownerEmail || s.owner_email || cfg.email || cfg.contactEmail || cfg.ownerEmail || '';
@@ -3312,19 +3314,21 @@ function formatBytes(bytes) {
 
 <script>
 function mostrarFechaLicencia() {
-  var cfg  = window._storeCfgRaw || {};
-  var raw  = cfg.licenseExpiry || (window._storeInfo && window._storeInfo.licenseExpiry) || '';
-  if (!raw) { toast('Sin datos de licencia disponibles'); return; }
+  var raw = window._licenseExpiry
+         || (window._storeCfgRaw && window._storeCfgRaw.licenseExpiry)
+         || (window._storeCfgRaw && window._storeCfgRaw.daysToExpiry !== undefined ? null : null)
+         || '';
+  if (!raw) { toast('Sin datos de licencia'); return; }
   var exp  = new Date(raw);
-  if (isNaN(exp.getTime())) { toast('Fecha de licencia no válida'); return; }
-  var dias = Math.ceil((exp.getTime() - Date.now()) / 86400000);
+  if (isNaN(exp.getTime())) { toast('Fecha inválida: ' + raw); return; }
+  var dias  = Math.ceil((exp.getTime() - Date.now()) / 86400000);
   var fecha = exp.toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
-  var estado = dias > 3  ? '✅ Vigente'
-             : dias > 0  ? '⚠️ Por vencer'
+  var estado = dias >  3 ? '✅ Vigente'
+             : dias >  0 ? '⚠️ Por vencer'
              : dias === 0 ? '🚨 Vence hoy'
-             : '🔴 Vencida';
-  var msg = estado + ' · ' + fecha + ' · ' + (dias > 0 ? dias + ' días restantes' : Math.abs(dias) + ' días vencida');
-  toast(msg);
+             :              '🔴 Vencida';
+  var resto = dias > 0 ? dias + ' días restantes' : Math.abs(dias) + ' días vencida';
+  toast(estado + ' · ' + fecha + ' · ' + resto);
 }
 </script>
 </body>
