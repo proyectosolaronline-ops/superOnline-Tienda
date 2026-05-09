@@ -3343,6 +3343,15 @@ document.addEventListener('tienda-lista', function () {
   alert(JSON.stringify(cfg, null, 2));
 });
 </script>
+
+<script>
+document.addEventListener('tienda-lista', function () {
+  var pf = (window._storeCfgRaw || {}).planFeatures || {};
+  alert(JSON.stringify(pf, null, 2));
+});
+</script>
+
+
   
 </body>
 </html>
