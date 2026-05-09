@@ -3301,6 +3301,31 @@ function formatBytes(bytes) {
   <button onclick="this.parentNode.style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px">✕</button>
 </div>
 
-  
+  <button onclick="mostrarFechaLicencia()" style="
+  position:fixed;bottom:140px;right:16px;z-index:9991;
+  background:#1a73e8;color:#fff;border:none;border-radius:99px;
+  padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;
+  font-family:var(--font-b);box-shadow:0 4px 16px rgba(26,115,232,.4);
+  display:flex;align-items:center;gap:6px;white-space:nowrap">
+  📅 Licencia
+</button>
+
+<script>
+function mostrarFechaLicencia() {
+  var cfg  = window._storeCfgRaw || {};
+  var raw  = cfg.licenseExpiry || (window._storeInfo && window._storeInfo.licenseExpiry) || '';
+  if (!raw) { toast('Sin datos de licencia disponibles'); return; }
+  var exp  = new Date(raw);
+  if (isNaN(exp.getTime())) { toast('Fecha de licencia no válida'); return; }
+  var dias = Math.ceil((exp.getTime() - Date.now()) / 86400000);
+  var fecha = exp.toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+  var estado = dias > 3  ? '✅ Vigente'
+             : dias > 0  ? '⚠️ Por vencer'
+             : dias === 0 ? '🚨 Vence hoy'
+             : '🔴 Vencida';
+  var msg = estado + ' · ' + fecha + ' · ' + (dias > 0 ? dias + ' días restantes' : Math.abs(dias) + ' días vencida');
+  toast(msg);
+}
+</script>
 </body>
 </html>
