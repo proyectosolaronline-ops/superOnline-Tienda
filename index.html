@@ -3297,6 +3297,12 @@ function formatBytes(bytes) {
   };
 }());
 </script>
+<button onclick="showSuspended('Tienda Test','Licencia vencida para prueba','')" 
+  style="position:fixed;top:70px;right:10px;z-index:9999;padding:8px;background:red;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:11px">
+  Test Matrix
+</button>
+  
+  
 <div id="lic-popup" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;color:#fff;border-radius:14px;padding:14px 20px;font-family:var(--font-b);font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,.35);align-items:center;gap:12px;white-space:nowrap">
   <span id="lic-ico">⚠️</span>
   <span id="lic-msg">Licencia vence: —</span>
@@ -3331,11 +3337,7 @@ function mostrarFechaLicencia() {
   toast(estado + ' · ' + fecha + ' · ' + resto);
 }
 
-<button onclick="showSuspended('Tienda Test','Licencia vencida para prueba','')" 
-  style="position:fixed;top:70px;right:10px;z-index:9999;padding:8px;background:red;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:11px">
-  Test Matrix
-</button>
-  
+
 </script>
 </body>
 </html>
