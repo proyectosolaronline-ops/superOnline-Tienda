@@ -1172,6 +1172,26 @@ window.addEventListener('load', async function() {
   if (!iR) { renderCatalog(); initMap(); showV('catalog'); return; }
   if (iR.error === 'STORE_SUSPENDED') { showSuspended(iR.storeName || '', iR.suspendReason || '', iR.suspendBanner || ''); return; }
   if (iR.error === 'LICENSE_EXPIRED') { showSuspended(iR.storeName || storeName || 'Esta tienda', 'Licencia vencida. El acceso ha sido suspendido temporalmente.', ''); return; }
+
+// ✅ NUEVO — suspensión automática por licencia vencida desde los datos de la tienda
+try {
+  var expRaw = iR.store && iR.store.licenseExpiry ? iR.store.licenseExpiry : '';
+  if (expRaw) {
+    var expDate = new Date(expRaw);
+    if (!isNaN(expDate.getTime())) {
+      var diasRestantes = Math.ceil((expDate.getTime() - Date.now()) / 86400000);
+      if (diasRestantes <= 0) {
+        showSuspended(
+          iR.store.name || 'Esta tienda',
+          'Licencia vencida. El acceso ha sido suspendido.',
+          ''
+        );
+        return;
+      }
+    }
+  }
+} catch(e) {}
+  
   try {
     var s = iR.store, rawCfg = s.config || {};
     var cfg = (typeof rawCfg === 'string') ? JSON.parse(rawCfg) : rawCfg;
