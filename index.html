@@ -3295,6 +3295,45 @@ function formatBytes(bytes) {
   };
 }());
 </script>
+<div id="lic-popup" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;color:#fff;border-radius:14px;padding:14px 20px;font-family:var(--font-b);font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,.35);align-items:center;gap:12px;white-space:nowrap">
+  <span id="lic-ico">⚠️</span>
+  <span id="lic-msg">Licencia vence: —</span>
+  <button onclick="this.parentNode.style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px">✕</button>
+</div>
 
+<script>
+document.addEventListener('tienda-lista', function () {
+  var cfg = window._storeCfgRaw || {};
+  var pf  = cfg.planFeatures   || {};
+
+  // Busca la fecha en todos los lugares posibles
+  var expiry = cfg.licenseExpiry
+            || cfg.expiryDate
+            || cfg.fechaVencimiento
+            || cfg.planExpiry
+            || pf.licenseExpiry
+            || pf.expiryDate
+            || null;
+
+  if (!expiry) return;
+
+  var exp  = new Date(expiry);
+  if (isNaN(exp)) return;
+
+  var days = Math.ceil((exp - Date.now()) / 86400000);
+  if (days > 3) return;
+
+  var colores = { 3:'#d97706', 2:'#ea580c', 1:'#dc2626', 0:'#7f1d1d' };
+  var iconos  = { 3:'🕐',      2:'⏳',      1:'🚨',      0:'🔴'      };
+  var d = Math.max(0, Math.min(days, 3));
+  var fecha = exp.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' });
+
+  var popup = document.getElementById('lic-popup');
+  popup.style.background = colores[d];
+  document.getElementById('lic-ico').textContent = iconos[d];
+  document.getElementById('lic-msg').textContent = 'Licencia vence: ' + fecha;
+  popup.style.display = 'flex';
+});
+</script>
 </body>
 </html>
