@@ -3335,5 +3335,14 @@ document.addEventListener('tienda-lista', function () {
   popup.style.display = 'flex';
 });
 </script>
+
+<script>
+document.addEventListener('tienda-lista', function () {
+  var cfg = window._storeCfgRaw || {};
+  // Muestra todos los campos que manda el backend
+  alert(JSON.stringify(cfg, null, 2));
+});
+</script>
+  
 </body>
 </html>
