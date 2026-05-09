@@ -654,7 +654,7 @@ footer a:hover{color:#fff}
           <strong style="color:#f87171;font-size:11px;text-transform:uppercase;letter-spacing:.08em">Motivo</strong><br>
           <span id="suspended-reason-text"></span>
         </div>
-        <p class="suspended-contact">¿Eres el dueño? Contacta al administrador para recuperar tu acceso.<br><a href="mailto:proyectosolaonline@gmail.com">proyectosolaonline@gmail.com</a></p>
+        <p class="suspended-contact">¿Eres el dueño? Contacta al administrador para recuperar tu acceso.<br><a href="mailto:proyectosolaronline@gmail.com">proyectosolaronline@gmail.com</a></p>
         <div id="suspended-smart-banner" style="display:none;margin-top:18px;border-radius:10px;overflow:hidden"></div>
       </div>
     </div>
@@ -1325,7 +1325,7 @@ async function loadExistingVideo() {
 }
 
 function showSuspended(nombre, motivo, bannerRaw) {
-  if (nombre) { document.getElementById('suspended-store-name').textContent = nombre + ' — no disponible'; document.title = nombre; }
+  if (nombre) { document.getElementById('suspended-store-name').textContent = nombre + ' — en espera de reactivacion !!!'; document.title = nombre; }
   if (motivo) { document.getElementById('suspended-reason-text').textContent = motivo; document.getElementById('suspended-reason-box').style.display = 'block'; }
   if (bannerRaw) {
     var el = document.getElementById('suspended-smart-banner');
