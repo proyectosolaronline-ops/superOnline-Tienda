@@ -1797,7 +1797,23 @@ if (!list.length) {
     var hasTwo = !!(p.imageUrl && p.imageUrl2);
     var inListQty = lightList.find(function(x) { return x.productId === p.productId; });
     var inCartQty = cart.find(function(c) { return c.productId === p.productId; });
-    var priceHTML = '<div class="price-wrap"><span class="price-real">' + fmt(p.price) + '</span>' + (hasWholesale ? '<span class="price-wholesale">★ May: ' + fmt(p.wholesalePrice) + '</span>' : '') + '</div>';
+ 
+var priceHTML;
+if (isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '') {
+  // Mayorista: solo ve su precio especial, no el precio público
+  priceHTML = '<div class="price-wrap">'
+    + '<span class="price-real" style="color:var(--warn)">' + fmt(p.wholesalePrice) + '</span>'
+    + '<span class="price-wholesale">★ Precio mayorista</span>'
+    + '</div>';
+} else if (!isMayorista) {
+  // Público: solo ve precio normal, nunca el mayorista
+  priceHTML = '<div class="price-wrap">'
+    + '<span class="price-real">' + fmt(p.price) + '</span>'
+    + '</div>';
+} else {
+  priceHTML = '<div class="price-wrap"><span class="price-real">' + fmt(p.price) + '</span></div>';
+}
+    
     var ctaHTML;
     if (window.IS_OFFLINE_MODE) {
       var qty0 = inCartQty ? inCartQty.qty : 0;
@@ -2361,7 +2377,25 @@ function openPM(id) {
   document.getElementById('pm-name').textContent = p.name;
   document.getElementById('pm-desc').textContent = p.description || '';
   var pb = document.getElementById('pm-price-block'), btn = document.getElementById('pm-add-btn');
-  pb.innerHTML = '<div class="pm-prices"><div class="pm-price">' + fmt(p.price) + '</div>' + (hasWholesale ? '<div class="pm-wholesale">★ Tu precio mayorista: <strong>' + fmt(p.wholesalePrice) + '</strong></div>' : '') + '</div>';
+ 
+ var priceBlock;
+if (isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '') {
+  // Mayorista: solo su precio
+  priceBlock = '<div class="pm-prices">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--warn);letter-spacing:.06em;margin-bottom:4px">★ TU PRECIO MAYORISTA</div>'
+    + '<div class="pm-price" style="color:var(--warn)">' + fmt(p.wholesalePrice) + '</div>'
+    + '</div>';
+} else {
+  // Público: solo precio normal
+  priceBlock = '<div class="pm-prices">'
+    + '<div class="pm-price">' + fmt(p.price) + '</div>'
+    + '</div>';
+}
+pb.innerHTML = priceBlock; 
+  
+  
+  
+  
   var inStock = Number(p.stock||0) > 0;
   if (isLight) {
     var inList = lightList.some(function(x) { return x.productId === id; });
