@@ -2950,7 +2950,13 @@ function renderCatalogModalGrid(list, isMayorista, isLight) {
     }
     return '<div class="pcard" onclick="openPM(\'' + p.productId + '\')">' +
       '<div class="pcard-img" style="aspect-ratio:1;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden">' + img + (!inStock ? '<div class="verify-tag">⏳</div>' : (stock <= 5 ? '<div class="stock-badge">¡' + stock + '!</div>' : '')) + '</div>' +
-      '<div class="pcard-body"><div class="pcard-name">' + esc(p.name) + '</div><div class="pcard-foot"><span class="price-real" style="font-size:13px">' + fmt(p.price) + '</span>' + ctaHTML + '</div></div></div>';
+      '<div class="pcard-body"><div class="pcard-name">' + esc(p.name) + '</div><div class="pcard-foot">
+      
+    + (isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== ''
+    ? '<span class="price-real" style="font-size:13px;color:var(--warn)">' + fmt(p.wholesalePrice) + '</span>'
+    : '<span class="price-real" style="font-size:13px">' + fmt(p.price) + '</span>')
++ ctaHTML
+      + '</div></div></div>';
   }).join('');
 }
 function updateCatalogModalCart() {
