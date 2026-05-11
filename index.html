@@ -1,82 +1,99 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Mini Clon Logística Real</title>
+    <title>Core Logística Tienda</title>
     <style>
-        :root { --warn: #ff6600; --text: #333; --r: 8px; }
-        body { font-family: sans-serif; padding: 20px; color: var(--text); }
-        #grid-el { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-        .pcard { border: 1px solid #eee; padding: 10px; border-radius: var(--r); position: relative; }
-        .price-real { font-weight: bold; font-size: 1.1em; display: block; }
-        .price-wholesale { color: var(--warn); font-size: 0.85em; font-weight: bold; }
-        #loading { padding: 50px; text-align: center; }
+        :root { --warn: #ff6600; --text: #333; }
+        body { font-family: 'Outfit', sans-serif; }
+        #grid-el { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .pcard { border: 1px solid #ddd; padding: 10px; border-radius: 8px; }
+        .price-real { font-size: 16px; font-weight: 700; display: block; }
+        .price-wholesale { color: var(--warn); font-size: 12px; font-weight: 800; }
+        #loading-overlay { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 99; }
     </style>
 </head>
 <body>
 
-    <div id="loading">Cargando logística...</div>
-    <div id="grid-el"></div>
+<div id="loading-overlay">Cargando Tienda...</div>
+<div id="grid-el"></div>
 
 <script>
-// 1. CAPTURA DE LOGÍSTICA (URL)
+// --- LOGÍSTICA DE ORIGEN (Parámetros URL) ---
 const params = new URLSearchParams(window.location.search);
-const BACKEND = params.get('backend');
-const STORE_ID = params.get('store');
+const BACKEND = params.get('backend'); // Tu Apps Script URL
+const STORE_ID = params.get('store');   // Tu store_id de la hoja
 
-// 2. ESTADO GLOBAL (Simulando tu cliente)
-// Cambia 'true' a 'false' para probar la otra cara de la moneda
-window.customer = { isMayorista: true }; 
+// --- VARIABLES DE ESTADO ---
+let products = [];
+let customer = null; // Se llenará con el fetch o login
 
-// 3. DATOS DE EJEMPLO (Lo que vendría de tu Sheets)
-const mockProducts = [
-    { productId: "A1", name: "Producto Pro", price: 100, price2: 80, category: "Solar" },
-    { productId: "B2", name: "Cable DC", price: 50, price2: 45, category: "Accesorios" }
-];
+// --- MOTOR DE FORMATEO ---
+function fmt(n) { return '$' + Number(n || 0).toLocaleString(); }
 
-// 4. FUNCIÓN FORMATEO (La que ya usas)
-function fmt(n) { return '$' + Number(n).toLocaleString(); }
-
-// 5. RENDERIZADO (El motor que no debe romperse)
-function render() {
+// --- LOGÍSTICA DE RENDERIZADO (El Corazón del Fix) ---
+function renderGridPage() {
     const g = document.getElementById('grid-el');
-    const isM = (window.customer && window.customer.isMayorista === true);
+    const isM = (customer && customer.isMayorista === true);
     
-    if (!mockProducts.length) return;
+    if (!products.length) {
+        g.innerHTML = "No hay productos.";
+        return;
+    }
 
-    const html = mockProducts.map(function(p) {
-        // LÓGICA CRÍTICA: Decisión de precio en el origen
-        let priceHTML = '';
-        if (isM && p.price2) {
-            // Flujo Mayorista
-            priceHTML = `<span class="price-real" style="color:var(--warn)">${fmt(p.price2)}</span>
-                         <span class="price-wholesale">★ Mayoreo</span>`;
+    // Clon de tu lógica .map().join('')
+    const html = products.map(function(p) {
+        // Logística: Price 2 es Mayoreo, Price es Público
+        const p1 = p.price;
+        const p2 = p.price2;
+
+        let priceHTML = '<div class="price-wrap">';
+        if (isM && p2 && p2 != 0) {
+            // Si es mayorista, inyectamos SOLO el precio 2 en naranja
+            priceHTML += '<span class="price-real" style="color:var(--warn)">' + fmt(p2) + '</span>';
+            priceHTML += '<span class="price-wholesale">★ MAYOREO</span>';
         } else {
-            // Flujo Público
-            priceHTML = `<span class="price-real">${fmt(p.price)}</span>`;
+            // Si es público, inyectamos SOLO el precio 1
+            priceHTML += '<span class="price-real">' + fmt(p1) + '</span>';
         }
+        priceHTML += '</div>';
 
-        return `
-            <div class="pcard">
-                <small>${p.category}</small>
-                <div>${p.name}</div>
-                <div style="margin-top:8px">${priceHTML}</div>
-            </div>
-        `;
+        return '<div class="pcard">' +
+                 '<div>' + p.name + '</div>' +
+                 priceHTML + 
+               '</div>';
     }).join('');
 
     g.innerHTML = html;
-    document.getElementById('loading').style.display = 'none';
+    // Rompemos el loop de carga apagando el overlay aquí
+    document.getElementById('loading-overlay').style.display = 'none';
 }
 
-// SIMULACIÓN DE ASINCRONÍA (Para ver si hay loop o no)
-setTimeout(() => {
-    if(!BACKEND || !STORE_ID) {
-        console.warn("Faltan parámetros, pero renderizo con mock para esta prueba.");
+// --- LOGÍSTICA ASÍNCRONA (Fetch Real) ---
+async function init() {
+    if (!BACKEND || !STORE_ID) {
+        document.body.innerHTML = "Error: Parámetros faltantes.";
+        return;
     }
-    render();
-}, 1000);
 
+    try {
+        // Simulamos la llamada a tu Google Apps Script
+        const response = await fetch(`${BACKEND}?action=getStoreData&storeId=${STORE_ID}`);
+        const data = await response.json();
+        
+        products = data.products || [];
+        customer = data.customer || { isMayorista: true }; // Simulamos sesión activa
+
+        renderGridPage();
+    } catch (e) {
+        console.error("Error de conexión:", e);
+        // Incluso si falla, apagamos el loop para mostrar el error
+        document.getElementById('loading-overlay').innerHTML = "Error de conexión con el Backend.";
+    }
+}
+
+// Iniciar aplicación
+window.onload = init;
 </script>
 </body>
 </html>
