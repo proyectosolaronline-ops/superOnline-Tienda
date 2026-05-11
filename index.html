@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini Clon Logística Real</title>
+    <style>
+        :root { --warn: #ff6600; --text: #333; --r: 8px; }
+        body { font-family: sans-serif; padding: 20px; color: var(--text); }
+        #grid-el { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .pcard { border: 1px solid #eee; padding: 10px; border-radius: var(--r); position: relative; }
+        .price-real { font-weight: bold; font-size: 1.1em; display: block; }
+        .price-wholesale { color: var(--warn); font-size: 0.85em; font-weight: bold; }
+        #loading { padding: 50px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">Cargando logística...</div>
+    <div id="grid-el"></div>
+
+<script>
+// 1. CAPTURA DE LOGÍSTICA (URL)
+const params = new URLSearchParams(window.location.search);
+const BACKEND = params.get('backend');
+const STORE_ID = params.get('store');
+
+// 2. ESTADO GLOBAL (Simulando tu cliente)
+// Cambia 'true' a 'false' para probar la otra cara de la moneda
+window.customer = { isMayorista: true }; 
+
+// 3. DATOS DE EJEMPLO (Lo que vendría de tu Sheets)
+const mockProducts = [
+    { productId: "A1", name: "Producto Pro", price: 100, price2: 80, category: "Solar" },
+    { productId: "B2", name: "Cable DC", price: 50, price2: 45, category: "Accesorios" }
+];
+
+// 4. FUNCIÓN FORMATEO (La que ya usas)
+function fmt(n) { return '$' + Number(n).toLocaleString(); }
+
+// 5. RENDERIZADO (El motor que no debe romperse)
+function render() {
+    const g = document.getElementById('grid-el');
+    const isM = (window.customer && window.customer.isMayorista === true);
+    
+    if (!mockProducts.length) return;
+
+    const html = mockProducts.map(function(p) {
+        // LÓGICA CRÍTICA: Decisión de precio en el origen
+        let priceHTML = '';
+        if (isM && p.price2) {
+            // Flujo Mayorista
+            priceHTML = `<span class="price-real" style="color:var(--warn)">${fmt(p.price2)}</span>
+                         <span class="price-wholesale">★ Mayoreo</span>`;
+        } else {
+            // Flujo Público
+            priceHTML = `<span class="price-real">${fmt(p.price)}</span>`;
+        }
+
+        return `
+            <div class="pcard">
+                <small>${p.category}</small>
+                <div>${p.name}</div>
+                <div style="margin-top:8px">${priceHTML}</div>
+            </div>
+        `;
+    }).join('');
+
+    g.innerHTML = html;
+    document.getElementById('loading').style.display = 'none';
+}
+
+// SIMULACIÓN DE ASINCRONÍA (Para ver si hay loop o no)
+setTimeout(() => {
+    if(!BACKEND || !STORE_ID) {
+        console.warn("Faltan parámetros, pero renderizo con mock para esta prueba.");
+    }
+    render();
+}, 1000);
+
+</script>
+</body>
+</html>
