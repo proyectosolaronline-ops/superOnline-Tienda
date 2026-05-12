@@ -1076,7 +1076,24 @@ function goToEditorApariencia() {
   window.location.href = base + 'editor-apariencia.html?backend=' + encodeURIComponent(BACKEND) + '&store=' + encodeURIComponent(STORE_ID);
 }
 function toggleMayoristaCheck() { var cb = document.getElementById('am-mayorista'); cb.checked = !cb.checked; }
-
+function selectTipo(tipo) {
+  var regLbl = document.getElementById('tipo-regular-lbl');
+  var mayLbl = document.getElementById('tipo-mayorista-lbl');
+  var cb     = document.getElementById('am-mayorista');
+  if (tipo === 'mayorista') {
+    regLbl.style.border = '2px solid var(--border)';
+    regLbl.querySelector('span:nth-child(2)').style.color = 'var(--text-mid)';
+    mayLbl.style.border = '2px solid var(--warn)';
+    mayLbl.querySelector('span:nth-child(2)').style.color = 'var(--warn)';
+    if (cb) cb.checked = true;
+  } else {
+    regLbl.style.border = '2px solid var(--primary)';
+    regLbl.querySelector('span:nth-child(2)').style.color = 'var(--primary)';
+    mayLbl.style.border = '2px solid var(--border)';
+    mayLbl.querySelector('span:nth-child(2)').style.color = 'var(--text-mid)';
+    if (cb) cb.checked = false;
+  }
+}
 function actualizarVisibilidadWA() {
   var debeMostrarWA = !!customer;
   var heroWA = document.getElementById('hero-wa-btn');
