@@ -2591,7 +2591,8 @@ function showAuth(mode) {
   var esMayorista = window.STORE_BUSINESS_TYPE === 'mayorista';
   var tipoWrap = document.getElementById('am-tipo-wrap');
   var mayWrap  = document.getElementById('am-mayorista-wrap');
-  if (tipoWrap) tipoWrap.style.display = (r && esMayorista) ? 'block' : 'none';
+  console.log('STORE_BUSINESS_TYPE:', window.STORE_BUSINESS_TYPE, '| r:', r, '| tipoWrap:', tipoWrap);
+  if (tipoWrap) tipoWrap.style.display = r ? 'block' : 'none';
   if (mayWrap)  mayWrap.style.display  = 'none';
   document.getElementById('am-err').style.display = 'none';
   document.getElementById('am-bg').classList.add('on');
