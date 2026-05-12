@@ -214,6 +214,7 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-fo
 .pm-name{font-family:var(--font-d);font-size:22px;font-weight:700;margin-bottom:8px;line-height:1.2;color:var(--text)}
 .pm-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px}
 .pm-prices{margin-bottom:18px;padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border)}
+.pm-prices.mayorista{background:#fff7e6;border-color:#ffd591}
 .pm-price{font-family:var(--font-d);font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
 .pm-wholesale{margin-top:6px;display:inline-flex;align-items:center;gap:5px;background:#fff7e6;border:1px solid #ffd591;color:#d46b08;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px}
 .pm-add{width:100%;padding:13px;background:var(--cta);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:all .2s;box-shadow:0 2px 8px rgba(255,105,0,.3)}
@@ -1825,7 +1826,7 @@ if (!list.length) {
     return '<div class="pcard" onclick="openPM(\'' + p.productId + '\')">' +
       '<div class="pcard-img" id="pimg-' + p.productId + '"><div class="img-track" id="track-' + p.productId + '">' + (img1 || '<span style="font-size:28px">🛍</span>') + (hasTwo ? img2 : '') + '</div>' +
       (!inStock ? '<div class="verify-tag">⏳</div>' : (stock <= 5 ? '<div class="stock-badge">¡' + stock + '!</div>' : '')) +
-      (hasWholesale ? '<div class="mayorista-tag">★</div>' : '') +
+      (isMayorista && hasWholesale ? '<div class="mayorista-tag">★ May</div>' : '') +
       (isLight && inListQty ? '<div class="in-list-badge">✓</div>' : '') + '</div>' +
       '<div class="pcard-body">' + (p.category ? '<div class="pcard-cat">' + esc(p.category) + '</div>' : '') + '<div class="pcard-name">' + esc(p.name) + '</div><div class="pcard-foot">' + priceHTML + ctaHTML + '</div></div></div>';
   }).join('');
@@ -2243,7 +2244,11 @@ if (!list.length) {
         + '<div class="promo-slide-cat">' + esc(cat) + '</div>'
         + '<div class="promo-slide-name">' + esc(p.name) + '</div>'
         + '<div class="promo-slide-desc">' + esc((p.description||'').slice(0,80)) + '</div>'
-        + '<div class="promo-slide-price">' + fmt(p.price) + '</div>'
+        + '<div class="promo-slide-price">'
+          + (customer && customer.isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== ''
+              ? fmt(p.wholesalePrice)
+              : fmt(p.price))
+          + '</div>'
         + '<button class="promo-slide-btn" onclick="event.stopPropagation();addToCart(\'' + p.productId + '\');cerrarPromoCarrusel()">Agregar a solicitudes</button>'
         + '</div>';
     }).join('');
@@ -2303,7 +2308,9 @@ function toggleLightList(pid) {
   if (idx >= 0) { lightList.splice(idx, 1); toast('"' + p.name + '" quitado de la lista'); }
   else {
     var sinStock = Number(p.stock||0) <= 0;
-    lightList.push({ productId: pid, name: p.name, price: Number(p.price), qty: 1, sinStock: sinStock });
+    var isMayorista = customer ? customer.isMayorista || false : false;
+    var lightPrice = (isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '') ? Number(p.wholesalePrice) : Number(p.price);
+    lightList.push({ productId: pid, name: p.name, price: lightPrice, qty: 1, sinStock: sinStock });
     toast(sinStock ? 'Solicitud registrada — verificaremos existencia' : '"' + p.name + '" agregado a tu lista');
   }
   updateLightBanner(); renderGrid();
@@ -2374,7 +2381,7 @@ function openPM(id) {
   // ── PRECIO: mayorista ve solo precio2 (mayoreo), público solo precio1 ──
   var priceBlock;
   if (isMayorista && p.wholesalePrice !== undefined && p.wholesalePrice !== '') {
-    priceBlock = '<div class="pm-prices">'
+    priceBlock = '<div class="pm-prices mayorista">'
       + '<div style="font-size:11px;font-weight:700;color:var(--warn);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">★ Tu precio mayorista</div>'
       + '<div class="pm-price" style="color:var(--warn)">' + fmt(p.wholesalePrice) + '</div>'
       + '</div>';
