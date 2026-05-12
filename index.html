@@ -935,23 +935,42 @@ footer a:hover{color:#fff}
 </div>
 
 <div class="modal-bg" id="am-bg" onclick="if(event.target===this)closeAuth()">
-  <div class="amodal">
-    <div class="am-title" id="am-title">Registrate gratis</div>
-    <div class="am-sub" id="am-sub">Crea tu cuenta para acceder a precios mayoristas y hacer pedidos</div>
-    <div id="am-reg-fields">
-      <div class="fg"><label>Nombre completo *</label><input id="am-name" placeholder="Juan Garcia"/></div>
-      <div class="fg"><label>Telefono</label><input id="am-phone" placeholder="+52..."/></div>
-      <div class="mayorista-check" onclick="toggleMayoristaCheck()">
-        <input type="checkbox" id="am-mayorista" onclick="event.stopPropagation()">
-        <label for="am-mayorista"><strong>Quiero precio mayorista</strong>Compro en cantidad y quiero precios especiales</label>
+<div class="amodal">
+  <div class="am-title" id="am-title">Registrate gratis</div>
+  <div class="am-sub" id="am-sub">Crea tu cuenta para hacer pedidos y precios especiales</div>
+  <div id="am-reg-fields">
+    <div class="fg"><label>Nombre completo *</label><input id="am-name" placeholder="Juan Garcia"/></div>
+    <div class="fg"><label>Telefono</label><input id="am-phone" placeholder="+52..."/></div>
+
+    <div id="am-tipo-wrap" style="display:none;margin-bottom:12px">
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase">Tipo de cliente</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label id="tipo-regular-lbl" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface2);border:2px solid var(--primary);border-radius:var(--r);cursor:pointer;text-align:center;transition:all .15s">
+          <input type="radio" name="am-tipo" value="regular" checked onclick="selectTipo('regular')" style="display:none">
+          <span style="font-size:22px">🛒</span>
+          <span id="tipo-regular-txt" style="font-size:12px;font-weight:700;color:var(--primary)">Regular</span>
+          <span style="font-size:10px;color:var(--muted);line-height:1.3">Compras personales</span>
+        </label>
+        <label id="tipo-mayorista-lbl" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--surface2);border:2px solid var(--border);border-radius:var(--r);cursor:pointer;text-align:center;transition:all .15s">
+          <input type="radio" name="am-tipo" value="mayorista" onclick="selectTipo('mayorista')" style="display:none">
+          <span style="font-size:22px">📦</span>
+          <span id="tipo-mayorista-txt" style="font-size:12px;font-weight:700;color:var(--text-mid)">Mayorista</span>
+          <span style="font-size:10px;color:var(--muted);line-height:1.3">Precios especiales</span>
+        </label>
       </div>
     </div>
-    <div class="fg"><label>Email *</label><input type="email" id="am-email" placeholder="tu@email.com"/></div>
-    <div class="fg"><label>Contrasena *</label><input type="password" id="am-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"/></div>
-    <div class="am-err" id="am-err"></div>
-    <button class="am-submit" id="am-submit" onclick="submitAuth()">Crear cuenta</button>
-    <div class="am-switch"><span id="am-sw-text">Ya tienes cuenta?</span> <button onclick="toggleAuthMode()" id="am-sw-btn">Iniciar sesion</button></div>
+
+    <div class="mayorista-check" id="am-mayorista-wrap" onclick="toggleMayoristaCheck()" style="display:none">
+      <input type="checkbox" id="am-mayorista" onclick="event.stopPropagation()">
+      <label for="am-mayorista"><strong>Quiero precio mayorista</strong>Compro en cantidad y quiero precios especiales</label>
+    </div>
   </div>
+  <div class="fg"><label>Email *</label><input type="email" id="am-email" placeholder="tu@email.com"/></div>
+  <div class="fg"><label>Contrasena *</label><input type="password" id="am-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"/></div>
+  <div class="am-err" id="am-err"></div>
+  <button class="am-submit" id="am-submit" onclick="submitAuth()">Crear cuenta</button>
+  <div class="am-switch"><span id="am-sw-text">Ya tienes cuenta?</span> <button onclick="toggleAuthMode()" id="am-sw-btn">Iniciar sesion</button></div>
+</div>
 </div>
 
 <div class="modal-bg" id="owner-bg" onclick="if(event.target===this)closeOwnerModal()">
@@ -2547,11 +2566,33 @@ function showAuth(mode) {
   document.getElementById('am-sw-text').textContent = r ? 'Ya tienes cuenta?' : 'Sin cuenta?';
   document.getElementById('am-sw-btn').textContent  = r ? 'Iniciar sesion' : 'Registrarse';
   document.getElementById('am-reg-fields').style.display = r ? 'block' : 'none';
-  var checkMay = document.querySelector('.mayorista-check');
-  if (checkMay) checkMay.style.display = (window.STORE_BUSINESS_TYPE === 'mayorista') ? '' : 'none';
+  var esMayorista = window.STORE_BUSINESS_TYPE === 'mayorista';
+  var tipoWrap = document.getElementById('am-tipo-wrap');
+  var mayWrap  = document.getElementById('am-mayorista-wrap');
+if (tipoWrap) tipoWrap.style.display = r ? 'block' : 'none';
+  if (mayWrap)  mayWrap.style.display  = 'none';
   document.getElementById('am-err').style.display = 'none';
   document.getElementById('am-bg').classList.add('on');
 }
+function selectTipo(tipo) {
+  var rLbl = document.getElementById('tipo-regular-lbl');
+  var mLbl = document.getElementById('tipo-mayorista-lbl');
+  var rTxt = document.getElementById('tipo-regular-txt');
+  var mTxt = document.getElementById('tipo-mayorista-txt');
+  var cb   = document.getElementById('am-mayorista');
+  if (tipo === 'mayorista') {
+    rLbl.style.border = '2px solid var(--border)'; rTxt.style.color = 'var(--text-mid)';
+    mLbl.style.border = '2px solid var(--warn)';   mTxt.style.color = 'var(--warn)';
+    if (cb) cb.checked = true;
+  } else {
+    rLbl.style.border = '2px solid var(--primary)'; rTxt.style.color = 'var(--primary)';
+    mLbl.style.border = '2px solid var(--border)';  mTxt.style.color = 'var(--text-mid)';
+    if (cb) cb.checked = false;
+  }
+}
+
+
+  
 function closeAuth() { document.getElementById('am-bg').classList.remove('on'); }
 function toggleAuthMode() { showAuth(authMode === 'register' ? 'login' : 'register'); }
 
