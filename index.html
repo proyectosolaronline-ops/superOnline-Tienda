@@ -2590,32 +2590,26 @@ function showAuth(mode) {
   document.getElementById('am-sw-text').textContent = r ? 'Ya tienes cuenta?' : 'Sin cuenta?';
   document.getElementById('am-sw-btn').textContent  = r ? 'Iniciar sesion' : 'Registrarse';
   document.getElementById('am-reg-fields').style.display = r ? 'block' : 'none';
+
+  // Mostrar selector de tipo según businessType de la tienda
   var esMayorista = window.STORE_BUSINESS_TYPE === 'mayorista';
   var tipoWrap = document.getElementById('am-tipo-wrap');
   var mayWrap  = document.getElementById('am-mayorista-wrap');
-  console.log('STORE_BUSINESS_TYPE:', window.STORE_BUSINESS_TYPE, '| r:', r, '| tipoWrap:', tipoWrap);
-  if (tipoWrap) tipoWrap.style.display = r ? 'block' : 'none';
-  if (mayWrap)  mayWrap.style.display  = 'none';
+  if (r) {
+    if (esMayorista) {
+      tipoWrap.style.display = 'block';
+      mayWrap.style.display  = 'none';
+    } else {
+      tipoWrap.style.display = 'none';
+      mayWrap.style.display  = 'none';
+    }
+  }
+
   document.getElementById('am-err').style.display = 'none';
   document.getElementById('am-bg').classList.add('on');
 }
 
-function selectTipo(tipo) {
-  var rLbl = document.getElementById('tipo-regular-lbl');
-  var mLbl = document.getElementById('tipo-mayorista-lbl');
-  var rTxt = document.getElementById('tipo-regular-txt');
-  var mTxt = document.getElementById('tipo-mayorista-txt');
-  var cb   = document.getElementById('am-mayorista');
-  if (tipo === 'mayorista') {
-    rLbl.style.border = '2px solid var(--border)'; rTxt.style.color = 'var(--text-mid)';
-    mLbl.style.border = '2px solid var(--warn)';   mTxt.style.color = 'var(--warn)';
-    if (cb) cb.checked = true;
-  } else {
-    rLbl.style.border = '2px solid var(--primary)'; rTxt.style.color = 'var(--primary)';
-    mLbl.style.border = '2px solid var(--border)';  mTxt.style.color = 'var(--text-mid)';
-    if (cb) cb.checked = false;
-  }
-}
+
   
 function closeAuth() { document.getElementById('am-bg').classList.remove('on'); }
 function toggleAuthMode() { showAuth(authMode === 'register' ? 'login' : 'register'); }
