@@ -1079,20 +1079,27 @@ function goToEditorApariencia() {
 }
 function toggleMayoristaCheck() { var cb = document.getElementById('am-mayorista'); cb.checked = !cb.checked; }
 function selectTipo(tipo) {
-  var regLbl = document.getElementById('tipo-regular-lbl');
-  var mayLbl = document.getElementById('tipo-mayorista-lbl');
-  var cb     = document.getElementById('am-mayorista');
+  var rLbl = document.getElementById('tipo-regular-lbl');
+  var mLbl = document.getElementById('tipo-mayorista-lbl');
+  var rTxt = document.getElementById('tipo-regular-txt');
+  var mTxt = document.getElementById('tipo-mayorista-txt');
+  var cb   = document.getElementById('am-mayorista');
+
   if (tipo === 'mayorista') {
-    regLbl.style.border = '2px solid var(--border)';
-    regLbl.querySelector('span:nth-child(2)').style.color = 'var(--text-mid)';
-    mayLbl.style.border = '2px solid var(--warn)';
-    mayLbl.querySelector('span:nth-child(2)').style.color = 'var(--warn)';
+    rLbl.style.border      = '2px solid var(--border)';
+    rLbl.style.background  = 'var(--surface2)';
+    rTxt.style.color       = 'var(--text-mid)';
+    mLbl.style.border      = '2px solid var(--success)';
+    mLbl.style.background  = 'var(--success-light)';
+    mTxt.style.color       = 'var(--success)';
     if (cb) cb.checked = true;
   } else {
-    regLbl.style.border = '2px solid var(--primary)';
-    regLbl.querySelector('span:nth-child(2)').style.color = 'var(--primary)';
-    mayLbl.style.border = '2px solid var(--border)';
-    mayLbl.querySelector('span:nth-child(2)').style.color = 'var(--text-mid)';
+    rLbl.style.border      = '2px solid var(--primary)';
+    rLbl.style.background  = 'var(--primary-light)';
+    rTxt.style.color       = 'var(--primary)';
+    mLbl.style.border      = '2px solid var(--border)';
+    mLbl.style.background  = 'var(--surface2)';
+    mTxt.style.color       = 'var(--text-mid)';
     if (cb) cb.checked = false;
   }
 }
