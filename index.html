@@ -1084,26 +1084,17 @@ function selectTipo(tipo) {
   var rTxt = document.getElementById('tipo-regular-txt');
   var mTxt = document.getElementById('tipo-mayorista-txt');
   var cb   = document.getElementById('am-mayorista');
-
   if (tipo === 'mayorista') {
-    rLbl.style.border      = '2px solid var(--border)';
-    rLbl.style.background  = 'var(--surface2)';
-    rTxt.style.color       = 'var(--text-mid)';
-    mLbl.style.border      = '2px solid var(--success)';
-    mLbl.style.background  = 'var(--success-light)';
-    mTxt.style.color       = 'var(--success)';
+    rLbl.style.border = '2px solid var(--border)'; rTxt.style.color = 'var(--text-mid)';
+    mLbl.style.border = '2px solid var(--warn)';   mTxt.style.color = 'var(--warn)';
     if (cb) cb.checked = true;
   } else {
-    rLbl.style.border      = '2px solid var(--primary)';
-    rLbl.style.background  = 'var(--primary-light)';
-    rTxt.style.color       = 'var(--primary)';
-    mLbl.style.border      = '2px solid var(--border)';
-    mLbl.style.background  = 'var(--surface2)';
-    mTxt.style.color       = 'var(--text-mid)';
+    rLbl.style.border = '2px solid var(--primary)'; rTxt.style.color = 'var(--primary)';
+    mLbl.style.border = '2px solid var(--border)';  mTxt.style.color = 'var(--text-mid)';
     if (cb) cb.checked = false;
   }
 }
-function actualizarVisibilidadWA() {
+  function actualizarVisibilidadWA() {
   var debeMostrarWA = !!customer;
   var heroWA = document.getElementById('hero-wa-btn');
   if (heroWA) heroWA.style.display = debeMostrarWA ? '' : 'none';
