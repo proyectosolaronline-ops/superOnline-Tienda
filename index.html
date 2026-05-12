@@ -3604,6 +3604,30 @@ function mostrarDebug() {
   });
   document.getElementById('dbg-products').innerHTML = rows || '<span style="color:#64748b">Sin productos cargados aún</span>';
 }
+
+ <button onclick="toggleFullscreen()" style="
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 9999;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 18px;
+">⛶</button>
+
+<script>
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+</script> 
 </script>
 
 </body>
