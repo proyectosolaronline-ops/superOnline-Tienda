@@ -3564,61 +3564,8 @@ getWithToken = async function(action, token) {
   }
   return result;
 };
-
-function mostrarDebug() {
-  var dbg = document.getElementById('dbg');
-  dbg.style.display = 'block';
-
-  // customer
-  document.getElementById('dbg-customer').textContent = JSON.stringify({
-    name:        customer ? customer.name : null,
-    email:       customer ? customer.email : null,
-    customerType:customer ? customer.customerType : null,
-    isMayorista: customer ? customer.isMayorista : null,
-    token:       customer ? (customer.token ? customer.token.slice(0,20)+'...' : null) : null
-  }, null, 2);
-
-  // cR
-  var cr = window._dbgCR;
-  document.getElementById('dbg-cr').textContent = cr ? JSON.stringify({
-    ok:          cr.ok,
-    isMayorista: cr.isMayorista,
-    totalProds:  cr.products ? cr.products.length : 0,
-    planFeatures:cr.planFeatures || null
-  }, null, 2) : 'null — aún no cargó o falló';
-
-  // productos
-  var rows = '';
-  var prods = (cr && cr.products) ? cr.products.slice(0,5) : (products ? products.slice(0,5) : []);
-  var isMay = customer ? customer.isMayorista || false : false;
-  prods.forEach(function(p) {
-    var precioMostrado = (isMay && p.wholesalePrice) ? p.wholesalePrice : p.price;
-    var ok = (isMay && p.wholesalePrice) ? '✅ mayorista' : '—  público';
-    rows += '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px;padding:4px 0;border-bottom:1px solid #222;align-items:center">'
-      + '<span style="color:#e2e8f0">' + (p.name||'').slice(0,25) + '</span>'
-      + '<span style="color:#fbbf24">price: ' + (p.price||'—') + '</span>'
-      + '<span style="color:#34d399">wholesale: ' + (p.wholesalePrice||'N/A') + '</span>'
-      + '<span style="color:' + (isMay && p.wholesalePrice ? '#818cf8' : '#64748b') + '">' + ok + ' → ' + precioMostrado + '</span>'
-      + '</div>';
-  });
-  document.getElementById('dbg-products').innerHTML = rows || '<span style="color:#64748b">Sin productos cargados aún</span>';
-}
-
- <button onclick="toggleFullscreen()" style="
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  z-index: 999999;
-  background: #333;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-size: 18px;
-">⛶</button>
 <script>
-  function toggleFullscreen() {
+function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
   } else {
@@ -3626,10 +3573,12 @@ function mostrarDebug() {
   }
 }
 </script>
-<div id="lic-owner-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9995;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
 
-  
-</script>
+<div id="lic-owner-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9995;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+</div>
+
+<button onclick="toggleFullscreen()" style="position:fixed;bottom:20px;left:20px;z-index:999999;background:#333;color:white;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:18px;">⛶</button>
 
 </body>
 </html>
+
