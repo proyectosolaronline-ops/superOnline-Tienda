@@ -3500,12 +3500,12 @@ function mostrarFechaLicencia() {
       .then(function(r){ return r.json(); })
       .catch(function(){ return {}; });
 
-    // Abrir cliente de correo con mailto
+<!--    // Abrir cliente de correo con mailto
     var adminEmail = 'proyectosolaronline@gmail.com'; // tu email registrado en master
     window.open('mailto:' + adminEmail + '?subject=' + asunto + '&body=' + cuerpo, '_blank');
 
     btn.disabled    = false;
-    btn.textContent = '✅ Correo abierto';
+    btn.textContent = '✅ Correo abierto no quiero este boton';
     btn.style.background = '#00a650';
 
     setTimeout(function(){
@@ -3513,7 +3513,7 @@ function mostrarFechaLicencia() {
     }, 2500);
   };
 
-})();
+})(); 
 </script>
 </script>
 
