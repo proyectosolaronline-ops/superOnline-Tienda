@@ -2525,17 +2525,11 @@ var ubicacion = '';
   if (ubicacion) msg += '📍 ' + ubicacion + '\n';
   if (orderId)   msg += '🔖 Pedido #' + orderId + '\n';
   if (orderLink) msg += '🔗 ' + orderLink + '\n';
-   // Solo vaciar carrito si el pedido se registró correctamente
-  if (orderId) {
-    cart = []; save(); renderGrid(); updateNav();
-    toast('✅ Pedido #' + orderId + ' registrado y enviado');
-  } else {
-    toast('⚠️ Pedido enviado por WhatsApp pero no se pudo registrar en el sistema');
-  }
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+  cart = []; save(); renderGrid(); updateNav();
   closeSuggestModal(); closeCart();
   if (btnConfirm) { btnConfirm.disabled=false; btnConfirm.textContent='Enviar pedido por WhatsApp'; }
-
+  toast('✅ Pedido registrado y enviado');
 function _doShowCheckout() {
   document.getElementById('cart-view').style.display = 'none';
   document.getElementById('co-view').style.display = 'flex';
