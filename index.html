@@ -1085,9 +1085,12 @@ window.IS_OFFLINE_MODE = false;
 
 // ── CACHÉ CON EXPIRACIÓN DE 5 MINUTOS ────────────────────────
 function loadCachedCatalog() {
-  try {
-    var raw = localStorage.getItem('cache_catalog_' + STORE_ID);
-    if (!raw) return null;
+  try {var MAX_AGE = 5 * 60 * 1000; // 5 minutos
+var age = Date.now() - (data.cachedAt || 0);
+if (age > MAX_AGE) {
+  // No retornar null — devolver los datos igual con una bandera
+  return { products: data.products, cachedAt: data.cachedAt || 0, stale: true };
+}
     var data = JSON.parse(raw);
     if (!data || !data.products || !data.products.length) return null;
     var MAX_AGE = 5 * 60 * 1000; // 5 minutos — fuerza fetch fresco del backend
