@@ -1604,7 +1604,7 @@ async function getWithToken(a, token) {
     var text = await r.text();
     if (text.trim().startsWith('<')) return null;
     var d = JSON.parse(text);
-    return d.ok ? d : null;
+    return d;
   } catch(e) { return null; }
 }
 async function post(a, b) {
