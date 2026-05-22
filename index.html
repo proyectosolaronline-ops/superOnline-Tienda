@@ -2550,10 +2550,10 @@ function showCartView() {
 
 async function placeOrder() {
   if (_orderInFlight) return;
+  if (!cart.length) { toast('Sin solicitudes en tu lista'); return; }
   var name = document.getElementById('co-name').value.trim(), email = document.getElementById('co-email').value.trim();
   if (!name || !email) { toast('Nombre y email requeridos'); return; }
   if (PRIVACY_STATUS !== 'accepted') { abrirPrivacidad(); return; }
-  if (!cart.length) { toast('Sin solicitudes en tu lista'); return; }
   _orderInFlight = true;
   var btn = document.getElementById('place-btn'); btn.disabled = true; btn.textContent = 'Enviando...';
   try {
