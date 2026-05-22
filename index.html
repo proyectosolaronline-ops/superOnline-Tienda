@@ -2483,13 +2483,13 @@ async function confirmarConTelefono() {
   err.style.display = 'none';
   var btnConfirm = document.querySelector('#csm-phone-block .csm-btn-primary');
   if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Registrando...'; }
-  var ubicacion = '';
+var ubicacion = '';
   try {
-try {
-  var geoRes = await fetch('https://ipapi.co/json/').then(function(r){ return r.json(); });
-  if (geoRes && geoRes.city) { ubicacion = (geoRes.city||'') + (geoRes.region ? ', '+geoRes.region : ''); }
-} catch(e) { ubicacion = ''; }    if (geoRes && geoRes.city) { ubicacion = (geoRes.city||'') + (geoRes.region ? ', '+geoRes.region : '') + (geoRes.country_name ? ', '+geoRes.country_name : ''); }
-  } catch(e) {}
+    var geoRes = await fetch('https://ipapi.co/json/').then(function(r){ return r.json(); });
+    if (geoRes && geoRes.city) {
+      ubicacion = (geoRes.city||'') + (geoRes.region ? ', '+geoRes.region : '') + (geoRes.country_name ? ', '+geoRes.country_name : '');
+    }
+  } catch(e) { ubicacion = ''; }
   var customerId = '', customerName = 'Cliente Tel';
   try {
     var regRes = await post('customer.registerPhone', { phone: tel, location: ubicacion, storeName: storeName });
