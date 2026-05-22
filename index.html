@@ -1761,8 +1761,12 @@ _catalogList = products.filter(function(p) {
   var cat = resolveCategory(p.category);
   if (cat === null) return false; // solo null real (sin categoría)
   // PROMO ya no retorna null → pasa este filtro ✓
-  if (activeCat && cat.toLowerCase() !== activeCat.toLowerCase()) return false;
-  if (_searchQuery) { /* ... igual ... */ }
+if (activeCat && cat.toLowerCase() !== activeCat.toLowerCase()) return false;
+  if (_searchQuery) {
+    var haystack = ((p.name||'') + ' ' + (p.description||'') + ' ' + (p.category||'')).toLowerCase();
+    var words = _searchQuery.split(/\s+/).filter(Boolean);
+    if (!words.every(function(w) { return haystack.indexOf(w) !== -1; })) return false;
+  }
   return true;
 });
   var sub = document.getElementById('cat-sub-count');
