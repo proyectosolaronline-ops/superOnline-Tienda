@@ -2530,6 +2530,8 @@ var ubicacion = '';
   closeSuggestModal(); closeCart();
   if (btnConfirm) { btnConfirm.disabled=false; btnConfirm.textContent='Enviar pedido por WhatsApp'; }
   toast('✅ Pedido registrado y enviado');
+}
+
 function _doShowCheckout() {
   document.getElementById('cart-view').style.display = 'none';
   document.getElementById('co-view').style.display = 'flex';
@@ -2548,10 +2550,10 @@ function showCartView() {
 
 async function placeOrder() {
   if (_orderInFlight) return;
-  if (!cart.length) { toast('Sin solicitudes en tu lista'); return; }
   var name = document.getElementById('co-name').value.trim(), email = document.getElementById('co-email').value.trim();
   if (!name || !email) { toast('Nombre y email requeridos'); return; }
   if (PRIVACY_STATUS !== 'accepted') { abrirPrivacidad(); return; }
+  if (!cart.length) { toast('Sin solicitudes en tu lista'); return; }
   _orderInFlight = true;
   var btn = document.getElementById('place-btn'); btn.disabled = true; btn.textContent = 'Enviando...';
   try {
@@ -3007,15 +3009,15 @@ function hashProducts(prods) {
 }
 
 async function pollCatalog() {
-  if (!BACKEND || !STORE_ID) return;
+  if (!BACKEND || !STORE_ID || !products.length) return; // no pollear si aún no cargó
   try {
     var token = customer ? customer.token || '' : '';
     var cR = await getWithToken('store.catalog', token).catch(function() { return null; });
-    if (!cR || !cR.products || !cR.products.length) return;
+    if (!cR || !cR.products || !cR.products.length) return; // ignorar respuestas vacías
     var fresh = cR.products.filter(function(p) {
       return p.active === true || p.active === 'TRUE';
     });
-    if (!fresh.length) return;
+    if (!fresh.length) return; // nunca sobreescribir con lista vacía
     var newHash = hashProducts(fresh);
     if (newHash !== _lastProductHash) {
       _lastProductHash = newHash;
@@ -3027,11 +3029,12 @@ async function pollCatalog() {
     }
   } catch(e) {}
 }
+
 function startPolling() {
-  if (_pollingActive) return;
+  if (_pollingActive || !products.length) return; // solo arrancar si ya hay productos
   _pollingActive = true;
   _lastProductHash = hashProducts(products);
-  setInterval(pollCatalog, 15000);
+  setInterval(pollCatalog, 15000); // 15s en lugar de 10s para reducir carga
 }
 
 document.addEventListener('tienda-lista', function() {
@@ -3487,5 +3490,7 @@ function mostrarFechaLicencia() {
 
 </body>
 </html>
+
+
 
 
