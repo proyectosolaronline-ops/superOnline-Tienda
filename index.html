@@ -1263,22 +1263,33 @@ try {
       products = (cR.products || []).filter(function(p) { return p.active === true || p.active === 'TRUE'; });
       if (products.length > 0) { saveCachedCatalog(products); }
     } else {
+    var cached = loadCachedCatalog();
+    if (cached && cached.products && cached.products.length) {
+      products = cached.products;
+      // Si el caché está vencido pero lo estamos usando igual (offline),
+      // no lo borramos — se refrescará cuando el backend responda
+    } else {
+      // Solo limpiar caché si está realmente vacío o corrupto
+      if (!cached || !cached.products || !cached.products.length) {
+        localStorage.removeItem('cache_catalog_' + STORE_ID);
+      }
+    }
+  }
       // ── FIX CACHÉ: solo usa caché si tiene menos de 5 minutos ──
       var cached = loadCachedCatalog();
       if (cached && cached.products && cached.products.length) {
         products = cached.products;
-      // ✅ PON:
-} else {
-    // Caché expirada o inválida — limpiar para forzar fetch fresco en próxima carga
-    localStorage.removeItem('cache_catalog_' + STORE_ID);
-    if (document.getElementById('grid-el')) {
-      document.getElementById('grid-el').innerHTML =
-        '<div style="grid-column:1/-1;text-align:center;padding:52px 24px;color:var(--muted);font-size:13px">' +
-        '⚠️ Sin conexión al catálogo. <button onclick="location.reload()" style="background:none;border:none;color:var(--primary);font-weight:600;cursor:pointer;font-family:var(--font-b)">Reintentar</button>' +
-        '</div>';
+      // ✅ PON:} else {
+    var cached = loadCachedCatalog();
+    if (cached && cached.products && cached.products.length) {
+      products = cached.products;
+    } else {
+      // Solo limpiar caché si está corrupto o vacío, no por estar vencido
+      if (!cached || !cached.products || !cached.products.length) {
+        localStorage.removeItem('cache_catalog_' + STORE_ID);
+      }
     }
   }
-    }
     if (products.length > 0) {
       var statProd = document.getElementById('stat-productos');
       if (statProd) statProd.textContent = products.length + '+';
