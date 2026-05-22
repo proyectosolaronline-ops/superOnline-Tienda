@@ -3009,15 +3009,15 @@ function hashProducts(prods) {
 }
 
 async function pollCatalog() {
-  if (!BACKEND || !STORE_ID || !products.length) return; // no pollear si aún no cargó
+  if (!BACKEND || !STORE_ID) return;
   try {
     var token = customer ? customer.token || '' : '';
     var cR = await getWithToken('store.catalog', token).catch(function() { return null; });
-    if (!cR || !cR.products || !cR.products.length) return; // ignorar respuestas vacías
+    if (!cR || !cR.products || !cR.products.length) return;
     var fresh = cR.products.filter(function(p) {
       return p.active === true || p.active === 'TRUE';
     });
-    if (!fresh.length) return; // nunca sobreescribir con lista vacía
+    if (!fresh.length) return;
     var newHash = hashProducts(fresh);
     if (newHash !== _lastProductHash) {
       _lastProductHash = newHash;
@@ -3029,12 +3029,11 @@ async function pollCatalog() {
     }
   } catch(e) {}
 }
-
 function startPolling() {
-  if (_pollingActive || !products.length) return; // solo arrancar si ya hay productos
+  if (_pollingActive) return;
   _pollingActive = true;
   _lastProductHash = hashProducts(products);
-  setInterval(pollCatalog, 15000); // 15s en lugar de 10s para reducir carga
+  setInterval(pollCatalog, 15000);
 }
 
 document.addEventListener('tienda-lista', function() {
