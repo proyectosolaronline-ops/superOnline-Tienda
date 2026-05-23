@@ -2874,7 +2874,7 @@ function abrirFlyerModal() {
   document.getElementById('flyer-modal').style.display = 'block';
   for (var i = 0; i < 4; i++) {
     var card = document.getElementById('fc' + i);
-    card.innerHTML = '<div style="font-family:var(--font-d);font-size:clamp(12px,2vw,18px);font-weight:700;text-align:center;color:#1a1a2e;line-height:1.2">' + esc(nombre) + '</div><div style="font-size:clamp(9px,1.2vw,12px);color:#717185;text-align:center">📱 Escanea para visitar la tienda</div><div id="fqr' + i + '" style="width:min(140px,38%);aspect-ratio:1;background:#f0fdf4;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div><div style="display:flex;flex-direction:column;gap:2px;width:100%;align-items:center;flex:1;justify-content:center">' + (dir ? '<div style="font-size:clamp(8px,1.1vw,11px);color:#1a1a2e;font-weight:500;text-align:center">📍 ' + esc(dir) + '</div>' : '') + (tel ? '<div style="font-size:clamp(8px,1.1vw,11px);color:#1a1a2e;font-weight:500;text-align:center">📞 ' + esc(tel) + '</div>' : '') + '</div><div style="width:100%;padding:4px 6px;border-radius:4px;background:linear-gradient(135deg,' + c1 + ',#1557b0);text-align:center;font-size:clamp(8px,1.1vw,11px);font-weight:700;color:#fff;word-break:break-word">' + esc(ban) + '</div><div style="font-size:clamp(6px,.9vw,9px);color:#b0b3c1;text-align:center;letter-spacing:.5px;font-weight:600;text-transform:uppercase">EasayLink</div>';
+    card.innerHTML = '<div style="font-family:var(--font-d);font-size:clamp(12px,2vw,18px);font-weight:700;text-align:center;color:#1a1a2e;line-height:1.2">' + esc(nombre) + '</div><div style="font-size:clamp(9px,1.2vw,12px);color:#717185;text-align:center">📱 Escanea para visitar la tienda</div><div id="fqr' + i + '" style="width:min(140px,38%);aspect-ratio:1;background:#f0fdf4;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div><div style="display:flex;flex-direction:column;gap:2px;width:100%;align-items:center;flex:1;justify-content:center">' + (dir ? '<div style="font-size:clamp(8px,1.1vw,11px);color:#1a1a2e;font-weight:500;text-align:center">📍 ' + esc(dir) + '</div>' : '') + (tel ? '<div style="font-size:clamp(8px,1.1vw,11px);color:#1a1a2e;font-weight:500;text-align:center">📞 ' + esc(tel) + '</div>' : '') + '</div><div style="width:100%;padding:4px 6px;border-radius:4px;background:linear-gradient(135deg,' + c1 + ',#1557b0);text-align:center;font-size:clamp(8px,1.1vw,11px);font-weight:700;color:#fff;word-break:break-word">' + esc(ban) + '</div><div style="font-size:clamp(6px,.9vw,9px);color:#b0b3c1;text-align:center;letter-spacing:.5px;font-weight:600;text-transform:uppercase">EasyLink</div>';
     generarQRFlyer(i, url, logo, ini, c1);
   }
 }
@@ -3291,10 +3291,8 @@ function dismissVideoOwner() {
 
 
 <script>
-function mostrarFechaLicencia() {
-  var raw = window._licenseExpiry
+var raw = window._licenseExpiry
          || (window._storeCfgRaw && window._storeCfgRaw.licenseExpiry)
-         || (window._storeCfgRaw && window._storeCfgRaw.daysToExpiry !== undefined ? null : null)
          || '';
   if (!raw) { toast('Sin datos de licencia'); return; }
   var exp  = new Date(raw);
