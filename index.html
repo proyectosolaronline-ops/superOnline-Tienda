@@ -1,4 +1,4 @@
-// ── version v2
+// ── version v3
 
 <!DOCTYPE html>
 <html lang="es">
@@ -1274,21 +1274,7 @@ try {
       }
     }
   }
-      // ── FIX CACHÉ: solo usa caché si tiene menos de 5 minutos ──
-      var cached = loadCachedCatalog();
-      if (cached && cached.products && cached.products.length) {
-        products = cached.products;
-      // ✅ PON:} else {
-    var cached = loadCachedCatalog();
-    if (cached && cached.products && cached.products.length) {
-      products = cached.products;
-    } else {
-      // Solo limpiar caché si está corrupto o vacío, no por estar vencido
-      if (!cached || !cached.products || !cached.products.length) {
-        localStorage.removeItem('cache_catalog_' + STORE_ID);
-      }
-    }
-  }
+
     if (products.length > 0) {
       var statProd = document.getElementById('stat-productos');
       if (statProd) statProd.textContent = products.length + '+';
