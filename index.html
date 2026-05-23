@@ -1,4 +1,4 @@
-// ── version v5
+// ── version v6
 
 <!DOCTYPE html>
 <html lang="es">
@@ -2729,8 +2729,13 @@ function toast(msg) {
   clearTimeout(t._t); t._t = setTimeout(function() { t.style.display = 'none'; }, 2800);
 }
 function applyColor(hex, textColor, ctaColor) {
-  if (hex) { document.documentElement.style.setProperty('--primary', hex); document.documentElement.style.setProperty('--primary-light', hex+'22'); document.documentElement.style.setProperty('--primary-dark', hex); }
-  if (textColor) { document.documentElement.style.setProperty('--hero-text', textColor); var heroEl = document.getElementById('hero-el'); if (heroEl) heroEl.style.color = textColor; }
+  if (hex) {
+    document.documentElement.style.setProperty('--primary', hex);
+    document.documentElement.style.setProperty('--primary-light', hex + '22');
+    var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    var dark='#'+[Math.max(0,r-30),Math.max(0,g-30),Math.max(0,b-30)].map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+    document.documentElement.style.setProperty('--primary-dark', dark);
+  }  if (textColor) { document.documentElement.style.setProperty('--hero-text', textColor); var heroEl = document.getElementById('hero-el'); if (heroEl) heroEl.style.color = textColor; }
   if (ctaColor) { document.documentElement.style.setProperty('--cta', ctaColor); document.documentElement.style.setProperty('--cta-dark', ctaColor); }
 }
 function applyFont(font) {
