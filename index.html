@@ -1,4 +1,4 @@
-// ── version gps directo v7
+// ── version gps directo v8
 
 <!DOCTYPE html>
 <html lang="es">
@@ -561,10 +561,9 @@ footer a:hover{color:#fff}
 @keyframes aparecer-led{0%{opacity:0;transform:translateX(20px)}100%{opacity:1;transform:translateX(0)}}
 @keyframes desaparecer-led{0%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(20px);display:none}}
 </style>
-<a class="barra-led" id="barraLed" style="display: none;">
+<a class="barra-led" id="barraLed" target="_blank" style="display: none;">
   <span class="texto-led" id="textoLed">🛰️ Detectando tu ubicación...</span>
 </a>
-
 <script>
 // Variables globales
 var barra, textoLed;
@@ -584,9 +583,11 @@ function mostrarBarra(){
 }
 
 function actualizarZona(zona, emoji, archivo){
+
   barra.href = 'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/' + archivo;
-  textoLed.innerHTML = '👽 Directorio ' + emoji + ' ' + zona + ' ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos !!! 👾 ';
-  console.log('✅ Zona: ' + zona);
+ 
+textoLed.innerHTML = '👽 Directorio ' + emoji + ' ' + zona + ' ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos !!! 👾 ';
+console.log('✅ Zona: ' + zona);
 }
 
 function determinarZona(lat, lng){
