@@ -1389,9 +1389,9 @@ function initMap(cfgOverride) {
   var lat  = parseFloat(cfg.locationLat  || '');
   var lng  = parseFloat(cfg.locationLng  || '');
   var addr = (cfg.storeLocation || '').trim();
-  var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-  if (!tieneCoords && !addr) {
-    if (!cfgOverride) setTimeout(function(){ initMap(); }, 1500);
+var addr = (cfg.storeLocation || cfg.description || '').trim();
+var tieneCoords = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+if (!tieneCoords && !addr) {    if (!cfgOverride) setTimeout(function(){ initMap(); }, 1500);
     return;
   }
 
