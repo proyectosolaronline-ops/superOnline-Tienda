@@ -579,13 +579,7 @@ footer a:hover{color:#fff}
     },10000);
   }
 
-function asignarLink(){
-  var lat=userLat, lng=userLng;
-  var enYucatan=lat>=19.5&&lat<=21.6&&lng>=-91.0&&lng<=-87.5;
-  barra.href=enYucatan
-    ?'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html'
-    :'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html';
-}
+
 function asignarLink(){
   var lat=userLat, lng=userLng;
   var enYucatan=lat>=19.5&&lat<=21.6&&lng>=-91.0&&lng<=-87.5;
@@ -594,7 +588,7 @@ function asignarLink(){
   if(enYucatan) {
     barra.href='https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html';
   } else if (enCDMX) {
-    barra.href='...dircdmx.html'; // ¡Nuevo enlace para tu página de CDMX!
+    barra.href='https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html'; // ¡Nuevo enlace para tu página de CDMX!
   } else {
     barra.href='https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html'; // La tienda genérica para el resto del país
   }
