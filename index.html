@@ -1,4 +1,4 @@
-// ── version gps directo v5
+// ── version gps directo v6
 
 <!DOCTYPE html>
 <html lang="es">
@@ -561,27 +561,8 @@ footer a:hover{color:#fff}
 @keyframes aparecer-led{0%{opacity:0;transform:translateX(20px)}100%{opacity:1;transform:translateX(0)}}
 @keyframes desaparecer-led{0%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(20px);display:none}}
 </style>
-<a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" class="barra-led" id="barraLed">
-  <span class="texto-led" id="textoLed">👽 Directorio tiendas amigables ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos visita !!! 👾 </span>
-</a>
-
-<script>
-(function(){
-  var barra = document.getElementById('barraLed');
-  var textoLed = document.getElementById('textoLed');
-  var intervaloAparicion, timeoutOcultar;
-
-  function mostrarBarra(){
-    barra.style.animation='aparecer-led 0.4s forwards';
-    barra.classList.add('visible');
-    timeoutOcultar=setTimeout(function(){
-      barra.style.animation='desaparecer-led 0.3s forwards';
-      setTimeout(function(){barra.classList.remove('visible');barra.style.animation='';},300);
-    },10000);
-  }
-
- <a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" class="barra-led" id="barraLed">
-  <span class="texto-led" id="textoLed">👽 Directorio tiendas amigables ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos visita !!! 👾 </span>
+<a class="barra-led" id="barraLed">
+  <span class="texto-led" id="textoLed">🛰️ Detectando tu ubicación...</span>
 </a>
 
 <script>
@@ -608,20 +589,13 @@ footer a:hover{color:#fff}
   }
 
   function determinarZona(lat, lng){
-    // Zona Yucatán
     if(lat >= 19.5 && lat <= 21.6 && lng >= -91.0 && lng <= -87.5){
       actualizarZona('Yucatán', '🌮', 'diryucatan.html');
-    }
-    // Zona BCS
-    else if(lat >= 23.1201 && lat <= 25.1201 && lng >= -112.3239 && lng <= -108.3239){
+    } else if(lat >= 23.1201 && lat <= 25.1201 && lng >= -112.3239 && lng <= -108.3239){
       actualizarZona('Baja California Sur', '🌊', 'dirbcs.html');
-    }
-    // Zona CDMX
-    else if(lat >= 19.1 && lat <= 19.6 && lng >= -99.3 && lng <= -99.0){
+    } else if(lat >= 19.1 && lat <= 19.6 && lng >= -99.3 && lng <= -99.0){
       actualizarZona('CDMX', '🏙️', 'dircdmx.html');
-    }
-    // General
-    else {
+    } else {
       actualizarZona('General', '📍', 'index.html');
     }
   }
@@ -632,7 +606,6 @@ footer a:hover{color:#fff}
     intervaloAparicion = setInterval(function(){ mostrarBarra(); }, 60000);
   }
 
-  // Intentar obtener GPS
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(pos){
       var lat = pos.coords.latitude;
@@ -648,7 +621,6 @@ footer a:hover{color:#fff}
     iniciarTodo(0, 0);
   }
 
-  // Eventos
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){
       clearInterval(intervaloAparicion);
@@ -668,7 +640,6 @@ footer a:hover{color:#fff}
   });
 })();
 </script>
-
   <nav class="navbar" id="navbar" style="display:flex;align-items:center;gap:8px;">
   <div class="brand-icon" style="display:flex;flex-direction:column;align-items:center;">
     <a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
