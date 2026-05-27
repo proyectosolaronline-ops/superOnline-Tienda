@@ -586,7 +586,21 @@ function asignarLink(){
     ?'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html'
     :'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html';
 }
+function asignarLink(){
+  var lat=userLat, lng=userLng;
+  var enYucatan=lat>=19.5&&lat<=21.6&&lng>=-91.0&&lng<=-87.5;
+  var enCDMX=lat>=19.1&&lat<=19.6&&lng>=-99.3&&lng<=-99.0; // ¡Nueva zona para CDMX!
 
+  if(enYucatan) {
+    barra.href='https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html';
+  } else if (enCDMX) {
+    barra.href='...dircdmx.html'; // ¡Nuevo enlace para tu página de CDMX!
+  } else {
+    barra.href='https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html'; // La tienda genérica para el resto del país
+  }
+}
+
+  
 function iniciarCiclo(){
   asignarLink();
   setTimeout(function(){mostrarBarra();},1000);
