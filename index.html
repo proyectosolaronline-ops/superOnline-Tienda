@@ -1,4 +1,4 @@
-// ── version v8.1
+// ── version v8.2
 
 <!DOCTYPE html>
 <html lang="es">
@@ -3291,21 +3291,6 @@ function dismissVideoOwner() {
 
 
 <script>
-var raw = window._licenseExpiry
-         || (window._storeCfgRaw && window._storeCfgRaw.licenseExpiry)
-         || '';
-  if (!raw) { toast('Sin datos de licencia'); return; }
-  var exp  = new Date(raw);
-  if (isNaN(exp.getTime())) { toast('Fecha inválida: ' + raw); return; }
-  var dias  = Math.ceil((exp.getTime() - Date.now()) / 86400000);
-  var fecha = exp.toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
-  var estado = dias >  3 ? '✅ Vigente'
-             : dias >  0 ? '⚠️ Por vencer'
-             : dias === 0 ? '🚨 Vence hoy'
-             :              '🔴 Vencida';
-  var resto = dias > 0 ? dias + ' días restantes' : Math.abs(dias) + ' días vencida';
-  toast(estado + ' · ' + fecha + ' · ' + resto);
-}
 
 </script>
  <div id="lic-owner-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9995;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
