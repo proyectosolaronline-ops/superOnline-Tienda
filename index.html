@@ -1,4 +1,4 @@
-// ── version gps directo v6
+// ── version gps directo v7
 
 <!DOCTYPE html>
 <html lang="es">
@@ -561,84 +561,104 @@ footer a:hover{color:#fff}
 @keyframes aparecer-led{0%{opacity:0;transform:translateX(20px)}100%{opacity:1;transform:translateX(0)}}
 @keyframes desaparecer-led{0%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(20px);display:none}}
 </style>
-<a class="barra-led" id="barraLed">
+<a class="barra-led" id="barraLed" style="display: none;">
   <span class="texto-led" id="textoLed">🛰️ Detectando tu ubicación...</span>
 </a>
 
 <script>
-(function(){
-  var barra = document.getElementById('barraLed');
-  var textoLed = document.getElementById('textoLed');
-  var intervaloAparicion, timeoutOcultar;
+// Variables globales
+var barra, textoLed;
+var intervaloAparicion, timeoutOcultar;
 
-  function mostrarBarra(){
-    barra.style.animation = 'aparecer-led 0.4s forwards';
-    barra.classList.add('visible');
-    timeoutOcultar = setTimeout(function(){
-      barra.style.animation = 'desaparecer-led 0.3s forwards';
-      setTimeout(function(){
-        barra.classList.remove('visible');
-        barra.style.animation = '';
-      }, 300);
-    }, 10000);
-  }
-
-  function actualizarZona(zona, emoji, archivo){
-    barra.href = 'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/' + archivo;
-    textoLed.innerHTML = '👽 Directorio ' + emoji + ' ' + zona + ' ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos !!! 👾 ';
-  }
-
-  function determinarZona(lat, lng){
-    if(lat >= 19.5 && lat <= 21.6 && lng >= -91.0 && lng <= -87.5){
-      actualizarZona('Yucatán', '🌮', 'diryucatan.html');
-    } else if(lat >= 23.1201 && lat <= 25.1201 && lng >= -112.3239 && lng <= -108.3239){
-      actualizarZona('Baja California Sur', '🌊', 'dirbcs.html');
-    } else if(lat >= 19.1 && lat <= 19.6 && lng >= -99.3 && lng <= -99.0){
-      actualizarZona('CDMX', '🏙️', 'dircdmx.html');
-    } else {
-      actualizarZona('General', '📍', 'index.html');
-    }
-  }
-
-  function iniciarTodo(lat, lng){
-    determinarZona(lat, lng);
-    setTimeout(function(){ mostrarBarra(); }, 800);
-    intervaloAparicion = setInterval(function(){ mostrarBarra(); }, 60000);
-  }
-
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(function(pos){
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-      console.log('📍 GPS: Lat=' + lat + ' Lng=' + lng);
-      iniciarTodo(lat, lng);
-    }, function(){
-      console.log('⚠️ GPS falló, usando default');
-      iniciarTodo(0, 0);
-    }, { enableHighAccuracy: true, timeout: 6000 });
-  } else {
-    console.log('⚠️ Sin GPS, usando default');
-    iniciarTodo(0, 0);
-  }
-
-  document.addEventListener('visibilitychange', function(){
-    if(document.hidden){
-      clearInterval(intervaloAparicion);
-      clearTimeout(timeoutOcultar);
+function mostrarBarra(){
+  barra.style.display = 'block';
+  barra.style.animation = 'aparecer-led 0.4s forwards';
+  barra.classList.add('visible');
+  timeoutOcultar = setTimeout(function(){
+    barra.style.animation = 'desaparecer-led 0.3s forwards';
+    setTimeout(function(){
       barra.classList.remove('visible');
-    }
-  });
+      barra.style.animation = '';
+    }, 300);
+  }, 10000);
+}
 
+function actualizarZona(zona, emoji, archivo){
+  barra.href = 'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/' + archivo;
+  textoLed.innerHTML = '👽 Directorio ' + emoji + ' ' + zona + ' ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos !!! 👾 ';
+  console.log('✅ Zona: ' + zona);
+}
+
+function determinarZona(lat, lng){
+  if(lat >= 19.5 && lat <= 21.6 && lng >= -91.0 && lng <= -87.5){
+    actualizarZona('Yucatán', '🌮', 'diryucatan.html');
+  } else if(lat >= 23.1201 && lat <= 25.1201 && lng >= -112.3239 && lng <= -108.3239){
+    actualizarZona('Baja California Sur', '🌊', 'dirbcs.html');
+  } else if(lat >= 19.1 && lat <= 19.6 && lng >= -99.3 && lng <= -99.0){
+    actualizarZona('CDMX', '🏙️', 'dircdmx.html');
+  } else {
+    actualizarZona('General', '📍', 'index.html');
+  }
+}
+
+function iniciarTodo(lat, lng){
+  determinarZona(lat, lng);
+  // Esperar 2 segundos después de cargar el catálogo para mostrar la barra
+  setTimeout(function(){ 
+    mostrarBarra(); 
+    console.log('📢 Barra LED mostrada');
+  }, 2000);
+  intervaloAparicion = setInterval(function(){ mostrarBarra(); }, 60000);
+}
+
+// ESPERAR A QUE TODO EL DOM ESTÉ CARGADO (incluido el catálogo)
+window.addEventListener('load', function(){
+  console.log('📦 Catálogo cargado completamente');
+  
+  barra = document.getElementById('barraLed');
+  textoLed = document.getElementById('textoLed');
+
+  // Pequeño retraso extra para asegurar que todo esté renderizado
+  setTimeout(function(){
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(function(pos){
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        console.log('📍 GPS: Lat=' + lat + ' Lng=' + lng);
+        iniciarTodo(lat, lng);
+      }, function(){
+        console.log('⚠️ GPS falló, usando default');
+        iniciarTodo(0, 0);
+      }, { enableHighAccuracy: true, timeout: 6000 });
+    } else {
+      console.log('⚠️ Sin GPS, usando default');
+      iniciarTodo(0, 0);
+    }
+  }, 1500); // 1.5 segundos extra después de cargar todo
+});
+
+// Eventos
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    clearInterval(intervaloAparicion);
+    clearTimeout(timeoutOcultar);
+    barra.classList.remove('visible');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+  barra = document.getElementById('barraLed');
   barra.addEventListener('click', function(){
     this.style.opacity = '0.5';
     setTimeout(function(){ barra.style.opacity = ''; }, 100);
   });
+});
 
-  window.addEventListener('beforeunload', function(){
-    clearInterval(intervaloAparicion);
-    clearTimeout(timeoutOcultar);
-  });
-})();
+window.addEventListener('beforeunload', function(){
+  clearInterval(intervaloAparicion);
+  clearTimeout(timeoutOcultar);
+});
+</script>
 </script>
   <nav class="navbar" id="navbar" style="display:flex;align-items:center;gap:8px;">
   <div class="brand-icon" style="display:flex;flex-direction:column;align-items:center;">
