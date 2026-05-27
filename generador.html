@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🧭 Generador de código para Directorio | Hecho para John</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      padding: 20px;
+    }
+    .contenedor {
+      max-width: 600px; width: 100%;
+      background: #16213e; border-radius: 24px;
+      padding: 30px 24px; color: #e0e0e0;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+      border: 1px solid #0f3460;
+    }
+    h2 {
+      font-size: 1.6em; font-weight: 600;
+      margin-bottom: 6px; color: #e94560;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .subtitulo { font-size: 0.9em; color: #a0a0b0; margin-bottom: 30px; }
+    .input-grupo {
+      background: #0f3460; border-radius: 16px;
+      padding: 20px; margin-bottom: 28px;
+      border: 1px solid #1a4a7a;
+    }
+    label {
+      display: block; font-weight: 600;
+      font-size: 0.8em; letter-spacing: 1px;
+      color: #e94560; margin-bottom: 4px;
+    }
+    input {
+      width: 100%; padding: 14px 16px;
+      border-radius: 12px; border: none;
+      background: #1a1a2e; color: #fff;
+      font-size: 1.2em; font-weight: 500;
+      margin-bottom: 16px; outline: 2px solid transparent;
+      transition: 0.2s;
+    }
+    input:focus { outline: 2px solid #e94560; background: #12121f; }
+    .fila-doble { display: flex; gap: 16px; }
+    .fila-doble > div { flex: 1; }
+    button {
+      width: 100%; background: #e94560; color: white;
+      font-weight: bold; font-size: 1.2em;
+      padding: 16px; border-radius: 16px;
+      border: none; cursor: pointer;
+      transition: 0.2s; letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+    button:hover { background: #ff6b81; transform: scale(1.02); }
+    .resultado {
+      background: #0a0a1a; border-radius: 16px;
+      padding: 20px; border: 1px solid #2a2a4a;
+    }
+    .etiqueta-resultado {
+      font-size: 0.75em; color: #8a8aaa;
+      letter-spacing: 1px; margin-bottom: 10px;
+    }
+    #codigoGenerado {
+      background: #000; color: #00ff88;
+      padding: 16px; border-radius: 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 1em; word-break: break-all;
+      margin-bottom: 16px; border: 1px solid #2a4a2a;
+    }
+    .boton-copiar {
+      background: #0f3460; font-size: 1em;
+      padding: 12px 20px; width: auto;
+      display: inline-block; margin: 0;
+    }
+    .nota { font-size: 0.7em; color: #7a7a9a; margin-top: 16px; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="contenedor">
+  <h2>🧭 John, tu generador de código</h2>
+  <p class="subtitulo">Pon cualquier coordenada y te daré la línea lista para pegar en tu directorio</p>
+
+  <div class="input-grupo">
+    <div class="fila-doble">
+      <div>
+        <label>🌍 Latitud</label>
+        <input type="number" id="lat" placeholder="ej. 24.131150" step="any" required>
+      </div>
+      <div>
+        <label>🌐 Longitud</label>
+        <input type="number" id="lng" placeholder="ej. -110.333158" step="any" required>
+      </div>
+    </div>
+    <label>🏷️ Nombre de la variable (sin espacios)</label>
+    <input type="text" id="nombreVar" placeholder="ej. enBCS, enGDL, enMTY" value="enZona" required>
+  </div>
+
+  <button onclick="generarCodigo()">✨ GENERAR MI CÓDIGO AHORA</button>
+
+  <div class="resultado" id="cajaResultado" style="display: none;">
+    <div class="etiqueta-resultado">📋 TU CÓDIGO LISTO PARA PEGAR</div>
+    <div id="codigoGenerado"></div>
+    <button class="boton-copiar" onclick="copiarCodigo()">📋 Copiar al portapapeles</button>
+    <p class="nota">✅ Solo pégalo dentro de tu función <strong>asignarLink()</strong> en index.html</p>
+  </div>
+</div>
+
+<script>
+  function generarCodigo() {
+    const lat = parseFloat(document.getElementById('lat').value);
+    const lng = parseFloat(document.getElementById('lng').value);
+    let nombreVar = document.getElementById('nombreVar').value.trim();
+
+    if (isNaN(lat) || isNaN(lng)) {
+      alert("Por favor ingresa las dos coordenadas, John.");
+      return;
+    }
+    if (!nombreVar) nombreVar = "enZona";
+
+    // Fórmula mágica: margen de 1 grado en latitud y 2 en longitud
+    const minLat = (lat - 1.0).toFixed(4);
+    const maxLat = (lat + 1.0).toFixed(4);
+    const minLng = (lng - 2.0).toFixed(4);
+    const maxLng = (lng + 2.0).toFixed(4);
+
+    const codigo = `var ${nombreVar}=lat>=${minLat}&&lat<=${maxLat}&&lng>=${minLng}&&lng<=${maxLng};`;
+
+    document.getElementById('codigoGenerado').textContent = codigo;
+    document.getElementById('cajaResultado').style.display = 'block';
+
+    // Scroll suave al resultado
+    document.getElementById('cajaResultado').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function copiarCodigo() {
+    const codigo = document.getElementById('codigoGenerado').textContent;
+    navigator.clipboard.writeText(codigo).then(() => {
+      const btn = document.querySelector('.boton-copiar');
+      btn.textContent = '✅ ¡Copiado!';
+      setTimeout(() => btn.textContent = '📋 Copiar al portapapeles', 2000);
+    }).catch(() => alert("No se pudo copiar, copia manualmente por favor."));
+  }
+</script>
+</body>
+</html>
