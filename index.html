@@ -1,4 +1,4 @@
-// ── version gps directo v2
+// ── version gps directo v3
 
 <!DOCTYPE html>
 <html lang="es">
@@ -585,14 +585,14 @@ footer a:hover{color:#fff}
     
     // Zonas definidas
     var enYucatan = lat >= 19.5 && lat <= 21.6 && lng >= -91.0 && lng <= -87.5;
-    var enBCS = lat >= 23.1201 && lat <= 25.1201 && lng >= -112.3239 && lng <= -108.3239;
+    var bcs=lat>=23.1201&&lat<=25.1201&&lng>=-112.3239&&lng<=-108.3239;
     var enCDMX = lat >= 19.1 && lat <= 19.6 && lng >= -99.3 && lng <= -99.0;
     
     // Determinar zona y enlace
     if (enYucatan) {
       barra.href = 'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html';
       textoLed.innerHTML = '👽 Directorio 🌮 Yucatán ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos !!! 👾 ';
-    } else if (enBCS) {
+    } else if (bcs) {
       barra.href = 'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/dirbcs.html';
       textoLed.innerHTML = '👽 Directorio 🌊 Baja California Sur ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos !!! 👾 ';
     } else if (enCDMX) {
