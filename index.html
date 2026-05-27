@@ -579,19 +579,32 @@ footer a:hover{color:#fff}
     },10000);
   }
 
-  function asignarLink(){
-    var lat=userLat, lng=userLng;
-    var enYucatan=lat>=19.5&&lat<=21.6&&lng>=-91.0&&lng<=-87.5;
-    barra.href=enYucatan
-      ?'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html'
-      :'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html';
-  }
+function asignarLink(){
+  var lat=userLat, lng=userLng;
+  var enYucatan=lat>=19.5&&lat<=21.6&&lng>=-91.0&&lng<=-87.5;
+  barra.href=enYucatan
+    ?'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html'
+    :'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html';
+}
 
-  function iniciarCiclo(){
-    asignarLink();
-    setTimeout(function(){mostrarBarra();},1000);
-    intervaloAparicion=setInterval(function(){mostrarBarra();},60000);
-  }
+function iniciarCiclo(){
+  asignarLink();
+  setTimeout(function(){mostrarBarra();},1000);
+  intervaloAparicion=setInterval(function(){mostrarBarra();},60000);
+}
+
+// Esperar GPS real — no usar timeout fijo
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(function(pos){
+    userLat=pos.coords.latitude;
+    userLng=pos.coords.longitude;
+    iniciarCiclo();
+  },function(){
+    iniciarCiclo(); // GPS falló — usar default
+  },{enableHighAccuracy:true,timeout:6000});
+} else {
+  iniciarCiclo();
+}
 
   // Esperar a que userLat/userLng estén disponibles
   setTimeout(function(){ iniciarCiclo(); }, 3000);
