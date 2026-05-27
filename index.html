@@ -1,4 +1,4 @@
-// ── version gps directo v3
+// ── version gps directo v4
 
 <!DOCTYPE html>
 <html lang="es">
@@ -585,7 +585,7 @@ footer a:hover{color:#fff}
     
     // Zonas definidas
     var enYucatan = lat >= 19.5 && lat <= 21.6 && lng >= -91.0 && lng <= -87.5;
-    var bcs=lat>=23.1201&&lat<=25.1201&&lng>=-112.3239&&lng<=-108.3239;
+    var bcs = lat >= 23.1201 && lat <= 25.1201 && lng >= -112.3239 && lng <= -108.3239;
     var enCDMX = lat >= 19.1 && lat <= 19.6 && lng >= -99.3 && lng <= -99.0;
     
     // Determinar zona y enlace
@@ -605,29 +605,32 @@ footer a:hover{color:#fff}
   }
 
   function iniciarCiclo(){
+    // 1. Primero asignar el link correcto según GPS
     asignarLink();
+    
+    // 2. Mostrar la barra LED después de que el texto ya se actualizó
     setTimeout(function(){mostrarBarra();}, 1000);
+    
+    // 3. Configurar la repetición
     intervaloAparicion = setInterval(function(){mostrarBarra();}, 60000);
   }
 
   // Esperar GPS real
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(pos) {
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(pos){
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
-      console.log('📍 GPS detectado: Lat=' + userLat + ' Lng=' + userLng);
       iniciarCiclo();
-    }, function() {
-      console.log('⚠️ GPS falló, usando default');
+    }, function(){
       iniciarCiclo();
-    }, { enableHighAccuracy: true, timeout: 6000 });
+    }, {enableHighAccuracy:true, timeout:6000});
   } else {
     iniciarCiclo();
   }
 
   // Eventos
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
       clearInterval(intervaloAparicion);
       clearTimeout(timeoutOcultar);
       barra.classList.remove('visible');
@@ -636,18 +639,18 @@ footer a:hover{color:#fff}
     }
   });
   
-  barra.addEventListener('click', function() {
+  barra.addEventListener('click', function(){
     this.style.opacity = '0.5';
-    setTimeout(function() { barra.style.opacity = ''; }, 100);
+    setTimeout(function(){barra.style.opacity = '';}, 100);
   });
   
-  window.addEventListener('beforeunload', function() {
+  window.addEventListener('beforeunload', function(){
     clearInterval(intervaloAparicion);
     clearTimeout(timeoutOcultar);
   });
 })();
-</script></script>
-<nav class="navbar" id="navbar" style="display:flex;align-items:center;gap:8px;">
+</script>
+  <nav class="navbar" id="navbar" style="display:flex;align-items:center;gap:8px;">
   <div class="brand-icon" style="display:flex;flex-direction:column;align-items:center;">
     <a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
       <div class="map-container" style="position:relative;cursor:pointer;">
