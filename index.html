@@ -1,4 +1,4 @@
-// ── version v8.2
+// ── version v8.3
 
 <!DOCTYPE html>
 <html lang="es">
@@ -565,6 +565,47 @@ footer a:hover{color:#fff}
 <a href="https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/" target="_blank" rel="noopener noreferrer" class="barra-led" id="barraLed">
   <span class="texto-led">👽 Directorio tiendas amigables  ?! 👾 &nbsp;&nbsp;&nbsp; haz Click y busca mas productos visita !!! 👾 </span>
 </a>
+<script>
+(function(){
+  var barra=document.getElementById('barraLed');
+  var intervaloAparicion, timeoutOcultar;
+
+  function mostrarBarra(){
+    barra.style.animation='aparecer-led 0.4s forwards';
+    barra.classList.add('visible');
+    timeoutOcultar=setTimeout(function(){
+      barra.style.animation='desaparecer-led 0.3s forwards';
+      setTimeout(function(){barra.classList.remove('visible');barra.style.animation='';},300);
+    },10000);
+  }
+
+  function asignarLink(){
+    var lat=userLat, lng=userLng;
+    var enYucatan=lat>=19.5&&lat<=21.6&&lng>=-91.0&&lng<=-87.5;
+    barra.href=enYucatan
+      ?'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/diryucatan.html'
+      :'https://proyectosolaronline-ops.github.io/Cat-logo-tienda-online/index.html';
+  }
+
+  function iniciarCiclo(){
+    asignarLink();
+    setTimeout(function(){mostrarBarra();},1000);
+    intervaloAparicion=setInterval(function(){mostrarBarra();},60000);
+  }
+
+  // Esperar a que userLat/userLng estén disponibles
+  setTimeout(function(){ iniciarCiclo(); }, 3000);
+
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){clearInterval(intervaloAparicion);clearTimeout(timeoutOcultar);barra.classList.remove('visible');}
+    else{iniciarCiclo();}
+  });
+  barra.addEventListener('click',function(){this.style.opacity='0.5';setTimeout(function(){barra.style.opacity='';},100);});
+  window.addEventListener('beforeunload',function(){clearInterval(intervaloAparicion);clearTimeout(timeoutOcultar);});
+})();
+</script>
+
+  
 <script>
 (function(){
   const barra=document.getElementById('barraLed');
